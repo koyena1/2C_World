@@ -506,7 +506,7 @@ export const UserSettingsModule: React.FC<UserSettingsModuleProps> = ({
                   }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 ${
                     currentUserRole === 'Super Admin'
-                      ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                      ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -535,7 +535,7 @@ export const UserSettingsModule: React.FC<UserSettingsModuleProps> = ({
                   }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 ${
                     currentUserRole === 'HR'
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >

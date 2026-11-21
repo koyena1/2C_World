@@ -202,7 +202,6 @@ html:not(.dark) .app-page :is(.text-slate-600, .text-slate-500) { color: var(--c
   background-color: var(--cc-accent);
   color: #fff;
 }
-html.dark .cc-btn-primary { color: #0b1220; }
 .cc-btn-primary:hover { filter: brightness(1.08); }
 
 /* Tone helpers: set --tone, then use fill / text / chip */
@@ -540,3 +539,111 @@ html.dark {
 }
 .cc-page-btn:hover:not(:disabled) { border-color: var(--cc-hover-border); color: var(--cc-accent); background-color: var(--cc-accent-soft); }
 .cc-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ================================================================== */
+/* Button colour system                                                */
+/*                                                                    */
+/*  primary / active ... royal blue (--cc-accent)                     */
+/*  secondary .......... white / light grey + subtle border (cc-btn-secondary) */
+/*  inactive tab/option  neutral (unchanged slate styles)             */
+/*  destructive ........ red (--cc-bad)                               */
+/*  success / warning .. --cc-good / --cc-warn (semantic, one shade)   */
+/*                                                                    */
+/* Shared components (.cc-btn-*, CategoryTabs, ...) use the tokens      */
+/* directly. The rules below map the legacy Tailwind colour classes that */
+/* many screens still use (sky / blue / indigo / purple solids, soft    */
+/* blue tints, blue text links, rose / emerald / amber solids) onto the */
+/* same tokens, so one edit to a token restyles every button in the app. */
+/* Only <button> elements are touched: avatars, chips and panels keep   */
+/* their own colours.                                                   */
+/* ================================================================== */
+:root { --cc-on-solid: #ffffff; }
+html.dark { --cc-on-solid: #0b1220; }
+
+/* Shared focus ring for every button */
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--cc-accent);
+  outline-offset: 2px;
+}
+
+/* Destructive variant for the shared button */
+.cc-btn-danger {
+  color: var(--cc-on-solid);
+  background-color: var(--cc-bad);
+  border-color: var(--cc-bad);
+}
+.cc-btn-danger:hover:not(:disabled) { filter: brightness(1.08); }
+.cc-btn-primary { color: var(--cc-on-solid); }
+
+/* 1. Blue text links / text buttons */
+button:is(
+  [class~="text-sky-400"], [class~="text-sky-500"], [class~="text-sky-600"], [class~="text-sky-700"],
+  [class~="text-blue-500"], [class~="text-blue-600"], [class~="text-indigo-500"], [class~="text-indigo-600"]
+) {
+  color: var(--cc-accent);
+}
+
+/* 2. Soft (tinted) blue buttons */
+button:is(
+  [class~="bg-sky-50"], [class~="bg-sky-100"], [class~="bg-blue-50"], [class~="bg-blue-100"],
+  [class~="bg-indigo-50"], [class~="bg-indigo-100"],
+  [class^="bg-sky-950"], [class*=" bg-sky-950"], [class*=" bg-sky-900"], [class*=" bg-indigo-950"]
+) {
+  color: var(--cc-accent);
+  background-color: var(--cc-accent-soft);
+  border-color: var(--cc-accent-border);
+}
+button:is(
+  [class~="bg-sky-50"], [class~="bg-sky-100"], [class~="bg-blue-50"], [class~="bg-blue-100"],
+  [class~="bg-indigo-50"], [class~="bg-indigo-100"],
+  [class^="bg-sky-950"], [class*=" bg-sky-950"], [class*=" bg-sky-900"], [class*=" bg-indigo-950"]
+):hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--cc-accent) 22%, transparent);
+}
+
+/* 3. Solid primary / active: every blue, indigo and purple solid, plus the dark-navy "primary" */
+button:is(
+  [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"],
+  [class~="bg-blue-500"], [class~="bg-blue-600"], [class~="bg-blue-700"],
+  [class~="bg-indigo-500"], [class~="bg-indigo-600"], [class~="bg-indigo-700"],
+  [class~="bg-purple-500"], [class~="bg-purple-600"], [class~="bg-purple-700"]
+),
+button[class~="bg-slate-900"][class~="text-white"] {
+  color: var(--cc-on-solid);
+  background-color: var(--cc-accent);
+  border-color: var(--cc-accent);
+}
+
+/* 4. Destructive solids: one red */
+button:is([class~="bg-rose-500"], [class~="bg-rose-600"], [class~="bg-rose-700"], [class~="bg-red-600"], [class~="bg-red-700"]) {
+  color: var(--cc-on-solid);
+  background-color: var(--cc-bad);
+  border-color: var(--cc-bad);
+}
+
+/* 5. Semantic solids keep their meaning, one shade each */
+button:is([class~="bg-emerald-500"], [class~="bg-emerald-600"], [class~="bg-emerald-700"]) {
+  color: var(--cc-on-solid);
+  background-color: var(--cc-good);
+  border-color: var(--cc-good);
+}
+button:is([class~="bg-amber-500"], [class~="bg-amber-600"]) {
+  color: var(--cc-on-solid);
+  background-color: var(--cc-warn);
+  border-color: var(--cc-warn);
+}
+
+/* One hover for every solid button (the old per-colour hover:bg-* classes are superseded) */
+button:is(
+  [class~="bg-sky-500"], [class~="bg-sky-600"], [class~="bg-sky-700"],
+  [class~="bg-blue-500"], [class~="bg-blue-600"], [class~="bg-blue-700"],
+  [class~="bg-indigo-500"], [class~="bg-indigo-600"], [class~="bg-indigo-700"],
+  [class~="bg-purple-500"], [class~="bg-purple-600"], [class~="bg-purple-700"],
+  [class~="bg-rose-500"], [class~="bg-rose-600"], [class~="bg-rose-700"], [class~="bg-red-600"], [class~="bg-red-700"],
+  [class~="bg-emerald-500"], [class~="bg-emerald-600"], [class~="bg-emerald-700"],
+  [class~="bg-amber-500"], [class~="bg-amber-600"]
+):hover:not(:disabled),
+button[class~="bg-slate-900"][class~="text-white"]:hover:not(:disabled) {
+  filter: brightness(1.08);
+}

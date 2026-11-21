@@ -61,7 +61,8 @@ const collectOptions = (children: React.ReactNode, group?: string, out: Option[]
 // Shared look & feel of the list. Change these once to restyle every dropdown in the app.
 const PANEL_MAX_HEIGHT = 240; // px, search bar included
 const PANEL_MIN_WIDTH = 176; // px
-const MIN_ROOM_BELOW = 200; // px: below this, scroll the page a little instead of flipping upward
+const MIN_ROOM_BELOW = 200; // px: below this, scroll the page a little so the list fits underneath
+const MIN_PANEL_HEIGHT = 140; // px: smallest comfortable list; below this the panel may flip above instead
 const GAP = 4;
 
 /**
@@ -90,7 +91,7 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeValue, setActiveValue] = useState<string | null>(null);
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -111,9 +112,16 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
     const el = triggerRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const width = Math.max(r.width, PANEL_MIN_WIDTH);
+    const width = Math.min(Math.max(r.width, PANEL_MIN_WIDTH), window.innerWidth - 16);
     const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8));
-    setPos({ top: r.bottom + GAP, left, width });
+    const below = window.innerHeight - r.bottom - GAP - 8;
+    const above = r.top - GAP - 8;
+    // Below by default; only flip when there is almost no room below AND more room above (keeps it on screen).
+    if (below < MIN_PANEL_HEIGHT && above > below) {
+      setPos({ bottom: window.innerHeight - r.top + GAP, left, width, maxHeight: Math.min(PANEL_MAX_HEIGHT, above) });
+    } else {
+      setPos({ top: r.bottom + GAP, left, width, maxHeight: Math.min(PANEL_MAX_HEIGHT, Math.max(MIN_PANEL_HEIGHT, below)) });
+    }
   }, []);
 
   const openMenu = () => {
@@ -254,7 +262,7 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
           else openMenu();
         }}
         onKeyDown={onTriggerKeyDown}
-        className={cn('flex items-center justify-between gap-2 text-left disabled:opacity-60 disabled:cursor-not-allowed', className)}
+        className={cn('flex items-center justify-between gap-2 text-left min-w-0 max-w-full disabled:opacity-60 disabled:cursor-not-allowed', className)}
       >
         <span className="truncate">{displayed?.label ?? ''}</span>
         <ChevronDown className={cn('w-3.5 h-3.5 shrink-0 opacity-60 transition-transform', open && 'rotate-180')} />
@@ -268,7 +276,7 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
             onKeyDown={onPanelKeyDown}
             // React portals bubble events to the React parent: keep clicks from reaching clickable cards / backdrops.
             onClick={(e) => e.stopPropagation()}
-            style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, maxHeight: PANEL_MAX_HEIGHT }}
+            style={{ position: 'fixed', top: pos.top, bottom: pos.bottom, left: pos.left, width: pos.width, maxHeight: pos.maxHeight }}
             className={cn(
               'cc-dropdown-panel dropdown-pop z-[1000] flex flex-col overflow-hidden text-xs normal-case font-normal tracking-normal',
               'bg-[color:var(--popover-bg)] text-[color:var(--popover-fg)]'

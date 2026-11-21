@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   X,
   ZoomIn,
@@ -56,6 +56,33 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
 
+  // Fit-to-width: measure the preview area and the rendered document (layout size, unaffected by transforms)
+  const [canvasEl, setCanvasEl] = useState<HTMLDivElement | null>(null);
+  const [docEl, setDocEl] = useState<HTMLDivElement | null>(null);
+  const [innerW, setInnerW] = useState<number>(0);
+  const [docSize, setDocSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+
+  useEffect(() => {
+    if (!canvasEl) return;
+    const measure = () => {
+      const cs = getComputedStyle(canvasEl);
+      setInnerW(canvasEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(canvasEl);
+    return () => ro.disconnect();
+  }, [canvasEl]);
+
+  useEffect(() => {
+    if (!docEl) return;
+    const measure = () => setDocSize({ w: docEl.offsetWidth, h: docEl.offsetHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(docEl);
+    return () => ro.disconnect();
+  }, [docEl]);
+
   if (!isOpen || !document) return null;
 
   const isUploaded = document.isUploaded !== false && document.status !== 'Not Uploaded';
@@ -89,9 +116,16 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
   const detectedType = inferDocType();
 
+  // The document scales down to the available width (never up); the zoom buttons zoom relative to that fit.
+  const isRotated = rotation % 180 !== 0;
+  const boxW = isRotated ? docSize.h : docSize.w;
+  const boxH = isRotated ? docSize.w : docSize.h;
+  const fit = boxW > 0 && innerW > 0 ? Math.min(1, innerW / boxW) : 1;
+  const scale = fit * zoom;
+
   return (
     <div
-      className="fixed inset-0 z-50 overflow-hidden bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6"
+      className="fixed inset-0 z-50 overflow-hidden bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-0 sm:p-6"
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
@@ -99,22 +133,22 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
       }}
     >
       <div
-        className={`w-full max-w-4xl h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border transition-all animate-in fade-in zoom-in-95 duration-150 ${
+        className={`w-full max-w-4xl h-[100dvh] sm:h-[88vh] rounded-none sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border max-sm:border-0 transition-all animate-in fade-in zoom-in-95 duration-150 ${
           isDark
             ? 'bg-slate-900 border-slate-750 text-slate-100'
             : 'bg-white border-slate-200 text-slate-900'
-        } ${isFullscreen ? 'max-w-none w-screen h-screen rounded-none' : ''}`}
+        } ${isFullscreen ? 'max-w-none w-screen h-screen sm:h-screen rounded-none sm:rounded-none' : ''}`}
       >
         {/* ========================================================================= */}
         {/* MODAL HEADER                                                              */}
         {/* ========================================================================= */}
         <div
-          className={`px-5 py-3.5 border-b flex items-center justify-between gap-4 shrink-0 ${
+          className={`px-3 sm:px-5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:pt-3.5 pb-2.5 sm:pb-3.5 border-b flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-2 gap-y-2 sm:gap-4 shrink-0 ${
             isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200'
           }`}
         >
           {/* Document Identity */}
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 order-1">
             <div
               className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
                 isUploaded
@@ -130,8 +164,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             </div>
 
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className={`font-bold text-sm truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h3 className={`font-bold text-sm truncate max-w-full ${isDark ? 'text-white' : 'text-slate-900'}`}>
                   {document.name}
                 </h3>
                 {document.category && (
@@ -175,22 +209,22 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               </div>
 
               <div
-                className={`text-[11px] flex items-center gap-2 mt-0.5 ${
+                className={`text-[11px] flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 ${
                   isDark ? 'text-slate-400' : 'text-slate-500'
                 }`}
               >
                 {document.candidateName && <span>Candidate: <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>{document.candidateName}</strong></span>}
-                {document.documentNumber && <span>· ID: <strong className="font-mono">{document.documentNumber}</strong></span>}
-                {document.size && <span>· Size: <strong className="font-mono">{document.size}</strong></span>}
-                {document.uploadedAt && <span>· Uploaded: <strong className="font-mono">{document.uploadedAt}</strong></span>}
+                {document.documentNumber && <span><span aria-hidden className="hidden sm:inline">· </span>ID: <strong className="font-mono">{document.documentNumber}</strong></span>}
+                {document.size && <span><span aria-hidden className="hidden sm:inline">· </span>Size: <strong className="font-mono">{document.size}</strong></span>}
+                {document.uploadedAt && <span><span aria-hidden className="hidden sm:inline">· </span>Uploaded: <strong className="font-mono">{document.uploadedAt}</strong></span>}
               </div>
             </div>
           </div>
 
           {/* Action Toolbar & Close */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="contents">
             {isUploaded && (
-              <>
+              <div className="order-3 sm:order-2 w-full sm:w-auto flex items-center gap-1.5 sm:shrink-0">
                 {/* Zoom Controls */}
                 <div
                   className={`flex items-center rounded-lg border p-0.5 ${
@@ -257,7 +291,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsFullscreen(!isFullscreen)}
-                  className={`p-1.5 rounded-lg border transition-colors ${
+                  className={`hidden sm:inline-flex p-1.5 rounded-lg border transition-colors ${
                     isDark
                       ? 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300'
                       : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-600'
@@ -271,7 +305,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className={`px-3 py-1.5 rounded-lg border font-semibold text-xs transition-colors flex items-center gap-1.5 ${
+                  className={`hidden sm:flex px-3 py-1.5 rounded-lg border font-semibold text-xs transition-colors items-center gap-1.5 ${
                     downloadSuccess
                       ? 'bg-emerald-600 text-white border-emerald-500'
                       : isDark
@@ -292,14 +326,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     </>
                   )}
                 </button>
-              </>
+              </div>
             )}
 
             {/* Close Button */}
             <button
               type="button"
               onClick={onClose}
-              className={`p-1.5 rounded-lg transition-colors ml-1 ${
+              className={`p-2 sm:p-1.5 rounded-lg transition-colors order-2 sm:order-3 shrink-0 sm:ml-1 ${
                 isDark
                   ? 'text-slate-400 hover:text-white hover:bg-slate-800'
                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200'
@@ -315,13 +349,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         {/* DOCUMENT VIEWING CANVAS                                                   */}
         {/* ========================================================================= */}
         <div
-          className={`flex-1 overflow-auto p-4 sm:p-8 flex items-center justify-center relative select-none ${
+          ref={setCanvasEl}
+          className={`flex-1 min-h-0 overflow-auto p-3 sm:p-8 flex relative select-none ${
             isDark ? 'bg-slate-950/80' : 'bg-slate-100'
           }`}
         >
           {!isUploaded ? (
             /* Document Not Uploaded State */
-            <div className="max-w-md w-full text-center p-8 rounded-2xl border border-dashed border-slate-700/60 bg-slate-900/40 space-y-4">
+            <div className="m-auto max-w-md w-full text-center p-6 sm:p-8 rounded-2xl border border-dashed border-slate-700/60 bg-slate-900/40 space-y-4">
               <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
                 <FileX className="w-8 h-8" />
               </div>
@@ -356,11 +391,21 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           ) : (
             /* Realistic High-Fidelity Document Rendering Canvas */
             <div
-              className="origin-center transition-transform duration-150 ease-out"
+              className="relative shrink-0 m-auto"
               style={{
-                transform: `scale(${zoom}) rotate(${rotation}deg)`,
+                width: boxW * scale,
+                height: boxH * scale,
+                visibility: docSize.w > 0 ? 'visible' : 'hidden',
               }}
             >
+              <div
+                ref={setDocEl}
+                className="absolute left-1/2 top-1/2 transition-transform duration-150 ease-out"
+                style={{
+                  width: 'max-content',
+                  transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
+                }}
+              >
               {/* RENDER BY DOCUMENT TYPE */}
               {detectedType === 'Aadhaar' && (
                 <div className="w-[620px] rounded-2xl border-2 border-slate-300 bg-white text-slate-900 shadow-2xl p-6 relative overflow-hidden font-sans">
@@ -843,6 +888,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   </div>
                 </div>
               )}
+              </div>
             </div>
           )}
         </div>
@@ -851,22 +897,23 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         {/* MODAL FOOTER                                                              */}
         {/* ========================================================================= */}
         <div
-          className={`px-5 py-3 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 text-xs ${
+          className={`px-3 sm:px-5 pt-2 sm:py-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:pb-3 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 shrink-0 text-xs ${
             isDark ? 'bg-slate-950/90 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
           }`}
         >
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>
-              Document verified by 2COMS Onboarding Engine · Encrypted Storage (AES-256)
+          <div className="flex items-center gap-2 min-w-0">
+            <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span className="truncate">
+              <span className="sm:hidden">Verified by 2COMS · AES-256 encrypted</span>
+              <span className="hidden sm:inline">Document verified by 2COMS Onboarding Engine · Encrypted Storage (AES-256)</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-[auto_1fr] sm:flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className={`px-4 py-1.5 rounded-lg border font-semibold transition-colors ${
+              className={`px-4 py-2.5 sm:py-1.5 rounded-lg border font-semibold transition-colors ${
                 isDark
                   ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
                   : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
@@ -878,7 +925,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               <button
                 type="button"
                 onClick={handleDownload}
-                className="px-4 py-1.5 rounded-lg font-semibold text-white bg-sky-600 hover:bg-sky-500 transition-colors flex items-center gap-1.5 shadow-xs"
+                className="px-4 py-2.5 sm:py-1.5 rounded-lg font-semibold text-white bg-sky-600 hover:bg-sky-500 transition-colors flex items-center justify-center gap-1.5 shadow-xs"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{downloadSuccess ? 'Downloaded!' : 'Download Document'}</span>

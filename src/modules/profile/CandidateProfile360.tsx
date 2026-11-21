@@ -28,6 +28,9 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { useTheme } from '../../hooks/useTheme';
 import { useToast } from '../../hooks/useToast';
 import { Toast } from '../../components/ui/Toast';
+import { PageHeader } from '../../components/page/PageHeader';
+import { CategoryTabs } from '../../components/page/CategoryTabs';
+import { Chip, ProgressBar } from '../dashboard/command-center/shared';
 import { DocumentPreviewModal, DocumentPreviewData } from '../../components/common/DocumentPreviewModal';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
@@ -90,16 +93,13 @@ export const CandidateProfile360: React.FC<CandidateProfile360Props> = ({
   };
 
 
-  const cardClass = isDark
-    ? 'bg-slate-900 border border-slate-800 text-slate-100 shadow-xs'
-    : 'bg-white border border-slate-200 text-slate-900 shadow-2xs';
-  const innerCardClass = isDark
-    ? 'bg-slate-950/60 border border-slate-800 text-slate-200'
-    : 'bg-slate-50 border border-slate-100 text-slate-800';
-  const inputClass = isDark
-    ? 'w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg p-2 disabled:bg-slate-900/80 disabled:text-slate-400 font-medium'
-    : 'w-full border border-slate-300 bg-white text-slate-900 rounded-lg p-2 disabled:bg-slate-50 disabled:text-slate-700 font-medium';
-  const labelClass = isDark ? 'block font-semibold text-slate-300 mb-1' : 'block font-semibold text-slate-700 mb-1';
+  // Shared design tokens (styles/design-system.css): one look for every page, light and dark.
+  const cardClass = 'cc-card cc-text';
+  const innerCardClass = 'bg-[color:var(--cc-row-hover)] border-[color:var(--cc-divider)] cc-text';
+  const inputClass =
+    'w-full border border-[color:var(--cc-card-border)] bg-[color:var(--cc-card-bg)] text-[color:var(--cc-title)] rounded-lg p-2 font-medium ' +
+    'disabled:opacity-70 focus:outline-none focus:border-[color:var(--cc-accent)] focus:ring-2 focus:ring-[color:var(--cc-accent-soft)]';
+  const labelClass = 'block font-semibold cc-title mb-1';
 
   const navSections = [
     { id: 'overview', label: 'Overview', completion: 100 },
@@ -138,87 +138,100 @@ export const CandidateProfile360: React.FC<CandidateProfile360Props> = ({
   };
 
   return (
-    <div className={`flex-1 min-h-screen pb-24 transition-colors duration-150 ${
+    <div className={`profile-360 flex-1 min-h-screen ${isEditMode ? 'pb-[calc(9.5rem+env(safe-area-inset-bottom))] sm:pb-24' : 'pb-24'} transition-colors duration-150 ${
       isDark ? 'text-slate-100' : 'text-slate-900'
     }`}>
       {/* Toast */}
       <Toast message={toastMessage} variant="solid" />
 
-      {/* Top Sticky Summary Header */}
-      <div className={`border-b sticky top-0 z-20 transition-colors ${
-        isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white border-slate-200 shadow-2xs'
-      }`}>
-        <div className="p-4 sm:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3">
-            <button
-              type="button"
-              onClick={onBackToDirectory}
-              className={`px-3 py-1.5 -ml-1 rounded-lg transition-colors flex items-center gap-1.5 shrink-0 border ${
-                isDark 
-                  ? 'text-slate-200 bg-slate-800 hover:bg-slate-750 border-slate-700' 
-                  : 'text-slate-700 bg-slate-100 hover:bg-slate-200 border-slate-300'
-              }`}
-              title="Return to Candidate Directory with filters preserved"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span className="text-xs font-semibold">Back to Directory</span>
-            </button>
-            <div className="w-12 h-12 rounded-xl bg-sky-600 text-white font-bold text-base flex items-center justify-center shrink-0 shadow-xs">
-              {candidate.firstName[0]}{candidate.lastName[0]}
+      <PageHeader
+        leading={
+          <span className="cc-btn-primary w-10 h-10 rounded-xl text-sm font-bold flex items-center justify-center shrink-0">
+            {candidate.firstName[0]}{candidate.lastName[0]}
+          </span>
+        }
+        title={`${candidate.firstName} ${candidate.lastName}`}
+        badge={
+          <>
+            <span className="cc-accent-chip font-mono text-[11px] font-semibold px-2 py-0.5 rounded-md">{candidate.userId}</span>
+            <StatusBadge type="joining" status={candidate.joiningStatus} />
+          </>
+        }
+        subtitle={
+          <span className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-2 gap-y-0.5">
+            <span>
+              <span className="cc-text font-medium">{candidate.designation}</span>
+              <span aria-hidden> · </span>
+              <span className="cc-accent font-semibold">{candidate.clientName}</span>
+            </span>
+            <span aria-hidden className="hidden sm:inline">·</span>
+            <span>Recruiter: <strong className="cc-text">{candidate.recruiterName}</strong></span>
+          </span>
+        }
+        eyebrow={
+          <button
+            type="button"
+            onClick={onBackToDirectory}
+            className="cc-accent font-semibold inline-flex items-center gap-1 hover:underline"
+            title="Return to Candidate Directory with filters preserved"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            <span>Back to Directory</span>
+          </button>
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            {/* Onboarding completion: compact bar on phones */}
+            <div className="flex sm:hidden flex-1 min-w-[112px] flex-col gap-1" role="group" aria-label="Onboarding completion">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="cc-muted text-[10px] font-semibold uppercase">Onboarding</span>
+                <span className="cc-title font-mono text-[11px] font-bold">{candidate.onboardingCompletionPct}%</span>
+              </div>
+              <ProgressBar value={candidate.onboardingCompletionPct} tone="info" label="Onboarding completion" />
             </div>
 
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {candidate.firstName} {candidate.lastName}
-                </h1>
-                <span className={`font-mono text-xs font-semibold px-2 py-0.5 rounded border ${
-                  isDark ? 'bg-slate-800 text-sky-400 border-slate-700' : 'bg-slate-100 text-slate-800 border-slate-200'
-                }`}>
-                  {candidate.userId}
-                </span>
-                <StatusBadge type="joining" status={candidate.joiningStatus} />
-              </div>
-
-              <div className={`flex flex-wrap items-center gap-3 text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{candidate.designation}</span>
-                <span className={isDark ? 'text-slate-600' : 'text-slate-300'}>·</span>
-                <span className="text-sky-500 font-semibold">{candidate.clientName}</span>
-                <span className={isDark ? 'text-slate-600' : 'text-slate-300'}>·</span>
-                <span>Recruiter: <strong className={isDark ? 'text-slate-300' : 'text-slate-700'}>{candidate.recruiterName}</strong></span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Metrics & Read/Edit Mode Toggle */}
-          <div className="flex items-center gap-3 self-end md:self-center flex-wrap">
-            {/* Completion Percentage Ring */}
-            <div className={`flex items-center gap-2.5 pr-3 border-r ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+            {/* Onboarding completion: ring from sm up */}
+            <div className="hidden sm:flex items-center gap-2.5 pr-3 mr-1 border-r border-[color:var(--cc-divider)]">
               <div className="text-right">
-                <span className={`text-[10px] font-semibold uppercase block ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Onboarding
-                </span>
-                <span className={`font-mono text-xs font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {candidate.onboardingCompletionPct}% Done
-                </span>
+                <span className="cc-muted text-[10px] font-semibold uppercase block">Onboarding</span>
+                <span className="cc-title font-mono text-xs font-bold">{candidate.onboardingCompletionPct}% Done</span>
               </div>
-              <div className={`w-9 h-9 rounded-full border-2 border-sky-500 flex items-center justify-center font-mono text-[11px] font-bold ${
-                isDark ? 'text-sky-300 bg-sky-950/80' : 'text-sky-700 bg-sky-50'
-              }`}>
+              <span className="cc-accent-chip w-9 h-9 rounded-full font-mono text-[11px] font-bold flex items-center justify-center">
                 {candidate.onboardingCompletionPct}%
-              </div>
+              </span>
             </div>
 
-            {/* Read / Edit Mode Switcher */}
-            <div className={`flex items-center gap-1.5 p-1 rounded-lg ${isDark ? 'bg-slate-800 border border-slate-700' : 'bg-slate-100'}`}>
+            {/* Edit | Read: compact segmented control on phones */}
+            <div
+              className="sm:hidden inline-flex items-center p-0.5 rounded-lg bg-[color:var(--cc-track)] shrink-0"
+              role="group"
+              aria-label="Profile mode"
+            >
+              <button
+                type="button"
+                onClick={() => setIsEditMode(true)}
+                aria-pressed={isEditMode}
+                className={`h-7 px-3.5 rounded-md text-xs font-semibold transition-colors ${isEditMode ? 'cc-btn-primary shadow-xs' : 'cc-muted'}`}
+              >
+                Edit
+              </button>
               <button
                 type="button"
                 onClick={() => setIsEditMode(false)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
-                  !isEditMode
-                    ? isDark ? 'bg-slate-700 text-white shadow-xs font-bold' : 'bg-white text-slate-900 shadow-xs font-semibold'
-                    : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
-                }`}
+                aria-pressed={!isEditMode}
+                className={`h-7 px-3.5 rounded-md text-xs font-semibold transition-colors ${!isEditMode ? 'cc-btn-primary shadow-xs' : 'cc-muted'}`}
+              >
+                Read
+              </button>
+            </div>
+
+            {/* Read / Edit mode */}
+            <div className="hidden sm:flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsEditMode(false)}
+                aria-pressed={!isEditMode}
+                className={`cc-btn ${!isEditMode ? 'cc-btn-primary' : 'cc-btn-secondary'}`}
               >
                 <Eye className="w-3.5 h-3.5" />
                 <span>Read Mode</span>
@@ -226,134 +239,93 @@ export const CandidateProfile360: React.FC<CandidateProfile360Props> = ({
               <button
                 type="button"
                 onClick={() => setIsEditMode(true)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 ${
-                  isEditMode
-                    ? 'bg-sky-600 text-white shadow-xs font-bold'
-                    : isDark ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
-                }`}
+                aria-pressed={isEditMode}
+                className={`cc-btn ${isEditMode ? 'cc-btn-primary' : 'cc-btn-secondary'}`}
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Edit Profile</span>
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Clean Horizontal Navigation Tabs with Section Completion Indicators */}
-        <div className={`px-4 sm:px-6 flex items-center gap-1 overflow-x-auto border-t text-xs scrollbar-none ${
-          isDark ? 'border-slate-800' : 'border-slate-100'
-        }`}>
-          {navSections.map((sec) => {
-            const isActive = activeTab === sec.id;
-            return (
-              <button
-                key={sec.id}
-                onClick={() => setActiveTab(sec.id)}
-                className={`px-3 py-2.5 font-medium whitespace-nowrap border-b-2 transition-colors flex items-center gap-1.5 ${
-                  isActive
-                    ? isDark ? 'border-sky-500 text-sky-300 font-semibold bg-sky-950/40' : 'border-sky-600 text-sky-700 font-semibold bg-sky-50/40'
-                    : isDark ? 'border-transparent text-slate-400 hover:text-slate-200' : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <span>{sec.label}</span>
-                {sec.completion < 100 && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Incomplete items" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        }
+      />
 
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-        {/* Missing Required Fields Alert Banner */}
+      <div className="cc-container cc-stack py-5">
+        {/* Profile sections (amber dot = incomplete items) */}
+        <CategoryTabs
+          value={activeTab}
+          onChange={setActiveTab}
+          tabs={navSections.map((sec) => ({
+            value: sec.id,
+            label: (
+              <span className="inline-flex items-center gap-1.5">
+                {sec.label}
+                {sec.completion < 100 && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--cc-warn)]" title="Incomplete items" />
+                )}
+              </span>
+            ),
+          }))}
+        />
+
+        {/* Missing Required Fields Alert */}
         {candidate.missingFields.length > 0 && (
-          <div className={`w-full h-auto min-h-fit border rounded-xl p-4 sm:p-5 shadow-xs transition-all flex flex-col md:flex-row md:items-start justify-between gap-4 overflow-visible ${
-            isDark 
-              ? 'bg-amber-950/40 border-amber-800/80 text-amber-200' 
-              : 'bg-gradient-to-r from-amber-50 via-amber-50/90 to-amber-100/40 border-amber-300 text-amber-900'
-          }`}>
-            <div className="flex items-start gap-3.5 flex-1 min-w-0">
-              <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 shadow-2xs ${
-                isDark ? 'bg-amber-950 border-amber-800 text-amber-400' : 'bg-amber-100 border-amber-300 text-amber-800'
-              }`}>
-                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
-              </div>
+          <div className="cc-callout tone-warn !p-3 sm:!p-4 flex-col md:flex-row !items-stretch md:!items-center justify-between !gap-2.5 md:!gap-4">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <span className="tone-chip w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </span>
 
               <div className="flex-1 min-w-0 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className={`font-bold text-sm sm:text-base break-words leading-snug ${
-                    isDark ? 'text-amber-300' : 'text-amber-950'
-                  }`}>
+                  <h2 className="cc-title text-sm font-bold leading-snug break-words">
                     Attention Required: {candidate.missingFields.length} Mandatory Onboarding Items Pending
                   </h2>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
-                    isDark ? 'bg-amber-950 text-amber-300 border-amber-800' : 'bg-amber-200/80 text-amber-900 border-amber-300'
-                  }`}>
-                    Compliance Action Required
-                  </span>
+                  <Chip tone="warn" className="rounded-full">Compliance Action Required</Chip>
                 </div>
 
-                <p className={`text-xs sm:text-sm leading-relaxed break-words ${
-                  isDark ? 'text-amber-300/80' : 'text-amber-900'
-                }`}>
-                  The candidate cannot be moved to <strong className={`font-semibold ${isDark ? 'text-amber-200' : 'text-amber-950'}`}>"Joined"</strong> status until all statutory compliance items are uploaded and verified.
+                <p className="cc-text text-xs leading-relaxed break-words">
+                  The candidate cannot be moved to <strong className="cc-title font-semibold">"Joined"</strong> status until all statutory compliance items are uploaded and verified.
                 </p>
 
-                {/* Missing Items List with proper wrapping */}
-                <div className="pt-2">
-                  <span className={`text-[11px] font-semibold uppercase tracking-wider block mb-1.5 ${
-                    isDark ? 'text-amber-400' : 'text-amber-800'
-                  }`}>
-                    Pending Verification Documents:
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {candidate.missingFields.map((f, i) => (
-                      <span
-                        key={i}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-2xs break-words whitespace-normal max-w-full border ${
-                          isDark 
-                            ? 'bg-slate-900 border-amber-800/80 text-amber-300' 
-                            : 'bg-white border-amber-300/90 text-amber-950'
-                        }`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                        <span>{f}</span>
-                      </span>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="cc-muted text-[11px] font-semibold uppercase tracking-wider mr-1">Pending Verification Documents:</span>
+                  {candidate.missingFields.map((f, i) => (
+                    <Chip key={i} tone="warn" className="gap-1.5 whitespace-normal break-words max-w-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+                      <span>{f}</span>
+                    </Chip>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Quick Action Button - Responsive alignment */}
-            <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end gap-1.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-amber-200/80">
+            <div className="flex flex-row md:flex-col flex-wrap items-center md:items-end gap-x-3 gap-y-1 md:gap-1 shrink-0">
               <button
                 type="button"
                 onClick={() => onOpenKycDesk(candidate)}
-                className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-colors whitespace-nowrap"
+                className="cc-btn text-white max-md:!h-8 max-md:!px-3 max-md:text-[11px]"
+                style={{ backgroundColor: 'var(--cc-warn)' }}
               >
                 <ShieldCheck className="w-4 h-4 shrink-0" />
                 <span>Resolve at KYC Desk</span>
               </button>
-              <span className="text-[10px] text-amber-800/80 text-center md:text-right font-medium">
-                Mandatory for Day-1 Joining
-              </span>
+              <span className="cc-muted text-[10px] md:text-right font-medium">Mandatory for Day-1 Joining</span>
             </div>
           </div>
         )}
 
         {/* Tab 1: Overview */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2 space-y-6">
               {/* Snapshot Card */}
               <div className={`${cardClass} p-5 rounded-xl space-y-4`}>
                 <h3 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   Onboarding Health Snapshot
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="grid grid-cols-1 min-[340px]:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                   <div className={`p-3 rounded-lg border ${innerCardClass}`}>
                     <span className="text-[11px] text-slate-400">Statutory KYC</span>
                     <div className="mt-1">
@@ -1140,52 +1112,54 @@ export const CandidateProfile360: React.FC<CandidateProfile360Props> = ({
         )}
       </div>
 
-      {/* Sticky Bottom Action Bar (When in Edit Mode or when unsaved changes exist) */}
+      {/* Sticky Bottom Action Bar (edit mode). Two rows on phones, one row from sm up. */}
       {isEditMode && (
-        <div className={`fixed bottom-0 left-0 right-0 z-40 border-t p-4 shadow-xl flex items-center justify-between px-6 animate-in slide-in-from-bottom duration-200 ${
-          isDark ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
-        }`}>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
-            <span className={`font-semibold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Candidate Profile Edit Mode Active</span>
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 border-t border-[color:var(--cc-card-border)] bg-[color:var(--cc-card-bg)] shadow-xl animate-in slide-in-from-bottom duration-200
+            px-3 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4
+            flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3"
+        >
+          <div className="flex items-center gap-2 text-xs min-w-0">
+            <span className="w-2 h-2 rounded-full bg-[color:var(--cc-accent)] animate-pulse shrink-0" />
+            <span className="cc-title font-semibold whitespace-nowrap">
+              <span className="sm:hidden">Editing</span>
+              <span className="hidden sm:inline">Candidate Profile Edit Mode Active</span>
+            </span>
             {hasUnsavedChanges && (
-              <span className={`text-[11px] px-2 py-0.5 rounded border ${
-                isDark ? 'text-amber-300 bg-amber-950/80 border-amber-800' : 'text-amber-700 bg-amber-50 border-amber-200'
-              }`}>
-                Unsaved modifications detected
-              </span>
+              <Chip tone="warn" className="rounded whitespace-nowrap">
+                <span className="sm:hidden">Unsaved</span>
+                <span className="hidden sm:inline">Unsaved modifications detected</span>
+              </Chip>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-[auto_auto_1fr] sm:flex items-center gap-2 sm:shrink-0">
             <button
               type="button"
               onClick={() => {
                 setIsEditMode(false);
                 setHasUnsavedChanges(false);
               }}
-              className={`px-4 py-2 border rounded-lg text-xs font-semibold transition-colors ${
-                isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-50'
-              }`}
+              className="cc-btn cc-btn-secondary whitespace-nowrap max-sm:!h-9 max-sm:!px-3"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold shadow-xs ${
-                isDark ? 'bg-slate-800 hover:bg-slate-750 text-white border border-slate-700' : 'bg-slate-900 hover:bg-slate-800 text-white'
-              }`}
+              className="cc-btn whitespace-nowrap text-white border-[color:var(--sidebar-pill-border)] bg-[color:var(--sidebar-bg-to)] hover:brightness-110 max-sm:!h-9 max-sm:!px-3"
             >
               Save Changes
             </button>
             <button
               type="button"
               onClick={handleSaveAndNext}
-              className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-xs"
+              className="cc-btn cc-btn-primary whitespace-nowrap max-sm:!h-9 max-sm:!px-3"
             >
-              <span>Save & Next Section</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <span>
+                Save & Next<span className="hidden sm:inline"> Section</span>
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             </button>
           </div>
         </div>

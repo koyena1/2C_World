@@ -139,8 +139,8 @@ export const PermissionMatrixSection: React.FC<PermissionMatrixSectionProps> = (
         </div>
 
         {/* Role Selector Tabs & Save Button */}
-        <div className="flex items-center gap-3 flex-wrap justify-between lg:justify-end">
-          <div className="overflow-x-auto max-w-full pb-0.5 scrollbar-thin">
+        <div className="flex items-center gap-3 flex-wrap justify-between lg:justify-end min-w-0 max-w-full">
+          <div className="overflow-x-auto min-w-0 max-w-full pb-0.5 scrollbar-thin">
             <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 w-max shrink-0">
               {roles.map((r) => (
                 <button

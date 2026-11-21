@@ -24,6 +24,8 @@ import { CreateCalendarModal } from './CreateCalendarModal';
 import { AssignEmployeesModal } from './AssignEmployeesModal';
 import { useTheme } from '../../hooks/useTheme';
 import { useToast } from '../../hooks/useToast';
+import { PageHeader } from '../../components/page/PageHeader';
+import { CategoryTabs } from '../../components/page/CategoryTabs';
 import { Toast } from '../../components/ui/Toast';
 
 export const HolidayMastersModule: React.FC = () => {
@@ -208,54 +210,24 @@ export const HolidayMastersModule: React.FC = () => {
       {/* Toast Notification */}
       <Toast message={toastMessage} variant="solid" />
 
-      {/* Top Module Subheader & Tabs */}
-      <div className={`border-b px-4 sm:px-6 transition-colors bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-2xs`}>
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-2.5">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Workforce & Attendance</span>
-            <span className="text-slate-300 dark:text-slate-600">/</span>
-            <span className="font-bold text-sm flex items-center gap-1.5 text-slate-800 dark:text-white">
-              <CalendarIcon className="w-4 h-4 text-amber-500" />
-              <span>Holiday Masters</span>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Navigation Tabs (Screen 1 vs Screen 3) */}
-            {!selectedCalendarForDetails && (
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-transparent dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('master')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                    activeTab === 'master'
-                      ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  Holiday Master
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('publish')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                    activeTab === 'publish'
-                      ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <Send className="w-3 h-3 text-sky-500 dark:text-sky-400" />
-                  <span>Publish Holiday Calendar</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={CalendarIcon}
+        title="Holiday Masters"
+        subtitle="Manage holiday calendars and publish them to employees"
+      />
 
       {/* Main Content Area */}
-      <div className="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full">
+      <div className="cc-container cc-stack py-5">
+        {!selectedCalendarForDetails && (
+          <CategoryTabs
+            value={activeTab}
+            onChange={(v) => setActiveTab(v as typeof activeTab)}
+            tabs={[
+              { value: 'master', label: 'Holiday Master' },
+              { value: 'publish', label: 'Publish Holiday Calendar' },
+            ]}
+          />
+        )}
         {/* If viewing specific Calendar Details (Screen 4) */}
         {selectedCalendarForDetails ? (
           <CalendarDetailsScreen

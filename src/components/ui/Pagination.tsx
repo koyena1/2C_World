@@ -25,10 +25,12 @@ interface PaginationControlsProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  /** Show "1 of N" between the arrows on phones (hidden from sm up). */
+  mobileIndicator?: boolean;
 }
 
 /** Two compact square arrow buttons (Previous Page / Next Page) for a table toolbar. Look: .cc-page-btn in design-system.css. */
-export const PaginationControls: React.FC<PaginationControlsProps> = ({ page, totalPages, onPageChange }) => (
+export const PaginationControls: React.FC<PaginationControlsProps> = ({ page, totalPages, onPageChange, mobileIndicator }) => (
   <div role="group" aria-label="Pagination" className="cc-pagination-nav">
     <button
       type="button"
@@ -40,6 +42,11 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({ page, to
     >
       <ChevronLeft className="w-4 h-4" />
     </button>
+    {mobileIndicator && (
+      <span className="sm:hidden cc-muted text-[11px] font-semibold tabular-nums whitespace-nowrap px-0.5" aria-live="polite">
+        {page} of {totalPages}
+      </span>
+    )}
     <button
       type="button"
       disabled={page >= totalPages}

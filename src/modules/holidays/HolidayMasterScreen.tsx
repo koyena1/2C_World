@@ -107,7 +107,7 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Calendar Picker & Identity Tools */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 min-w-0 max-w-full">
             <div className="flex items-center gap-2">
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                 Calendar:
@@ -158,7 +158,7 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
           {/* Top Actions: Year View / List View, Create Calendar, New Holiday */}
           <div className="flex flex-wrap items-center gap-2">
             {/* View Toggle */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 max-w-full overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setViewMode('list')}

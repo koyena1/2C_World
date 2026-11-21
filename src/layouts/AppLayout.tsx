@@ -85,7 +85,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           Always mounted so it can slide in and out; inert + invisible while closed. */}
       <div
         className={cn(
-          'md:hidden fixed inset-0 z-50 flex transition-[visibility] duration-200',
+          'lg:hidden fixed inset-0 z-50 flex transition-[visibility] duration-200',
           navOpen ? 'visible' : 'invisible pointer-events-none'
         )}
         role={navOpen ? 'dialog' : undefined}

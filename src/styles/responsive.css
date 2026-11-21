@@ -64,3 +64,60 @@
   }
   .cc-card-table td:last-child { padding-top: 8px !important; }
 }
+
+/* ------------------------------------------------------------------ */
+/* All widths: dropdown triggers (SelectMenu) and the rows holding them */
+/* shrink and truncate instead of widening the page.                    */
+/* ------------------------------------------------------------------ */
+[role="combobox"] { min-width: 0; max-width: 100%; }
+.app-page :is(div, span):has(> [role="combobox"]),
+.app-page :is(div, span):has(> :is(div, span) > [role="combobox"]) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Touch screens: larger tap targets for the shared controls (tokens, so every page follows) */
+@media (pointer: coarse) {
+  :root {
+    --cc-control-height: 40px;
+    --cc-tab-height: 34px;
+  }
+  .cc-page-btn { width: 36px; height: 36px; }
+  .cc-dropdown-search { height: 40px; }
+  [role="option"] { padding-block: 10px; }
+}
+
+/* Grid cells may shrink below their content width (stops long text / button rows widening the page) */
+.app-page [class*="grid-cols-"] > * { min-width: 0; }
+
+/* ------------------------------------------------------------------ */
+/* Phones: horizontally scrolling chip rows (CategoryTabs)             */
+/* ------------------------------------------------------------------ */
+@media (max-width: 639px) {
+  :root {
+    --cc-tab-height: 32px;
+    --cc-tab-padding-x: 12px;
+    --cc-tab-gap: 6px;
+    --cc-badge-size: 15px;
+  }
+  .cc-tabs {
+    padding-top: 8px;
+    scroll-snap-type: x proximity;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .cc-tab { scroll-snap-align: start; font-size: 0.6875rem; }
+  .cc-count-badge { font-size: 8.5px; padding-inline: 3.5px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Candidate 360 on phones: compact cards (scoped to .profile-360)      */
+/* ------------------------------------------------------------------ */
+@media (max-width: 639px) {
+  .profile-360 .cc-card { padding: 14px; border-radius: 0.875rem; }
+  .profile-360 .cc-card.space-y-4 > * + *,
+  .profile-360 .cc-card.space-y-5 > * + * { margin-top: 12px; }
+  .profile-360 .cc-stack > * + * { margin-top: 10px; }
+  .profile-360 .cc-container.py-5 { padding-block: 10px; }
+}

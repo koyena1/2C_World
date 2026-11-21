@@ -34,7 +34,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ currentView, onGoHome, onO
     }`}>
       <div className="flex items-center gap-2 min-w-0">
         {onOpenMenu && (
-          <IconButton onClick={onOpenMenu} aria-label="Open navigation menu" title="Menu" className="md:hidden text-slate-700 dark:text-slate-200">
+          <IconButton onClick={onOpenMenu} aria-label="Open navigation menu" title="Menu" className="lg:hidden text-slate-700 dark:text-slate-200">
             <Menu className="w-4 h-4" />
           </IconButton>
         )}

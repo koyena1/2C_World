@@ -100,6 +100,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState<boolean>(false);
   const [previewCandidate, setPreviewCandidate] = useState<Candidate | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
   const { message: toastMessage, showToast } = useToast(3000);
   const [statusChangeModalCandidate, setStatusChangeModalCandidate] = useState<Candidate | null>(null);
@@ -314,6 +315,172 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
   }, [sortedCandidates, currentPage, pageSize]);
 
   // Bulk selection handlers
+  // Row action menu (shared by the desktop table row and the phone card)
+  const renderActionMenu = (candidate: Candidate) => (
+    activeActionMenuId === candidate.id && (
+                                  <>
+                                    <div
+                                      className="fixed inset-0 z-20"
+                                      onClick={() => setActiveActionMenuId(null)}
+                                    />
+                                    <div className={`absolute right-0 mt-1 w-52 rounded-lg shadow-xl border py-1 z-30 text-left text-xs divide-y animate-in fade-in duration-100 ${
+                                      isDark
+                                        ? 'bg-slate-900 border-slate-750 divide-slate-800 text-slate-200'
+                                        : 'bg-white border-slate-200 divide-slate-100 text-slate-700'
+                                    }`}>
+                                      <div className="py-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            onOpenCandidateProfile(candidate);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-medium cursor-pointer ${
+                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
+                                          }`}
+                                        >
+                                          <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                                          <span>View Candidate 360</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            onOpenKycWorkspace(candidate);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-medium cursor-pointer ${
+                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
+                                          }`}
+                                        >
+                                          <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+                                          <span>KYC Verification Desk</span>
+                                        </button>
+                                      </div>
+
+                                      <div className="py-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            handleMarkCandidateJoined(candidate);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-semibold cursor-pointer ${
+                                            isDark ? 'text-emerald-400 hover:bg-slate-800' : 'text-emerald-700 hover:bg-emerald-50'
+                                          }`}
+                                        >
+                                          <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                          <span>Mark as Joined</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            setStatusChangeModalCandidate(candidate);
+                                            setNewSelectedStatus(candidate.joiningStatus);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
+                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
+                                          }`}
+                                        >
+                                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                          <span>Change Status...</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            handleRejoinCandidate(candidate);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
+                                            isDark ? 'text-purple-400 hover:bg-slate-800' : 'text-purple-700 hover:bg-purple-50'
+                                          }`}
+                                        >
+                                          <RotateCcw className="w-3.5 h-3.5 text-purple-500" />
+                                          <span>Rejoin Flow (Past ID)</span>
+                                        </button>
+                                      </div>
+
+                                      <div className="py-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            handleReRunKyc(candidate);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
+                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
+                                          }`}
+                                        >
+                                          <RefreshCw className="w-3.5 h-3.5 text-sky-500" />
+                                          <span>Re-run KYC & ₹1 Drop</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            showToast(`Generated & downloaded Joining Kit PDF for ${candidate.firstName}`);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
+                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
+                                          }`}
+                                        >
+                                          <FileDown className="w-3.5 h-3.5 text-slate-400" />
+                                          <span>Download Dossier</span>
+                                        </button>
+                                      </div>
+
+                                      <div className="py-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            navigator.clipboard.writeText(`https://connect.2coms.com/onboard/c/${candidate.userId}`);
+                                            showToast(`Copied onboarding link for ${candidate.firstName}`);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
+                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
+                                          }`}
+                                        >
+                                          <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                          <span>Copy Onboarding URL</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            showToast(`Resent invitation SMS & WhatsApp to ${candidate.phone}`);
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
+                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
+                                          }`}
+                                        >
+                                          <Send className="w-3.5 h-3.5 text-slate-400" />
+                                          <span>Resend Invitation</span>
+                                        </button>
+                                      </div>
+
+                                      <div className="py-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setActiveActionMenuId(null);
+                                            if (confirm(`Remove candidate ${candidate.firstName} ${candidate.lastName} from onboarding pipeline?`)) {
+                                              handleDeleteCandidate(candidate);
+                                            }
+                                          }}
+                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-medium cursor-pointer ${
+                                            isDark ? 'text-rose-400 hover:bg-slate-800' : 'text-rose-600 hover:bg-rose-50'
+                                          }`}
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                          <span>Delete Candidate</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </>
+                                )
+  );
+
   const handleSelectAll = () => {
     if (selectedIds.length === filteredCandidates.length && filteredCandidates.length > 0) {
       setSelectedIds([]);
@@ -454,7 +621,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
           <div className={`${cardStyleClass} p-3.5 space-y-3`}>
             <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
               {/* Smart Search Bar */}
-              <div className="relative flex-1 min-w-[260px]">
+              <div className="relative flex-1 min-w-0 lg:min-w-[260px]">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
@@ -480,14 +647,14 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               </div>
 
               {/* Quick Primary Filters: Client, Location, Status */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
                 {/* Client Filter */}
                 <SelectMenu
                   value={filters.client}
                   onChange={(e) => setFilters({ ...filters, client: e.target.value })}
                   className={`py-2 px-2.5 text-xs rounded-lg border font-medium ${
                     isDark ? 'bg-slate-950 border-slate-750 text-slate-200' : 'bg-white border-slate-200 text-slate-700 shadow-2xs'
-                  } max-w-[170px] truncate`}
+                  } w-full sm:w-auto sm:max-w-[170px] truncate`}
                 >
                   <option value="">All Clients</option>
                   {CLIENT_LIST.map((cl) => (
@@ -503,7 +670,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                   onChange={(e) => setFilters({ ...filters, location: e.target.value })}
                   className={`py-2 px-2.5 text-xs rounded-lg border font-medium ${
                     isDark ? 'bg-slate-950 border-slate-750 text-slate-200' : 'bg-white border-slate-200 text-slate-700 shadow-2xs'
-                  } max-w-[150px] truncate`}
+                  } w-full sm:w-auto sm:max-w-[150px] truncate`}
                 >
                   <option value="">All Locations</option>
                   {LOCATION_LIST.map((loc) => (
@@ -519,7 +686,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                   onChange={(e) => setFilters({ ...filters, joiningStatus: e.target.value })}
                   className={`py-2 px-2.5 text-xs rounded-lg border font-medium ${
                     isDark ? 'bg-slate-950 border-slate-750 text-slate-200' : 'bg-white border-slate-200 text-slate-700 shadow-2xs'
-                  } max-w-[150px] truncate`}
+                  } w-full sm:w-auto sm:max-w-[150px] truncate`}
                 >
                   <option value="">All Statuses</option>
                   <option value="Yet to Join">Yet to Join</option>
@@ -535,7 +702,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsMoreFiltersOpen(!isMoreFiltersOpen)}
-                  className={`px-3 py-2 text-xs font-semibold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`px-3 py-2 text-xs font-semibold rounded-lg border transition-all flex items-center justify-center sm:justify-start gap-1.5 cursor-pointer w-full sm:w-auto ${
                     isMoreFiltersOpen || advancedFilterCount > 0
                       ? isDark
                         ? 'bg-sky-950/90 border-sky-500 text-sky-300 ring-1 ring-sky-500'
@@ -1067,14 +1234,14 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
 
           {/* Bulk Action Bar (when rows are checked) */}
           {selectedIds.length > 0 && (
-            <div className="bg-slate-900 text-white px-4 py-2.5 rounded-lg flex items-center justify-between text-xs shadow-md animate-in slide-in-from-top-1 duration-150 border border-slate-800">
+            <div className="bg-slate-900 text-white px-3 sm:px-4 py-2.5 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs shadow-md animate-in slide-in-from-top-1 duration-150 border border-slate-800">
               <div className="flex items-center gap-2">
                 <span className="font-semibold font-mono bg-slate-800 px-2 py-0.5 rounded text-sky-400">
                   {selectedIds.length}
                 </span>
                 <span>Candidates Selected</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => showToast(`Resent onboarding invitations to ${selectedIds.length} candidate(s)`)}
@@ -1116,16 +1283,17 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <PaginationSummary page={currentPage} total={sortedCandidates.length} pageSize={pageSize} itemLabel="candidates" />
 
-            <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 sm:flex-wrap w-full sm:w-auto">
               {/* Sort By Dropdown */}
-              <div className="flex items-center gap-1.5">
-                <span className={`text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <div className="flex items-center gap-1.5 min-w-0 flex-1 sm:flex-none">
+                <span className={`hidden sm:inline text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   Sort:
                 </span>
                 <SelectMenu
+                  aria-label="Sort candidates"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className={`py-1 px-2 rounded-md border text-xs font-medium ${
+                  className={`py-1 px-2 rounded-md border text-xs font-medium w-full sm:w-auto ${
                     isDark ? 'bg-slate-900 border-slate-750 text-slate-200' : 'bg-white border-slate-200 text-slate-700 shadow-2xs'
                   }`}
                 >
@@ -1139,11 +1307,12 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               </div>
 
               {/* Rows Per Page Dropdown */}
-              <div className="flex items-center gap-1.5">
-                <span className={`text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className={`hidden sm:inline text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   Rows:
                 </span>
                 <SelectMenu
+                  aria-label="Rows per page"
                   value={pageSize}
                   onChange={(e) => {
                     setPageSize(Number(e.target.value));
@@ -1159,14 +1328,208 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                 </SelectMenu>
               </div>
 
-              <PaginationControls page={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+              <PaginationControls page={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} mobileIndicator />
             </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* PHONE LAYOUT: candidate cards (the full table is shown from md up)         */}
+          {/* ========================================================================= */}
+          <div className="md:hidden space-y-2.5">
+            {paginatedCandidates.length > 0 && (
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                className="cc-muted flex items-center gap-2 text-xs font-semibold px-1 py-0.5"
+              >
+                {selectedIds.length === filteredCandidates.length && filteredCandidates.length > 0 ? (
+                  <CheckSquare className="w-4 h-4 text-sky-500" />
+                ) : (
+                  <Square className="w-4 h-4" />
+                )}
+                <span>Select all {filteredCandidates.length}</span>
+              </button>
+            )}
+
+            {paginatedCandidates.length === 0 ? (
+              <div className="cc-card p-6 text-center space-y-2">
+                <SearchX className="cc-muted w-6 h-6 mx-auto" />
+                <p className="cc-title font-bold text-sm">No candidates match your criteria</p>
+                <p className="cc-muted text-xs">Try a different search or adjust the applied filters.</p>
+                <button type="button" onClick={handleResetFilters} className="cc-btn cc-btn-primary mt-1">
+                  Reset All Filters
+                </button>
+              </div>
+            ) : (
+              paginatedCandidates.map((candidate) => {
+                const isSelected = selectedIds.includes(candidate.id);
+                const isExpanded = expandedCardIds.includes(candidate.id);
+                const kycOf = (type: string) => candidate.kycRecords.find((k) => k.documentType === type);
+                const kycChip = (status?: string) =>
+                  status === 'Verified'
+                    ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'
+                    : status === 'Pending Manual Review'
+                    ? 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+                    : status === 'API Mismatch'
+                    ? 'bg-orange-500/20 text-orange-500 border-orange-500/30'
+                    : status === 'Rejected'
+                    ? 'bg-rose-500/20 text-rose-500 border-rose-500/30'
+                    : 'bg-slate-500/15 text-slate-500 border-transparent';
+
+                return (
+                  <article
+                    key={candidate.id}
+                    className={`cc-card p-3 space-y-2.5 ${isSelected ? 'ring-1 ring-sky-500/70' : ''}`}
+                  >
+                    {/* Identity + status */}
+                    <div className="flex items-start gap-2.5">
+                      <button
+                        type="button"
+                        onClick={(e) => handleSelectOne(candidate.id, e)}
+                        aria-label={`${isSelected ? 'Deselect' : 'Select'} ${candidate.firstName} ${candidate.lastName}`}
+                        aria-pressed={isSelected}
+                        className="mt-1.5 shrink-0"
+                      >
+                        {isSelected ? <CheckSquare className="w-4 h-4 text-sky-500" /> : <Square className="cc-muted w-4 h-4" />}
+                      </button>
+                      <div className="w-9 h-9 rounded-full bg-sky-600/20 text-sky-500 border border-sky-500/30 flex items-center justify-center font-bold text-xs shrink-0">
+                        {candidate.firstName[0]}{candidate.lastName[0]}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="cc-title text-sm font-semibold leading-snug break-words">
+                          {candidate.firstName} {candidate.lastName}
+                        </div>
+                        <div className="cc-accent font-mono text-[11px] font-semibold">{candidate.userId}</div>
+                      </div>
+                      <div className="shrink-0">
+                        <StatusBadge type="joining" status={candidate.joiningStatus} size="sm" />
+                      </div>
+                    </div>
+
+                    {/* Key facts */}
+                    <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                      <div className="min-w-0">
+                        <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Client</dt>
+                        <dd className="cc-title font-medium break-words">{candidate.clientName}</dd>
+                      </div>
+                      <div className="min-w-0">
+                        <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Designation</dt>
+                        <dd className="cc-title font-medium break-words">{candidate.designation}</dd>
+                      </div>
+                      <div className="col-span-2 min-w-0 flex items-baseline gap-2">
+                        <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Joining Date</dt>
+                        <dd className="cc-title font-mono font-semibold">{candidate.dateOfJoining}</dd>
+                      </div>
+                    </dl>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-2.5 border-t border-[color:var(--cc-divider)]">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewCandidate(candidate)}
+                        className="cc-btn cc-btn-tone tone-info !h-9 flex-1 min-[420px]:flex-none"
+                        title={`Open details for ${candidate.firstName} ${candidate.lastName}`}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Details</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedCardIds((prev) =>
+                            prev.includes(candidate.id) ? prev.filter((id) => id !== candidate.id) : [...prev, candidate.id]
+                          )
+                        }
+                        aria-expanded={isExpanded}
+                        className="cc-btn cc-btn-secondary !h-9 !px-2.5"
+                      >
+                        <span>{isExpanded ? 'Less' : 'More'}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
+                      <div className="relative ml-auto">
+                        <button
+                          type="button"
+                          onClick={() => setActiveActionMenuId(activeActionMenuId === candidate.id ? null : candidate.id)}
+                          className="cc-page-btn"
+                          aria-label="Candidate actions"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                        {renderActionMenu(candidate)}
+                      </div>
+                    </div>
+
+                    {/* Expandable details */}
+                    {isExpanded && (
+                      <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs pt-2.5 border-t border-[color:var(--cc-divider)]">
+                        <div className="min-w-0">
+                          <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Phone</dt>
+                          <dd className="cc-title">{candidate.phone}</dd>
+                        </div>
+                        <div className="min-w-0">
+                          <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Branch / Location</dt>
+                          <dd className="cc-title break-words">{candidate.branchName || candidate.workLocation}</dd>
+                        </div>
+                        <div className="col-span-2 min-w-0">
+                          <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Email</dt>
+                          <dd className="cc-title break-all">{candidate.email}</dd>
+                        </div>
+                        <div className="min-w-0">
+                          <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Department</dt>
+                          <dd className="cc-title break-words">{candidate.department}</dd>
+                        </div>
+                        <div className="min-w-0">
+                          <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">₹1 Penny Test</dt>
+                          <dd className="mt-0.5"><StatusBadge type="penny" status={candidate.pennyTestStatus} size="sm" /></dd>
+                        </div>
+                        <div className="col-span-2 min-w-0">
+                          <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">KYC Summary</dt>
+                          <dd className="mt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => onOpenKycWorkspace(candidate)}
+                              className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold"
+                              title="Open documents in KYC Desk"
+                            >
+                              {[['A', 'Aadhaar'], ['P', 'PAN'], ['B', 'Bank'], ['U', 'UAN']].map(([letter, type]) => (
+                                <span
+                                  key={letter}
+                                  title={`${type}: ${kycOf(type)?.status || 'Not Started'}`}
+                                  className={`w-5 h-5 rounded border flex items-center justify-center ${kycChip(kycOf(type)?.status)}`}
+                                >
+                                  {letter}
+                                </span>
+                              ))}
+                              <span className="cc-muted font-sans font-semibold">· KYC Desk</span>
+                            </button>
+                          </dd>
+                        </div>
+                        <div className="min-w-0">
+                          <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Registered</dt>
+                          <dd className="cc-title font-mono">{candidate.registrationDate}</dd>
+                        </div>
+                        <div className="min-w-0">
+                          <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Recruiter / Source</dt>
+                          <dd className="cc-title break-words">{candidate.recruiterName} · {candidate.source}</dd>
+                        </div>
+                        {candidate.oldEmployeeId && (
+                          <div className="min-w-0">
+                            <dt className="cc-muted text-[10px] font-semibold uppercase tracking-wide">Old Employee ID</dt>
+                            <dd className="cc-title font-mono">{candidate.oldEmployeeId}</dd>
+                          </div>
+                        )}
+                      </dl>
+                    )}
+                  </article>
+                );
+              })
+            )}
           </div>
 
           {/* ========================================================================= */}
           {/* MAIN CANDIDATE DIRECTORY TABLE                                             */}
           {/* ========================================================================= */}
-          <div className={`${cardStyleClass} overflow-hidden`}>
+          <div className={`${cardStyleClass} overflow-hidden hidden md:block`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -1430,168 +1793,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                                   <MoreHorizontal className="w-4 h-4" />
                                 </button>
 
-                                {activeActionMenuId === candidate.id && (
-                                  <>
-                                    <div
-                                      className="fixed inset-0 z-20"
-                                      onClick={() => setActiveActionMenuId(null)}
-                                    />
-                                    <div className={`absolute right-0 mt-1 w-52 rounded-lg shadow-xl border py-1 z-30 text-left text-xs divide-y animate-in fade-in duration-100 ${
-                                      isDark
-                                        ? 'bg-slate-900 border-slate-750 divide-slate-800 text-slate-200'
-                                        : 'bg-white border-slate-200 divide-slate-100 text-slate-700'
-                                    }`}>
-                                      <div className="py-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            onOpenCandidateProfile(candidate);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-medium cursor-pointer ${
-                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
-                                          }`}
-                                        >
-                                          <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                                          <span>View Candidate 360</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            onOpenKycWorkspace(candidate);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-medium cursor-pointer ${
-                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
-                                          }`}
-                                        >
-                                          <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
-                                          <span>KYC Verification Desk</span>
-                                        </button>
-                                      </div>
-
-                                      <div className="py-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            handleMarkCandidateJoined(candidate);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-semibold cursor-pointer ${
-                                            isDark ? 'text-emerald-400 hover:bg-slate-800' : 'text-emerald-700 hover:bg-emerald-50'
-                                          }`}
-                                        >
-                                          <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                          <span>Mark as Joined</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            setStatusChangeModalCandidate(candidate);
-                                            setNewSelectedStatus(candidate.joiningStatus);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
-                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
-                                          }`}
-                                        >
-                                          <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                          <span>Change Status...</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            handleRejoinCandidate(candidate);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
-                                            isDark ? 'text-purple-400 hover:bg-slate-800' : 'text-purple-700 hover:bg-purple-50'
-                                          }`}
-                                        >
-                                          <RotateCcw className="w-3.5 h-3.5 text-purple-500" />
-                                          <span>Rejoin Flow (Past ID)</span>
-                                        </button>
-                                      </div>
-
-                                      <div className="py-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            handleReRunKyc(candidate);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
-                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
-                                          }`}
-                                        >
-                                          <RefreshCw className="w-3.5 h-3.5 text-sky-500" />
-                                          <span>Re-run KYC & ₹1 Drop</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            showToast(`Generated & downloaded Joining Kit PDF for ${candidate.firstName}`);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
-                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
-                                          }`}
-                                        >
-                                          <FileDown className="w-3.5 h-3.5 text-slate-400" />
-                                          <span>Download Dossier</span>
-                                        </button>
-                                      </div>
-
-                                      <div className="py-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            navigator.clipboard.writeText(`https://connect.2coms.com/onboard/c/${candidate.userId}`);
-                                            showToast(`Copied onboarding link for ${candidate.firstName}`);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
-                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
-                                          }`}
-                                        >
-                                          <Copy className="w-3.5 h-3.5 text-slate-400" />
-                                          <span>Copy Onboarding URL</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            showToast(`Resent invitation SMS & WhatsApp to ${candidate.phone}`);
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 cursor-pointer ${
-                                            isDark ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-50 text-slate-700'
-                                          }`}
-                                        >
-                                          <Send className="w-3.5 h-3.5 text-slate-400" />
-                                          <span>Resend Invitation</span>
-                                        </button>
-                                      </div>
-
-                                      <div className="py-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setActiveActionMenuId(null);
-                                            if (confirm(`Remove candidate ${candidate.firstName} ${candidate.lastName} from onboarding pipeline?`)) {
-                                              handleDeleteCandidate(candidate);
-                                            }
-                                          }}
-                                          className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-medium cursor-pointer ${
-                                            isDark ? 'text-rose-400 hover:bg-slate-800' : 'text-rose-600 hover:bg-rose-50'
-                                          }`}
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                                          <span>Delete Candidate</span>
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </>
-                                )}
+                                {renderActionMenu(candidate)}
                               </div>
                             </div>
                           </td>

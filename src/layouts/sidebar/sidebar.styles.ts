@@ -8,7 +8,7 @@ import type { SidebarBadgeTone } from './sidebar.types';
 export const sidebarStyles = {
   /* ---- Shell ---- */
   root:
-    'app-sidebar relative z-20 hidden md:flex flex-col shrink-0 sticky top-0 self-start ' +
+    'app-sidebar relative z-20 hidden lg:flex flex-col shrink-0 sticky top-0 self-start ' +
     'h-screen border-r border-[color:var(--sidebar-border)] text-[color:var(--sidebar-fg)]',
   /** Same sidebar rendered inside the mobile drawer (below md). */
   rootMobile:

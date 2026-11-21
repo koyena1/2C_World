@@ -46,6 +46,8 @@ import { LinkCandidateAccountModal } from './LinkCandidateAccountModal';
 import { EditClientMappingModal } from './EditClientMappingModal';
 
 import { useToast } from '../../hooks/useToast';
+import { PageHeader } from '../../components/page/PageHeader';
+import { CategoryTabs } from '../../components/page/CategoryTabs';
 import { Toast } from '../../components/ui/Toast';
 
 export type UserSettingsTab = 
@@ -489,178 +491,76 @@ export const UserSettingsModule: React.FC<UserSettingsModuleProps> = ({
       {/* Toast Notification */}
       <Toast message={toastMessage} variant="solid" />
 
-      {/* Top Module Subheader with 7 Tabs (Non-overlapping, responsive horizontal scroll) */}
-      <div className="border-b px-3 sm:px-6 transition-colors bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-2xs sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto flex flex-col xl:flex-row xl:items-center justify-between gap-3 py-3">
-          {/* Left: Breadcrumb & Simulated Persona Selector */}
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Governance & Security</span>
-              <span className="text-slate-300 dark:text-slate-600">/</span>
-              <span className="font-bold text-sm flex items-center gap-1.5 text-slate-900 dark:text-white">
-                <Shield className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
-                <span className="whitespace-nowrap">User Settings</span>
-              </span>
-            </div>
-
-            {/* Persona Switcher to inspect role-based behaviors */}
-            <div className="flex items-center gap-1.5 sm:pl-3 sm:border-l border-slate-200 dark:border-slate-800 text-xs shrink-0 overflow-x-auto no-scrollbar py-0.5">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">Active Persona:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentUserRole('Super Admin');
-                  showToast('Operating as Super Admin (Full access to all accounts & settings)');
-                }}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 ${
-                  currentUserRole === 'Super Admin'
-                    ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                Super Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentUserRole('Admin');
-                  showToast('Operating as Admin (Can manage only assigned HR team members)');
-                }}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 ${
-                  currentUserRole === 'Admin'
-                    ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentUserRole('HR');
-                  setActiveSection('my-access');
-                  showToast('Operating as HR (Read-only access to own profile & allowed modules)');
-                }}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 ${
-                  currentUserRole === 'HR'
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
-                HR
-              </button>
-            </div>
-          </div>
-
-          {/* Right: Section Navigation Tabs (All 7 Sections with responsive horizontal scroll) */}
-          <div className="w-full xl:w-auto overflow-x-auto no-scrollbar pb-0.5 shrink-0">
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 w-max shrink-0">
-              {/* 1. Users & Access */}
-              <button
-                type="button"
-                onClick={() => setActiveSection('users')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                  activeSection === 'users'
-                    ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Users className="w-3.5 h-3.5 shrink-0" />
-                <span>Users & Access</span>
-              </button>
-
-              {/* 2. Roles */}
-              <button
-                type="button"
-                onClick={() => setActiveSection('roles')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                  activeSection === 'roles'
-                    ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Shield className="w-3.5 h-3.5 shrink-0" />
-                <span>Roles</span>
-              </button>
-
-              {/* 3. Permission Matrix */}
-              <button
-                type="button"
-                onClick={() => setActiveSection('matrix')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                  activeSection === 'matrix'
-                    ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Grid className="w-3.5 h-3.5 shrink-0" />
-                <span>Permission Matrix</span>
-              </button>
-
-              {/* 4. Permission Registry */}
-              <button
-                type="button"
-                onClick={() => setActiveSection('registry')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                  activeSection === 'registry'
-                    ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Key className="w-3.5 h-3.5 shrink-0" />
-                <span>Permission Registry</span>
-              </button>
-
-              {/* 5. Client Access Mapping */}
-              <button
-                type="button"
-                onClick={() => setActiveSection('clients')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                  activeSection === 'clients'
-                    ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5 shrink-0" />
-                <span>Client Access Mapping</span>
-              </button>
-
-              {/* 6. My Access (Read-only personal access) */}
-              <button
-                type="button"
-                onClick={() => setActiveSection('my-access')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                  activeSection === 'my-access'
-                    ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                <UserCheck className="w-3.5 h-3.5 shrink-0" />
-                <span>My Access</span>
-              </button>
-
-              {/* 7. Access Audit Log */}
-              {currentUserRole !== 'HR' && (
+      <PageHeader
+        icon={Shield}
+        title="User Settings"
+        subtitle="Users, roles, permissions and client access"
+        actions={
+              <div className="flex items-center gap-1.5 text-xs flex-wrap">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">Active Persona:</span>
                 <button
                   type="button"
-                  onClick={() => setActiveSection('audit')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
-                    activeSection === 'audit'
-                      ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  onClick={() => {
+                    setCurrentUserRole('Super Admin');
+                    showToast('Operating as Super Admin (Full access to all accounts & settings)');
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 ${
+                    currentUserRole === 'Super Admin'
+                      ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
-                  <History className="w-3.5 h-3.5 shrink-0" />
-                  <span>Access Audit Log</span>
+                  Super Admin
                 </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentUserRole('Admin');
+                    showToast('Operating as Admin (Can manage only assigned HR team members)');
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 ${
+                    currentUserRole === 'Admin'
+                      ? 'bg-sky-600 text-white border-sky-600 shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentUserRole('HR');
+                    setActiveSection('my-access');
+                    showToast('Operating as HR (Read-only access to own profile & allowed modules)');
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-colors whitespace-nowrap shrink-0 ${
+                    currentUserRole === 'HR'
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  HR
+                </button>
+              </div>
+  
+        }
+      />
 
       {/* Main Content Body */}
-      <div className="flex-1 p-3 sm:p-6 max-w-7xl mx-auto w-full">
+      <div className="cc-container cc-stack py-5">
+        <CategoryTabs
+          value={activeSection}
+          onChange={(v) => setActiveSection(v as typeof activeSection)}
+          tabs={[
+            { value: 'users', label: 'Users & Access' },
+            { value: 'roles', label: 'Roles' },
+            { value: 'matrix', label: 'Permission Matrix' },
+            { value: 'registry', label: 'Permission Registry' },
+            { value: 'clients', label: 'Client Access Mapping' },
+            { value: 'my-access', label: 'My Access' },
+            ...(currentUserRole !== 'HR' ? [{ value: 'audit', label: 'Access Audit Log' }] : []),
+          ]}
+        />
         {/* 1. USERS & ACCESS */}
         {activeSection === 'users' && (
           <UsersAndAccessSection

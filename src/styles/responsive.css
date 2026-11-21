@@ -1,0 +1,66 @@
+/*
+ * Mobile-only refinements (phones, <640px). Nothing here applies on tablets / desktop.
+ * Variables (gutter, gap) are overridden here; the desktop values live in design-system.css.
+ */
+
+@media (max-width: 639px) {
+  :root {
+    --cc-gutter: 12px;
+    --cc-gap: 10px;
+  }
+
+  /* Header strip: tighter, subtitle limited to two lines */
+  .cc-topbar { padding-block: 10px; }
+  .cc-topbar h1 { font-size: 1rem; }
+  .cc-topbar p.cc-muted {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .cc-container.py-5 { padding-block: 12px; }
+
+  /* Form controls never exceed their container */
+  .app-page :is(select, input:not([type="checkbox"], [type="radio"]), textarea) { max-width: 100%; }
+
+  /* Rows that pair a label with a select may wrap instead of pushing the select off-screen */
+  .app-page div.flex:has(> select, > .relative > select) { flex-wrap: wrap; }
+  .app-page div.flex > select { min-width: 0; }
+
+  /* Wide data tables scroll inside their own card instead of widening the page */
+  .app-page .overflow-x-auto { max-width: 100%; }
+
+  /* ---- Stacked "card" rows for tables marked .cc-card-table ---- */
+  .cc-card-table thead { display: none; }
+  .cc-card-table,
+  .cc-card-table tbody { display: block; width: 100%; }
+  .cc-card-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px 12px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--cc-divider);
+  }
+  .cc-card-table tr:first-child { border-top: 0; }
+  .cc-card-table td {
+    display: block;
+    min-width: 0 !important;
+    width: auto !important;
+    padding: 6px 0 !important;
+    border: 0 !important;
+  }
+  .cc-card-table td:first-child,
+  .cc-card-table td:last-child,
+  .cc-card-table td[colspan] { grid-column: 1 / -1; }
+  .cc-card-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--cc-muted);
+  }
+  .cc-card-table td:last-child { padding-top: 8px !important; }
+}

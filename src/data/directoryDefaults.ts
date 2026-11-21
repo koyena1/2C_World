@@ -1,0 +1,30 @@
+import type { FilterOptions } from '../types/onboarding';
+
+/** Initial (empty) Candidate Directory filters; also used to reset them. */
+export const INITIAL_DIRECTORY_FILTERS: FilterOptions = {
+  searchQuery: '',
+  client: '',
+  location: '',
+  branch: '',
+  department: '',
+  designation: '',
+  candidateStatus: '',
+  joiningStatus: '',
+  kycStatus: '',
+  bankVerificationStatus: '',
+  pennyTestStatus: '',
+  dateFrom: '',
+  dateTo: '',
+  joiningDateFrom: '',
+  joiningDateTo: '',
+  regDateFrom: '',
+  regDateTo: '',
+  contractEndDateFrom: '',
+  contractEndDateTo: '',
+  oldEmployeeId: '',
+  aadhaarStatus: '',
+  panStatus: '',
+  bankStatus: '',
+  uanStatus: '',
+  showOnlyMyCandidates: false,
+};

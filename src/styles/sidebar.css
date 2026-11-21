@@ -1,0 +1,104 @@
+/*
+ * Sidebar design tokens.
+ * Edit ONLY this file to change sidebar sizes, spacing, colors and motion.
+ * (Menu content lives in layouts/sidebar/sidebar.config.ts, class maps in
+ * layouts/sidebar/sidebar.styles.ts.)
+ */
+
+:root {
+  /* ---- Dimensions ---- */
+  --sidebar-width: 19.5rem;               /* expanded */
+  --sidebar-width-collapsed: 5rem;        /* icon-only */
+  --sidebar-header-height: var(--app-header-height); /* matches the main header */
+  --sidebar-padding-x: 0.875rem;
+  --sidebar-padding-y: 0.875rem;
+  --sidebar-gap: 0.25rem;                 /* between items */
+  --sidebar-group-gap: 0.625rem;          /* between groups */
+  --sidebar-group-height: 2.75rem;
+  --sidebar-item-height: 2.25rem;
+  --sidebar-item-height-collapsed: 2.75rem;
+  --sidebar-radius: 0.75rem;
+  --sidebar-icon-size: 1.125rem;
+  --sidebar-logo-size: 2.5rem;            /* logo tile; the hover toggle button uses the same size */
+  --sidebar-toggle-size: 2.25rem;         /* visible toggle button beside the logo */
+  --sidebar-active-bar-width: 0.25rem;
+
+  /* ---- Motion ---- */
+  --sidebar-transition: 240ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- Colors: navy / royal-blue identity (light mode) ---- */
+  --sidebar-bg-from: #1d3fae;
+  --sidebar-bg-to: #162d86;
+  --sidebar-border: rgb(255 255 255 / 0.14);
+  --sidebar-fg: #ffffff;
+  --sidebar-fg-muted: rgb(255 255 255 / 0.74);
+  --sidebar-heading-fg: rgb(255 255 255 / 0.6);
+  --sidebar-hover-bg: rgb(255 255 255 / 0.1);
+  --sidebar-pill-bg: rgb(255 255 255 / 0.06);
+  --sidebar-pill-border: rgb(255 255 255 / 0.24);
+  --sidebar-active-bg: rgb(255 255 255 / 0.14);
+  --sidebar-active-border: rgb(255 255 255 / 0.42);
+  --sidebar-active-bar: #ffffff;
+  --sidebar-guide-line: rgb(255 255 255 / 0.22);
+  --sidebar-dot: #ef4444;
+  --sidebar-live-dot: #34d399;
+  --sidebar-toggle-bg: #ffffff;
+  --sidebar-toggle-fg: #1e3a8a;
+  --sidebar-logo-bg: #ffffff;
+  --sidebar-logo-fg: #1e3a8a;
+  --sidebar-avatar-bg: #0ea5e9;
+  --sidebar-avatar-fg: #ffffff;
+  --sidebar-tooltip-bg: #0f172a;
+  --sidebar-tooltip-fg: #ffffff;
+}
+
+/* Dark mode: same identity, deeper navy */
+html.dark {
+  --sidebar-bg-from: #0f2263;
+  --sidebar-bg-to: #0a1740;
+  --sidebar-border: rgb(255 255 255 / 0.1);
+  --sidebar-hover-bg: rgb(255 255 255 / 0.08);
+  --sidebar-pill-bg: rgb(255 255 255 / 0.05);
+  --sidebar-pill-border: rgb(255 255 255 / 0.18);
+  --sidebar-active-bg: rgb(255 255 255 / 0.12);
+  --sidebar-active-border: rgb(255 255 255 / 0.34);
+  --sidebar-logo-fg: #0f2263;
+  --sidebar-toggle-fg: #0f2263;
+  --sidebar-tooltip-bg: #020617;
+}
+
+/* ---- Structural rules (width drives the whole collapse animation) ---- */
+.app-sidebar {
+  width: var(--sidebar-width);
+  background: linear-gradient(180deg, var(--sidebar-bg-from), var(--sidebar-bg-to));
+  transition: width var(--sidebar-transition);
+}
+
+.app-sidebar[data-collapsed="true"] {
+  width: var(--sidebar-width-collapsed);
+}
+
+/* `backwards` (not `both`): no transform may remain after the animation, otherwise it
+   becomes the containing block for the fixed-position tooltips and clips them. */
+.sidebar-fade-in {
+  animation: sidebar-fade-in 220ms ease backwards;
+}
+
+@keyframes sidebar-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .sidebar-fade-in {
+    transition: none;
+    animation: none;
+  }
+}

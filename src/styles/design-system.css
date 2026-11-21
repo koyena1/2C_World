@@ -1,0 +1,542 @@
+/*
+ * Shared design system (used by the Dashboard and every other page).
+ *
+ * 1. Variables: change a colour / radius / shadow here and every page follows.
+ * 2. `.app-page` rules: the main content area (see layouts/AppLayout.tsx) applies
+ *    the dashboard look (card surface, radius, shadow, title/muted text) to the
+ *    existing page markup, so individual modules need no restyling.
+ */
+
+:root {
+  --cc-font: 'Roboto', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Layout */
+  --cc-gutter: 16px;
+  --cc-gap: 16px;
+  --cc-max-width: 1760px;
+
+  /* Page canvas: the large rounded light-blue panel every page sits on.
+     Change these to restyle the background of ALL pages at once. */
+  --panel-bg: linear-gradient(135deg, #f3f7ff 0%, #e8f0fd 100%);
+  --panel-border: #d9e5f6;
+  --panel-radius: 1.75rem;
+  --panel-margin: 14px;
+  --panel-shadow: inset 0 1px 0 rgb(255 255 255 / 0.75);
+
+  /* Cards */
+  --cc-card-bg: #ffffff;
+  --cc-card-border: #e3e9f3;
+  --cc-card-radius: 1.125rem;
+  --cc-card-shadow: 0 1px 2px rgb(15 40 90 / 0.04), 0 10px 28px -12px rgb(30 64 175 / 0.16);
+  --cc-card-shadow-hover: 0 2px 4px rgb(15 40 90 / 0.05), 0 16px 34px -12px rgb(30 64 175 / 0.26);
+
+  /* Card hover (stat cards, content cards, workflow cards) */
+  --cc-hover-border: var(--cc-accent-border);
+  --cc-hover-lift: -1px;
+  --cc-hover-duration: 150ms;
+
+  /* Text */
+  --cc-title: #0b1d3a;
+  --cc-text: #1f2d45;
+  --cc-muted: #5b6b82;
+  --cc-divider: #edf1f8;
+  --cc-track: #e8eef8;
+  --cc-row-hover: #f4f8ff;
+
+  /* Blue accent */
+  --cc-accent: #1d4ed8;
+  --cc-accent-soft: #eaf1ff;
+  --cc-accent-border: #b9cef5;
+
+  /* Page header strip */
+  --cc-topbar-bg: rgb(255 255 255 / 0.9);
+  --cc-topbar-border: #e3e9f3;
+
+  /* Semantic tones used by bars / chips */
+  --cc-good: #059669;
+  --cc-warn: #d97706;
+  --cc-bad: #e11d48;
+  --cc-info: #2563eb;
+  --cc-violet: #7c3aed;
+  --cc-teal: #0d9488;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --cc-gutter: 24px;
+    --cc-gap: 20px;
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --panel-margin: 8px;
+    --panel-radius: 1.25rem;
+  }
+}
+
+html.dark {
+  --panel-bg: linear-gradient(135deg, #0f1c38 0%, #0b1630 100%);
+  --panel-border: #1c2a46;
+  --panel-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+
+  --cc-card-bg: #111c33;
+  --cc-card-border: #22314f;
+  --cc-card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 30px -14px rgb(0 0 0 / 0.55);
+  --cc-card-shadow-hover: 0 2px 4px rgb(0 0 0 / 0.35), 0 16px 34px -12px rgb(0 0 0 / 0.65);
+
+  --cc-title: #f1f5f9;
+  --cc-text: #dbe4f3;
+  --cc-muted: #93a4bf;
+  --cc-divider: #1c2a46;
+  --cc-track: #1d2b47;
+  --cc-row-hover: #162343;
+
+  --cc-accent: #60a5fa;
+  --cc-accent-soft: rgb(59 130 246 / 0.16);
+  --cc-accent-border: rgb(96 165 250 / 0.4);
+
+  --cc-topbar-bg: rgb(11 18 32 / 0.85);
+  --cc-topbar-border: #1c2a46;
+
+  --cc-good: #34d399;
+  --cc-warn: #fbbf24;
+  --cc-bad: #fb7185;
+  --cc-info: #60a5fa;
+  --cc-violet: #a78bfa;
+  --cc-teal: #2dd4bf;
+}
+
+/* ------------------------------------------------------------------ */
+/* Page content area                                                   */
+/* ------------------------------------------------------------------ */
+
+.app-page {
+  font-family: var(--cc-font);
+  /* the big rounded panel (clip, not hidden: keeps sticky children and fixed overlays working) */
+  margin: var(--panel-margin);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  background: var(--panel-bg);
+  box-shadow: var(--panel-shadow);
+  overflow: clip;
+}
+
+/* Page roots that pad themselves (p-4 sm:p-6): use the shared gutter and max width */
+.app-page > [class*="sm:p-6"] {
+  width: 100%;
+  max-width: var(--cc-max-width);
+  margin-inline: auto;
+  padding-inline: var(--cc-gutter);
+}
+
+/* Card surfaces: white (light) / navy (dark) rounded panels get the dashboard card look.
+   Modals keep their own large shadow. */
+.app-page :is(.rounded-xl, .rounded-2xl).border:is(.bg-white, .bg-white\/95):not([class*="shadow-2xl"]),
+html.dark .app-page :is(.rounded-xl, .rounded-2xl).border:is(.bg-slate-900, .bg-slate-900\/95):not([class*="shadow-2xl"]) {
+  background-color: var(--cc-card-bg);
+  border-color: var(--cc-card-border);
+  border-radius: var(--cc-card-radius);
+  box-shadow: var(--cc-card-shadow);
+}
+
+/* Hairlines match the card border colour */
+html:not(.dark) .app-page .border-slate-200 { border-color: var(--cc-card-border); }
+html.dark .app-page .border-slate-800 { border-color: var(--cc-card-border); }
+
+/* Light-mode typography: navy titles, softer muted text */
+html:not(.dark) .app-page :is(h1, h2, h3, h4) { letter-spacing: -0.01em; }
+html:not(.dark) .app-page :is(.text-slate-900, .text-slate-800) { color: var(--cc-title); }
+html:not(.dark) .app-page .text-slate-700 { color: var(--cc-text); }
+html:not(.dark) .app-page :is(.text-slate-600, .text-slate-500) { color: var(--cc-muted); }
+
+/* ------------------------------------------------------------------ */
+/* Shared page components (PageHeader, KpiCard, cards, chips, tones)   */
+/* ------------------------------------------------------------------ */
+
+.ops-dashboard {
+  font-family: var(--cc-font);
+  color: var(--cc-text);
+}
+
+
+.cc-topbar {
+  background-color: var(--cc-topbar-bg);
+  border-color: var(--cc-topbar-border);
+  backdrop-filter: blur(6px);
+}
+
+.cc-card {
+  background-color: var(--cc-card-bg);
+  border: 1px solid var(--cc-card-border);
+  border-radius: var(--cc-card-radius);
+  box-shadow: var(--cc-card-shadow);
+}
+
+/* Hover effect shared by every card (stat, content, workflow). Tweak the tokens in :root to change all pages. */
+.cc-card-hover,
+.cc-card-link {
+  transition: box-shadow var(--cc-hover-duration) ease, transform var(--cc-hover-duration) ease, border-color var(--cc-hover-duration) ease;
+}
+.cc-card-hover:hover,
+.cc-card-link:hover {
+  box-shadow: var(--cc-card-shadow-hover);
+  transform: translateY(var(--cc-hover-lift));
+  border-color: var(--cc-hover-border);
+}
+.cc-card-link { cursor: pointer; }
+
+.cc-title { color: var(--cc-title); }
+.cc-muted { color: var(--cc-muted); }
+.cc-text { color: var(--cc-text); }
+.cc-divide > * + * { border-top: 1px solid var(--cc-divider); }
+.cc-track { background-color: var(--cc-track); }
+.cc-row:hover { background-color: var(--cc-row-hover); }
+.cc-accent { color: var(--cc-accent); }
+.cc-accent-chip {
+  color: var(--cc-accent);
+  background-color: var(--cc-accent-soft);
+  border: 1px solid var(--cc-accent-border);
+}
+.cc-btn-primary {
+  background-color: var(--cc-accent);
+  color: #fff;
+}
+html.dark .cc-btn-primary { color: #0b1220; }
+.cc-btn-primary:hover { filter: brightness(1.08); }
+
+/* Tone helpers: set --tone, then use fill / text / chip */
+.tone-good   { --tone: var(--cc-good); }
+.tone-warn   { --tone: var(--cc-warn); }
+.tone-bad    { --tone: var(--cc-bad); }
+.tone-info   { --tone: var(--cc-info); }
+.tone-violet { --tone: var(--cc-violet); }
+.tone-teal   { --tone: var(--cc-teal); }
+.tone-muted  { --tone: var(--cc-muted); }
+.tone-fill { background-color: var(--tone); }
+.tone-text { color: var(--tone); }
+.tone-chip {
+  color: var(--tone);
+  background-color: color-mix(in srgb, var(--tone) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
+}
+
+/* ---- Layout (variables --cc-gutter / --cc-max-width / --cc-gap live in styles/design-system.css) ---- */
+.cc-container {
+  width: 100%;
+  max-width: var(--cc-max-width);
+  margin-inline: auto;
+  padding-inline: var(--cc-gutter);
+}
+.cc-stack > * + * { margin-top: var(--cc-gap); }
+.cc-grid { display: grid; gap: var(--cc-gap); }
+.cc-stack > .fixed { margin-top: 0; }
+
+/* Module sub-header bars (Attendance, Holidays, User Settings, Candidate 360, …) use the page-header strip look */
+.app-page > * > .border-b:is(.bg-white, .bg-slate-900, .bg-slate-900\/95, .bg-slate-950, .bg-slate-950\/95),
+.app-page > * > * > .border-b:is(.bg-white, .bg-slate-900, .bg-slate-900\/95, .bg-slate-950, .bg-slate-950\/95) {
+  background-color: var(--cc-topbar-bg);
+  border-color: var(--cc-topbar-border);
+  box-shadow: none;
+  backdrop-filter: blur(6px);
+}
+
+/* ---- Category tabs (components/page/CategoryTabs.tsx): used by every page with category / status tabs ---- */
+:root {
+  --cc-badge-bg: #e11d48;
+  --cc-badge-fg: #ffffff;
+  --cc-tab-height: 32px;
+  --cc-tab-padding-x: 14px;
+  --cc-tab-radius: 0.625rem;
+  --cc-tab-gap: 8px;
+  --cc-badge-size: 16px;
+}
+.cc-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--cc-tab-gap);
+  /* top/right padding leaves room for the badge that overhangs each tab */
+  padding: 9px 8px 4px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cc-tabs::-webkit-scrollbar { display: none; }
+.cc-tab {
+  position: relative;
+  flex-shrink: 0;
+  white-space: nowrap;
+  height: var(--cc-tab-height);
+  padding: 0 var(--cc-tab-padding-x);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cc-muted);
+  background-color: var(--cc-card-bg);
+  border: 1px solid var(--cc-card-border);
+  border-radius: var(--cc-tab-radius);
+  transition: color var(--cc-hover-duration) ease, background-color var(--cc-hover-duration) ease, border-color var(--cc-hover-duration) ease;
+}
+.cc-tab:hover { color: var(--cc-title); border-color: var(--cc-hover-border); }
+.cc-tab-active,
+.cc-tab-active:hover {
+  color: #fff;
+  background-color: var(--cc-accent);
+  border-color: var(--cc-accent);
+}
+html.dark .cc-tab-active,
+html.dark .cc-tab-active:hover { color: #0b1220; }
+.cc-count-badge {
+  position: absolute;
+  top: calc(var(--cc-badge-size) / -2 + 1px);
+  right: -5px;
+  min-width: var(--cc-badge-size);
+  height: var(--cc-badge-size);
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--cc-badge-fg);
+  background-color: var(--cc-badge-bg);
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1.5px var(--cc-card-bg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Form controls, buttons, tables, callouts, dropzone, stepper         */
+/* (shared by every page; tweak the tokens in :root to restyle all)    */
+/* ------------------------------------------------------------------ */
+:root {
+  --cc-control-height: 36px;
+  --cc-control-radius: 0.625rem;
+  --cc-step-dot: 28px;
+}
+
+.cc-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cc-title);
+}
+.cc-hint { margin-top: 4px; font-size: 0.6875rem; color: var(--cc-muted); }
+
+.cc-input {
+  width: 100%;
+  height: var(--cc-control-height);
+  padding: 0 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--cc-title);
+  background-color: var(--cc-card-bg);
+  border: 1px solid var(--cc-card-border);
+  border-radius: var(--cc-control-radius);
+  transition: border-color var(--cc-hover-duration) ease, box-shadow var(--cc-hover-duration) ease;
+}
+.cc-input:hover { border-color: var(--cc-hover-border); }
+.cc-input:focus {
+  outline: none;
+  border-color: var(--cc-accent);
+  box-shadow: 0 0 0 3px var(--cc-accent-soft);
+}
+.cc-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.cc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--cc-control-height);
+  padding: 0 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: var(--cc-control-radius);
+  cursor: pointer;
+  transition: filter var(--cc-hover-duration) ease, background-color var(--cc-hover-duration) ease, border-color var(--cc-hover-duration) ease;
+}
+.cc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cc-btn-secondary {
+  color: var(--cc-text);
+  background-color: var(--cc-card-bg);
+  border-color: var(--cc-card-border);
+}
+.cc-btn-secondary:hover:not(:disabled) { border-color: var(--cc-hover-border); color: var(--cc-title); }
+/* Tinted button: pair with tone-good / tone-bad / tone-info ... */
+.cc-btn-tone {
+  color: var(--tone);
+  background-color: color-mix(in srgb, var(--tone) 10%, var(--cc-card-bg));
+  border-color: color-mix(in srgb, var(--tone) 30%, transparent);
+}
+.cc-btn-tone:hover:not(:disabled) { background-color: color-mix(in srgb, var(--tone) 18%, var(--cc-card-bg)); }
+
+.cc-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--cc-card-border);
+  border-radius: 0.75rem;
+}
+.cc-table { width: 100%; text-align: left; font-size: 0.75rem; color: var(--cc-text); }
+.cc-table th {
+  position: sticky;
+  top: 0;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--cc-muted);
+  background-color: var(--cc-row-hover);
+  border-bottom: 1px solid var(--cc-divider);
+}
+.cc-table td { padding: 10px 14px; vertical-align: middle; }
+.cc-table tbody tr + tr td { border-top: 1px solid var(--cc-divider); }
+.cc-table tbody tr:hover { background-color: var(--cc-row-hover); }
+
+/* Tinted info box: set a tone-* class */
+.cc-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  font-size: 0.75rem;
+  color: var(--cc-text);
+  background-color: color-mix(in srgb, var(--tone) 8%, var(--cc-card-bg));
+  border: 1px solid color-mix(in srgb, var(--tone) 28%, transparent);
+  border-radius: 0.75rem;
+}
+
+.cc-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  background-color: color-mix(in srgb, var(--cc-accent-soft) 45%, transparent);
+  border: 2px dashed var(--cc-accent-border);
+  border-radius: 1rem;
+  transition: border-color var(--cc-hover-duration) ease, background-color var(--cc-hover-duration) ease;
+}
+.cc-dropzone:hover, .cc-dropzone:focus-visible {
+  outline: none;
+  border-color: var(--cc-accent);
+  background-color: var(--cc-accent-soft);
+}
+
+/* Stepper (components/page/StepProgress.tsx) */
+.cc-stepper-scroll { overflow-x: auto; scrollbar-width: none; }
+.cc-stepper-scroll::-webkit-scrollbar { display: none; }
+.cc-stepper {
+  display: grid;
+  grid-template-columns: repeat(var(--cc-step-count), minmax(76px, 1fr));
+  min-width: 640px;
+}
+.cc-step { position: relative; }
+/* connector to the next step */
+.cc-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--cc-step-dot) / 2 + 1px);
+  left: calc(50% + var(--cc-step-dot) / 2 + 6px);
+  right: calc(-50% + var(--cc-step-dot) / 2 + 6px);
+  height: 2px;
+  border-radius: 9999px;
+  background-color: var(--cc-track);
+}
+.cc-step-done:not(:last-child)::after { background-color: var(--cc-good); }
+.cc-step-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 2px 4px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.cc-step-btn:disabled { cursor: default; }
+.cc-step-dot {
+  width: var(--cc-step-dot);
+  height: var(--cc-step-dot);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--cc-muted);
+  background-color: var(--cc-track);
+  border-radius: 9999px;
+  transition: background-color var(--cc-hover-duration) ease, box-shadow var(--cc-hover-duration) ease;
+}
+.cc-step-label { font-size: 0.6875rem; font-weight: 600; color: var(--cc-muted); text-align: center; line-height: 1.25; }
+.cc-step-btn:not(:disabled):hover .cc-step-dot { box-shadow: 0 0 0 3px var(--cc-accent-soft); }
+.cc-step-done .cc-step-dot { color: #fff; background-color: var(--cc-good); }
+.cc-step-done .cc-step-label { color: var(--cc-title); }
+.cc-step-current .cc-step-dot { color: #fff; background-color: var(--cc-accent); box-shadow: 0 0 0 4px var(--cc-accent-soft); }
+html.dark .cc-step-current .cc-step-dot, html.dark .cc-step-done .cc-step-dot { color: #0b1220; }
+.cc-step-current .cc-step-label { color: var(--cc-accent); }
+
+/* ---- Dropdown panel (components/ui/SelectMenu.tsx): used by every dropdown ---- */
+:root {
+  --cc-dropdown-border: #b8c5da;
+  --cc-dropdown-radius: 0.75rem;
+  --cc-dropdown-shadow: 0 12px 28px -8px rgb(15 40 90 / 0.28), 0 2px 6px rgb(15 40 90 / 0.08);
+}
+html.dark {
+  --cc-dropdown-border: #3b4d70;
+  --cc-dropdown-shadow: 0 12px 28px -8px rgb(0 0 0 / 0.65), 0 2px 6px rgb(0 0 0 / 0.35);
+}
+.cc-dropdown-panel {
+  border: 1px solid var(--cc-dropdown-border);
+  border-radius: var(--cc-dropdown-radius);
+  box-shadow: var(--cc-dropdown-shadow);
+}
+.cc-dropdown-search-wrap {
+  padding: 8px;
+  border-bottom: 1px solid var(--cc-divider);
+}
+.cc-dropdown-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 32px;
+  color: var(--cc-title);
+  background-color: var(--cc-card-bg);
+  border: 1px solid var(--cc-dropdown-border);
+  border-radius: 0.5rem;
+  transition: border-color var(--cc-hover-duration) ease, box-shadow var(--cc-hover-duration) ease;
+}
+.cc-dropdown-search:hover { border-color: var(--cc-hover-border); }
+.cc-dropdown-search:focus-within {
+  border-color: var(--cc-accent);
+  box-shadow: 0 0 0 3px var(--cc-accent-soft);
+}
+.cc-dropdown-options { padding: 6px; }
+
+/* ---- Table pagination (components/ui/Pagination.tsx) ---- */
+.cc-pagination-summary { font-size: 0.75rem; color: var(--cc-muted); }
+.cc-pagination-summary strong { color: var(--cc-title); font-weight: 600; font-variant-numeric: tabular-nums; }
+.cc-pagination-nav { display: flex; align-items: center; gap: 6px; }
+.cc-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--cc-text);
+  background-color: var(--cc-card-bg);
+  border: 1px solid var(--cc-card-border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: color var(--cc-hover-duration) ease, background-color var(--cc-hover-duration) ease, border-color var(--cc-hover-duration) ease;
+}
+.cc-page-btn:hover:not(:disabled) { border-color: var(--cc-hover-border); color: var(--cc-accent); background-color: var(--cc-accent-soft); }
+.cc-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }

@@ -1,0 +1,7 @@
+{
+  "name": "2cworld",
+  "description": "Enterprise UI/UX redesign and interactive design system for 2cworld HRMS candidate onboarding",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

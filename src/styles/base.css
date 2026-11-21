@@ -1,0 +1,94 @@
+/* Global base styles — all theme-dependent values come from tokens.css */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+select {
+  color-scheme: light;
+}
+
+html.dark select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: var(--color-option-bg);
+  color: var(--color-option-fg);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background: var(--app-background);
+    background-attachment: fixed;
+    color: var(--color-app-fg);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* High-contrast text selection for Day & Night modes (applies to every element) */
+::selection {
+  background-color: var(--color-selection-bg) !important;
+  color: var(--color-selection-fg) !important;
+}
+
+::-moz-selection {
+  background-color: var(--color-selection-bg) !important;
+  color: var(--color-selection-fg) !important;
+}
+
+/* Dropdown / popover entrance. `backwards` so no transform lingers afterwards. */
+.dropdown-pop {
+  animation: dropdown-pop 140ms ease-out backwards;
+}
+
+@keyframes dropdown-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-pop {
+    animation: none;
+  }
+}
+
+/* Root of the app chrome: shares the global page background. */
+.app-shell {
+  background: var(--app-background);
+  background-attachment: fixed;
+}

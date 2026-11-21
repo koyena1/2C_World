@@ -647,3 +647,12 @@ button:is(
 button[class~="bg-slate-900"][class~="text-white"]:hover:not(:disabled) {
   filter: brightness(1.08);
 }
+
+/* Denser table cells for dashboard-style summary tables */
+.cc-table-compact th,
+.cc-table-compact td { padding-inline: 8px; }
+.cc-table-compact th { font-size: 10px; letter-spacing: 0.03em; }
+.cc-table-compact th:first-child,
+.cc-table-compact td:first-child { padding-left: 14px; }
+.cc-table-compact th:last-child,
+.cc-table-compact td:last-child { padding-right: 14px; }

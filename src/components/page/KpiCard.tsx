@@ -1,6 +1,8 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { TrendBadge } from './TrendBadge';
+import type { TrendInput } from '../../utils/trends';
 
 export type KpiTone = 'good' | 'warn' | 'bad' | 'info' | 'violet' | 'teal' | 'muted';
 
@@ -8,6 +10,8 @@ interface KpiCardProps {
   label: string;
   value: React.ReactNode;
   detail?: string;
+  /** Period-over-period change. Omit for metrics with no history; hidden automatically when there is no baseline. */
+  trend?: TrendInput;
   icon: LucideIcon;
   tone: KpiTone;
   /** Makes the card a button. */
@@ -16,7 +20,7 @@ interface KpiCardProps {
 }
 
 /** Dashboard-style KPI tile: label + tinted icon, large value, small detail line. */
-export const KpiCard: React.FC<KpiCardProps> = ({ label, value, detail, icon: Icon, tone, onClick, className }) => {
+export const KpiCard: React.FC<KpiCardProps> = ({ label, value, detail, trend, icon: Icon, tone, onClick, className }) => {
   const content = (
     <>
       <div className="flex items-center justify-between gap-2">
@@ -28,6 +32,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({ label, value, detail, icon: Ic
       <div>
         <div className="cc-title text-2xl sm:text-3xl font-bold tracking-tight leading-none tabular-nums">{value}</div>
         {detail && <p className="cc-muted text-[10px] sm:text-[11px] mt-1 sm:mt-2 leading-snug line-clamp-2 sm:line-clamp-none">{detail}</p>}
+        {trend && <TrendBadge {...trend} className={detail ? 'mt-1' : 'mt-1 sm:mt-2'} />}
       </div>
     </>
   );

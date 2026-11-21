@@ -2,15 +2,18 @@ import React from 'react';
 import { AlertTriangle, CalendarClock, FileClock, ShieldCheck, UserCheck, Users } from 'lucide-react';
 import { UPCOMING_WINDOW_LABEL, type CommandCenterKpis } from '../dashboard.metrics';
 import { KpiCard } from '../../../components/page/KpiCard';
+import type { TrendInput } from '../../../utils/trends';
 
 interface KpiOverviewProps {
   kpis: CommandCenterKpis;
+  /** Only the cards whose history can be rebuilt from dated records get a trend. */
+  trends?: { total?: TrendInput; joined?: TrendInput };
   onNavigate: (view: string) => void;
 }
 
 const share = (part: number, whole: number) => (whole > 0 ? `${Math.round((part / whole) * 100)}%` : '0%');
 
-export const KpiOverview: React.FC<KpiOverviewProps> = ({ kpis, onNavigate }) => {
+export const KpiOverview: React.FC<KpiOverviewProps> = ({ kpis, trends, onNavigate }) => {
   const offerParts = [
     kpis.offersNotIssued > 0 && `${kpis.offersNotIssued} not issued`,
     kpis.offersUnsigned > 0 && `${kpis.offersUnsigned} unsigned`,
@@ -23,6 +26,7 @@ export const KpiOverview: React.FC<KpiOverviewProps> = ({ kpis, onNavigate }) =>
         label="Total Candidates"
         value={kpis.total}
         detail={`Across ${kpis.clients} client${kpis.clients === 1 ? '' : 's'}`}
+        trend={trends?.total}
         icon={Users}
         tone="info"
         onClick={() => onNavigate('directory')}
@@ -31,6 +35,7 @@ export const KpiOverview: React.FC<KpiOverviewProps> = ({ kpis, onNavigate }) =>
         label="Joined"
         value={kpis.joined}
         detail={`${share(kpis.joined, kpis.total)} of all candidates`}
+        trend={trends?.joined}
         icon={UserCheck}
         tone="good"
         onClick={() => onNavigate('directory')}

@@ -44,6 +44,7 @@ import { Toast } from '../../components/ui/Toast';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
+import { joinedTrend, totalCandidatesTrend } from '../../utils/candidateTrends';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
 import {
   CLIENT_LIST,
@@ -591,7 +592,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
       <>
           {/* Quick Metrics Strip */}
           <div className="cc-grid grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="Total Candidates" value={candidates.length} detail="Live pool" icon={Users} tone="info" />
+            <KpiCard label="Total Candidates" value={candidates.length} detail="Live pool" trend={totalCandidatesTrend(candidates)} icon={Users} tone="info" />
             <KpiCard
               label="Yet to Join"
               value={candidates.filter((c) => c.joiningStatus === 'Yet to Join').length}
@@ -610,6 +611,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               label="Joined & Active"
               value={candidates.filter((c) => c.joiningStatus === 'Joined').length}
               detail="Completed onboarding"
+              trend={joinedTrend(candidates)}
               icon={UserCheck}
               tone="good"
             />

@@ -53,6 +53,9 @@ import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { Toast } from '../../components/ui/Toast';
 import { SelectMenu } from '../../components/ui/SelectMenu';
+import { TrendBadge } from '../../components/page/TrendBadge';
+import { stockTrend } from '../../utils/trends';
+import { DASHBOARD_REFERENCE_DATE } from '../dashboard/dashboard.metrics';
 
 interface OfferLetterOperationsProps {
   onOpenCandidate360?: (candidate: Candidate | string) => void;
@@ -478,6 +481,29 @@ export const OfferLetterOperations: React.FC<OfferLetterOperationsProps> = ({
     isDark ? 'bg-slate-950 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-900'
   }`;
 
+  // "Signed", "Sent" and "Sent But Not Signed" have history via dated letter events.
+  const signedTrend = stockTrend(
+    candidates.filter((c) => c.offerLetterStatus === 'Signed'),
+    (c) => c.letterAcceptanceDate,
+    DASHBOARD_REFERENCE_DATE,
+    'month',
+    true
+  );
+  const sentTrend = stockTrend(
+    candidates.filter((c) => c.offerLetterStatus === 'Sent'),
+    (c) => c.letterSentDate,
+    DASHBOARD_REFERENCE_DATE,
+    'month',
+    true
+  );
+  const sentNotSignedTrend = stockTrend(
+    candidates.filter((c) => c.offerLetterStatus === 'Sent But Not Signed'),
+    (c) => c.letterSentDate,
+    DASHBOARD_REFERENCE_DATE,
+    'month',
+    true
+  );
+
   const summaryCards: Array<{
     key: OfferLetterStatus;
     label: string;
@@ -693,9 +719,13 @@ export const OfferLetterOperations: React.FC<OfferLetterOperationsProps> = ({
                 <span className="cc-muted text-[10px] sm:text-[11px]">of {counts.total}<span className="hidden sm:inline"> candidates</span></span>
               </div>
 
-              <p className="hidden sm:block cc-muted text-[11px] leading-snug min-h-8">{card.description}</p>
+              <p className="hidden sm:block cc-muted text-[11px] leading-snug min-h-8 flex-1">{card.description}</p>
 
-              <div className="cc-track h-1.5 rounded-full overflow-hidden" role="progressbar" aria-valuenow={share} aria-valuemin={0} aria-valuemax={100} aria-label={`${card.label}: ${share}% of candidates`}>
+              {card.key === 'Signed' && <TrendBadge {...signedTrend} className="-mt-1" />}
+              {card.key === 'Sent' && <TrendBadge {...sentTrend} className="-mt-1" />}
+              {card.key === 'Sent But Not Signed' && <TrendBadge {...sentNotSignedTrend} className="-mt-1" />}
+
+              <div className="cc-track h-1.5 rounded-full overflow-hidden mt-auto" role="progressbar" aria-valuenow={share} aria-valuemin={0} aria-valuemax={100} aria-label={`${card.label}: ${share}% of candidates`}>
                 <div className="tone-fill h-full rounded-full" style={{ width: `${share}%` }} />
               </div>
 

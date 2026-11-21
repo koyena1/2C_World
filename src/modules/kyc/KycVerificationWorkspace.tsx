@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
+import { totalCandidatesTrend } from '../../utils/candidateTrends';
 import { Chip } from '../dashboard/command-center/shared';
 import { Toast } from '../../components/ui/Toast';
 import { useToast } from '../../hooks/useToast';
@@ -523,7 +524,13 @@ export const KycVerificationWorkspace: React.FC<KycVerificationWorkspaceProps> =
 
       {/* KPIs: five non-overlapping measures */}
       <div className="cc-grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-        <KpiCard label="Total Candidates" value={clientOverviewMetrics.totalCandidates} icon={Users} tone="info" />
+        <KpiCard
+          label="Total Candidates"
+          value={clientOverviewMetrics.totalCandidates}
+          trend={totalCandidatesTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient))}
+          icon={Users}
+          tone="info"
+        />
         <KpiCard label="100% Verified" value={clientOverviewMetrics.verifiedCount} icon={CheckCircle2} tone="good" />
         <KpiCard label="Manual Review" value={clientOverviewMetrics.manualReviewRequired} icon={Eye} tone="violet" />
         <KpiCard label="Failed Checks" value={clientOverviewMetrics.failedVerifications} icon={XCircle} tone="bad" />

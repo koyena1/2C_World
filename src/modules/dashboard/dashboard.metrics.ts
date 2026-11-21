@@ -228,18 +228,23 @@ export interface JoiningEntry {
 export interface JoiningOverview {
   today: JoiningEntry[];
   upcoming: JoiningEntry[];
+  /** Joiners after today, up to the end of the upcoming window (same window as the KPI card). */
+  next7: JoiningEntry[];
 }
 
 export const computeJoiningOverview = (candidates: Candidate[]): JoiningOverview => {
   const toEntry = (candidate: Candidate): JoiningEntry => ({ candidate, hasBlocker: hasAnyBlocker(candidate) });
   const notDropped = candidates.filter((c) => !isDropped(c));
 
+  const windowEnd = addDays(DASHBOARD_REFERENCE_DATE, UPCOMING_WINDOW_DAYS);
+  const future = notDropped
+    .filter((c) => c.dateOfJoining > DASHBOARD_REFERENCE_DATE && c.joiningStatus !== 'Joined')
+    .sort((a, b) => a.dateOfJoining.localeCompare(b.dateOfJoining));
+
   return {
     today: notDropped.filter((c) => c.dateOfJoining === DASHBOARD_REFERENCE_DATE).map(toEntry),
-    upcoming: notDropped
-      .filter((c) => c.dateOfJoining > DASHBOARD_REFERENCE_DATE && c.joiningStatus !== 'Joined')
-      .sort((a, b) => a.dateOfJoining.localeCompare(b.dateOfJoining))
-      .map(toEntry),
+    upcoming: future.map(toEntry),
+    next7: future.filter((c) => c.dateOfJoining <= windowEnd).map(toEntry),
   };
 };
 

@@ -1,17 +1,13 @@
 /**
- * Sidebar CONTENT only: menu groups, items, labels, icons, routes, badges,
+ * Sidebar CONTENT only: menu groups, items, labels, icons, routes, notification keys,
  * branding and the footer user per role. No styling here (see sidebar.styles.ts
  * and styles/sidebar.css).
  */
 import {
   Calendar,
   CalendarCheck,
-  CalendarClock,
-  Contact,
   FileText,
   LayoutDashboard,
-  LayoutGrid,
-  LockKeyhole,
   Settings,
   ShieldCheck,
   UploadCloud,
@@ -45,11 +41,10 @@ export const SIDEBAR_BRANDING: SidebarBranding = {
 
 export const SIDEBAR_GROUPS: SidebarGroupConfig[] = [
   {
-    id: 'operations',
-    title: 'Operations Console',
-    icon: LayoutGrid,
-    tag: 'HR Ops',
-    defaultOpen: true,
+    id: 'dashboard-menu',
+    title: 'Dashboard',
+    icon: LayoutDashboard,
+    permanent: true,
     items: [
       {
         id: 'dashboard',
@@ -57,7 +52,6 @@ export const SIDEBAR_GROUPS: SidebarGroupConfig[] = [
         viewId: 'dashboard',
         icon: LayoutDashboard,
         activeViews: ['dashboard', 'overview'],
-        badge: { kind: 'text', text: 'Live', tone: 'live' },
       },
     ],
   },
@@ -65,91 +59,73 @@ export const SIDEBAR_GROUPS: SidebarGroupConfig[] = [
     id: 'pipeline',
     title: 'Candidate Pipeline',
     icon: Workflow,
-    showCount: true,
     items: [
       {
         id: 'directory',
         label: 'Candidate Directory',
         viewId: 'directory',
         icon: Users,
-        badge: { kind: 'dynamic', key: 'candidateCount', tone: 'count', fallback: 20 },
+        notify: 'directoryIssues',
       },
       {
         id: 'offer-letters',
         label: 'Offer Letters',
         viewId: 'offer-letters',
         icon: FileText,
-        badge: { kind: 'text', text: '16', tone: 'count' },
+        notify: 'pendingOffers',
       },
       {
         id: 'invite',
         label: 'Invite Candidate',
         viewId: 'invite',
         icon: UserPlus,
-        badge: { kind: 'text', text: 'Fast', tone: 'fast' },
       },
       {
         id: 'import',
         label: 'Bulk Excel Import',
         viewId: 'import',
         icon: UploadCloud,
-        badge: { kind: 'text', text: 'XLSX', tone: 'tag-indigo' },
       },
       {
         id: 'kyc',
         label: 'KYC & ₹1 Verification',
         viewId: 'kyc',
         icon: ShieldCheck,
-        badge: { kind: 'dynamic', key: 'pendingKyc', tone: 'alert', hideWhenZero: true, dotWhenCollapsed: true },
+        notify: 'pendingKyc',
       },
     ],
   },
   {
-    id: 'workforce',
-    title: 'Workforce & Attendance',
-    icon: CalendarClock,
+    // Former parents (Workforce & Attendance, Experience & 360, Governance & Security) had only
+    // children: they are now direct, headerless sidebar items.
+    id: 'standalone',
+    title: 'Menu',
+    icon: Workflow,
+    permanent: true,
     items: [
       {
         id: 'attendance',
         label: 'Attendance & Cycles',
         viewId: 'attendance',
         icon: CalendarCheck,
-        badge: { kind: 'text', text: 'Muster', tone: 'tag-sky' },
       },
       {
         id: 'holidays',
         label: 'Holiday Masters',
         viewId: 'holidays',
         icon: Calendar,
-        badge: { kind: 'text', text: 'Policy', tone: 'tag-amber' },
       },
-    ],
-  },
-  {
-    id: 'experience',
-    title: 'Experience & 360',
-    icon: Contact,
-    items: [
       {
         id: 'profile',
         label: 'Candidate 360 Profile',
         viewId: 'profile',
         icon: UserCheck,
-        badge: { kind: 'text', text: 'Read/Edit', tone: 'muted' },
       },
-    ],
-  },
-  {
-    id: 'governance',
-    title: 'Governance & Security',
-    icon: LockKeyhole,
-    items: [
       {
         id: 'usersettings',
         label: 'User Settings',
         viewId: 'usersettings',
         icon: Settings,
-        badge: { kind: 'text', text: 'RBAC', tone: 'tag-purple' },
       },
     ],
   },

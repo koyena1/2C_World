@@ -7,7 +7,14 @@ import type { TrendInput } from '../../../utils/trends';
 interface KpiOverviewProps {
   kpis: CommandCenterKpis;
   /** Only the cards whose history can be rebuilt from dated records get a trend. */
-  trends?: { total?: TrendInput; joined?: TrendInput };
+  trends?: {
+    total?: TrendInput;
+    joined?: TrendInput;
+    kycVerified?: TrendInput;
+    pendingOffers?: TrendInput;
+    blockers?: TrendInput;
+    upcoming?: TrendInput;
+  };
   onNavigate: (view: string) => void;
 }
 
@@ -44,6 +51,7 @@ export const KpiOverview: React.FC<KpiOverviewProps> = ({ kpis, trends, onNaviga
         label="KYC Verified"
         value={kpis.kycVerified}
         detail={`${share(kpis.kycVerified, kpis.total)} of all candidates`}
+        trend={trends?.kycVerified}
         icon={ShieldCheck}
         tone="violet"
         onClick={() => onNavigate('kyc')}
@@ -52,6 +60,7 @@ export const KpiOverview: React.FC<KpiOverviewProps> = ({ kpis, trends, onNaviga
         label="Pending Offers"
         value={kpis.pendingOffers}
         detail={offerParts.length ? offerParts.join(' · ') : 'No offers pending'}
+        trend={trends?.pendingOffers}
         icon={FileClock}
         tone="teal"
         onClick={() => onNavigate('offer-letters')}
@@ -60,6 +69,7 @@ export const KpiOverview: React.FC<KpiOverviewProps> = ({ kpis, trends, onNaviga
         label="Operational Blockers"
         value={kpis.blockers}
         detail={`Of ${kpis.activeCandidates} candidates still in onboarding`}
+        trend={trends?.blockers}
         icon={AlertTriangle}
         tone="bad"
         onClick={() => onNavigate('directory')}
@@ -68,6 +78,7 @@ export const KpiOverview: React.FC<KpiOverviewProps> = ({ kpis, trends, onNaviga
         label="Upcoming Joining"
         value={kpis.upcomingJoining}
         detail={`${kpis.joiningToday} today · ${UPCOMING_WINDOW_LABEL}`}
+        trend={trends?.upcoming}
         icon={CalendarClock}
         tone="warn"
         onClick={() => onNavigate('directory')}

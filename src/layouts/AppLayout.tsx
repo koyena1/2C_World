@@ -4,14 +4,15 @@ import { useTheme } from '../hooks/useTheme';
 import { cn } from '../utils/cn';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './sidebar/AppSidebar';
+import type { SidebarNotifications } from './sidebar/sidebar.types';
 
 interface AppLayoutProps {
   currentView: string;
   /** Called when a sidebar item is chosen. */
   onNavigate: (view: string) => void;
   activeRole: string;
-  pendingKycCount: number;
-  candidateCount: number;
+  /** Pending item counts per module; drives the red dots in the sidebar. */
+  notifications: SidebarNotifications;
   /** Global overlays (toast, modals) rendered after the main layout. */
   overlays?: React.ReactNode;
   children: React.ReactNode;
@@ -34,8 +35,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   currentView,
   onNavigate,
   activeRole,
-  pendingKycCount,
-  candidateCount,
+  notifications,
   overlays,
   children,
 }) => {
@@ -69,7 +69,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         currentView={currentView}
         onNavigate={onNavigate}
         role={activeRole}
-        badges={{ candidateCount, pendingKyc: pendingKycCount }}
+        notifications={notifications}
       />
 
       <div className="flex-1 min-w-0 flex flex-col">
@@ -108,7 +108,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               onNavigate(view);
             }}
             role={activeRole}
-            badges={{ candidateCount, pendingKyc: pendingKycCount }}
+            notifications={notifications}
           />
           <button
             type="button"

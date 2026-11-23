@@ -54,7 +54,7 @@ import { PageBody } from '../../components/page/PageBody';
 import { Toast } from '../../components/ui/Toast';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { TrendBadge } from '../../components/page/TrendBadge';
-import { stockTrend } from '../../utils/trends';
+import { addDays, stockTrend } from '../../utils/trends';
 import { DASHBOARD_REFERENCE_DATE } from '../dashboard/dashboard.metrics';
 
 interface OfferLetterOperationsProps {
@@ -481,7 +481,7 @@ export const OfferLetterOperations: React.FC<OfferLetterOperationsProps> = ({
     isDark ? 'bg-slate-950 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-900'
   }`;
 
-  // "Signed", "Sent" and "Sent But Not Signed" have history via dated letter events.
+  // Signed is terminal and dated, so its earlier value is exact. "Not Sent" at a date = generated but not yet sent by then.
   const signedTrend = stockTrend(
     candidates.filter((c) => c.offerLetterStatus === 'Signed'),
     (c) => c.letterAcceptanceDate,
@@ -489,20 +489,33 @@ export const OfferLetterOperations: React.FC<OfferLetterOperationsProps> = ({
     'month',
     true
   );
-  const sentTrend = stockTrend(
-    candidates.filter((c) => c.offerLetterStatus === 'Sent'),
-    (c) => c.letterSentDate,
-    DASHBOARD_REFERENCE_DATE,
-    'month',
-    true
-  );
-  const sentNotSignedTrend = stockTrend(
-    candidates.filter((c) => c.offerLetterStatus === 'Sent But Not Signed'),
-    (c) => c.letterSentDate,
-    DASHBOARD_REFERENCE_DATE,
-    'month',
-    true
-  );
+  const notSentOn = (iso: string) =>
+    candidates.filter(
+      (c) =>
+        (c.offerLetterStatus === 'Not Sent' || c.offerLetterStatus === 'Pending' || c.letterSentDate) &&
+        Boolean(c.letterGeneratedDate) &&
+        c.letterGeneratedDate!.slice(0, 10) <= iso &&
+        !(c.letterSentDate && c.letterSentDate.slice(0, 10) <= iso)
+    ).length;
+  const notSentTrend = {
+    current: notSentOn(DASHBOARD_REFERENCE_DATE),
+    previous: notSentOn(addDays(DASHBOARD_REFERENCE_DATE, -30)),
+    period: 'month' as const,
+    higherIsBetter: false,
+  };
+
+  // Sent and "Sent But Not Signed" both sit inside "sent and not yet signed on that date" (dated by sent / acceptance),
+  // so their earlier value cannot be higher than that union.
+  const awaitingSignatureOn = (iso: string) =>
+    candidates.filter(
+      (c) =>
+        c.letterSentDate &&
+        c.letterSentDate.slice(0, 10) <= iso &&
+        !(c.letterAcceptanceDate && c.letterAcceptanceDate.slice(0, 10) <= iso)
+    ).length;
+  const sentBound = awaitingSignatureOn(addDays(DASHBOARD_REFERENCE_DATE, -30));
+  const sentTrend = { current: counts.sent, previous: 0, previousHigh: sentBound, period: 'month' as const, higherIsBetter: true };
+  const sentNotSignedTrend = { current: counts.sentNotSigned, previous: 0, previousHigh: sentBound, period: 'month' as const, higherIsBetter: false };
 
   const summaryCards: Array<{
     key: OfferLetterStatus;
@@ -722,6 +735,7 @@ export const OfferLetterOperations: React.FC<OfferLetterOperationsProps> = ({
               <p className="hidden sm:block cc-muted text-[11px] leading-snug min-h-8 flex-1">{card.description}</p>
 
               {card.key === 'Signed' && <TrendBadge {...signedTrend} className="-mt-1" />}
+              {card.key === 'Not Sent' && <TrendBadge {...notSentTrend} className="-mt-1" />}
               {card.key === 'Sent' && <TrendBadge {...sentTrend} className="-mt-1" />}
               {card.key === 'Sent But Not Signed' && <TrendBadge {...sentNotSignedTrend} className="-mt-1" />}
 

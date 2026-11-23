@@ -1,17 +1,4 @@
-import type {
-  SidebarBadgeConfig,
-  SidebarBadgeTone,
-  SidebarBadgeValues,
-  SidebarGroupConfig,
-  SidebarItemConfig,
-} from './sidebar.types';
-
-export interface ResolvedBadge {
-  text: string;
-  tone: SidebarBadgeTone;
-  /** Show a dot on the icon in collapsed mode. */
-  dot: boolean;
-}
+import type { SidebarGroupConfig, SidebarItemConfig, SidebarNotifications } from './sidebar.types';
 
 /** Roles: no `roles` list means visible to everyone. */
 export const isVisibleForRole = (roles: string[] | undefined, role?: string): boolean =>
@@ -20,18 +7,9 @@ export const isVisibleForRole = (roles: string[] | undefined, role?: string): bo
 export const isItemActive = (item: SidebarItemConfig, currentView: string): boolean =>
   (item.activeViews ?? [item.viewId]).includes(currentView);
 
-export const resolveBadge = (
-  badge: SidebarBadgeConfig | undefined,
-  values: SidebarBadgeValues
-): ResolvedBadge | null => {
-  if (!badge) return null;
-  if (badge.kind === 'text') return { text: badge.text, tone: badge.tone, dot: false };
-
-  const raw = values[badge.key] ?? badge.fallback;
-  if (raw === undefined || raw === '') return null;
-  if (badge.hideWhenZero && Number(raw) === 0) return null;
-  return { text: String(raw), tone: badge.tone, dot: Boolean(badge.dotWhenCollapsed) };
-};
+/** An item shows a red dot while its notification count is above zero. */
+export const hasNotification = (item: SidebarItemConfig, notifications: SidebarNotifications): boolean =>
+  Boolean(item.notify) && Number(notifications[item.notify as string] ?? 0) > 0;
 
 /** Applies role-based visibility; drops groups that end up empty. */
 export const filterGroupsByRole = (groups: SidebarGroupConfig[], role?: string): SidebarGroupConfig[] =>

@@ -14,7 +14,14 @@ import {
 } from './dashboard.metrics';
 import { PageHeader } from '../../components/page/PageHeader';
 import { SelectMenu } from '../../components/ui/SelectMenu';
-import { joinedTrend, totalCandidatesTrend } from '../../utils/candidateTrends';
+import {
+  blockersTrend,
+  joinedTrend,
+  kycVerifiedTrend,
+  pendingOffersTrend,
+  totalCandidatesTrend,
+  upcomingJoiningTrend,
+} from '../../utils/candidateTrends';
 import { CandidatePipeline } from './command-center/CandidatePipeline';
 import { ClientAnalytics } from './command-center/ClientAnalytics';
 import { JoiningOverview } from './command-center/JoiningOverview';
@@ -64,7 +71,17 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
   );
 
   const kpis = useMemo(() => computeKpis(candidates), [candidates]);
-  const kpiTrends = useMemo(() => ({ total: totalCandidatesTrend(candidates), joined: joinedTrend(candidates) }), [candidates]);
+  const kpiTrends = useMemo(
+    () => ({
+      total: totalCandidatesTrend(candidates),
+      joined: joinedTrend(candidates),
+      kycVerified: kycVerifiedTrend(candidates),
+      pendingOffers: pendingOffersTrend(candidates),
+      blockers: blockersTrend(candidates),
+      upcoming: upcomingJoiningTrend(candidates),
+    }),
+    [candidates]
+  );
   const pipeline = useMemo(() => computePipeline(candidates), [candidates]);
   const statusMix = useMemo(() => computeStatusMix(candidates), [candidates]);
   const pendingActions = useMemo(() => computePendingActions(candidates), [candidates]);

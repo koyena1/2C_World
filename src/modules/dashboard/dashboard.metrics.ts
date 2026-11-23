@@ -34,9 +34,8 @@ const addDays = (iso: string, days: number) => {
 
 const pct = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 100) : 0);
 
-const isInUpcomingWindow = (c: Candidate) =>
-  c.dateOfJoining >= DASHBOARD_REFERENCE_DATE &&
-  c.dateOfJoining <= addDays(DASHBOARD_REFERENCE_DATE, UPCOMING_WINDOW_DAYS);
+const isInUpcomingWindow = (c: Candidate, refDate: string = DASHBOARD_REFERENCE_DATE) =>
+  c.dateOfJoining >= refDate && c.dateOfJoining <= addDays(refDate, UPCOMING_WINDOW_DAYS);
 
 /* ---------------- KPIs ---------------- */
 
@@ -55,7 +54,7 @@ export interface CommandCenterKpis {
   joiningToday: number;
 }
 
-export const computeKpis = (candidates: Candidate[]): CommandCenterKpis => {
+export const computeKpis = (candidates: Candidate[], refDate: string = DASHBOARD_REFERENCE_DATE): CommandCenterKpis => {
   const active = candidates.filter(isActive);
   const awaitingOffer = active.filter((c) => !c.letters.some((l) => l.status === 'Accepted'));
   const offersUnsigned = awaitingOffer.filter(hasUnsignedLetter).length;
@@ -72,8 +71,8 @@ export const computeKpis = (candidates: Candidate[]): CommandCenterKpis => {
     offersUnsigned,
     blockers: active.filter(hasAnyBlocker).length,
     activeCandidates: active.length,
-    upcomingJoining: active.filter(isInUpcomingWindow).length,
-    joiningToday: active.filter((c) => c.dateOfJoining === DASHBOARD_REFERENCE_DATE).length,
+    upcomingJoining: active.filter((c) => isInUpcomingWindow(c, refDate)).length,
+    joiningToday: active.filter((c) => c.dateOfJoining === refDate).length,
   };
 };
 

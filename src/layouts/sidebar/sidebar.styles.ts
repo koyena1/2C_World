@@ -1,10 +1,8 @@
 /**
  * Sidebar STYLING only: class-name maps. Sizes and colors come from the CSS
  * variables in styles/sidebar.css, so tweak those first; edit these maps to
- * change structure (borders, weights, shapes, badge looks).
+ * change structure (borders, weights, shapes, the notification dot).
  */
-import type { SidebarBadgeTone } from './sidebar.types';
-
 export const sidebarStyles = {
   /* ---- Shell ---- */
   root:
@@ -55,14 +53,14 @@ export const sidebarStyles = {
   /* ---- Group (expanded) ---- */
   group: 'space-y-[var(--sidebar-gap)]',
   groupHeader:
-    'w-full flex items-center gap-2.5 h-[var(--sidebar-group-height)] px-3 rounded-[var(--sidebar-radius)] ' +
-    'border border-[color:var(--sidebar-pill-border)] bg-[color:var(--sidebar-pill-bg)] ' +
-    'text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[color:var(--sidebar-hover-bg)] ' +
-    'focus-visible:outline-2 focus-visible:outline-white',
-  groupTag:
-    'text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-white/15 text-white/90',
-  groupCount: 'text-[11px] font-bold tabular-nums text-[color:var(--sidebar-fg-muted)]',
+    'w-full flex items-center gap-2.5 h-[var(--sidebar-item-height)] px-2.5 rounded-[var(--sidebar-radius)] border text-[13px] ' +
+    'cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-white',
+  groupHeaderIdle:
+    'border-[color:var(--sidebar-pill-border)] bg-[color:var(--sidebar-pill-bg)] font-semibold text-[color:var(--sidebar-fg)] ' +
+    'hover:bg-[color:var(--sidebar-hover-bg)] hover:border-[color:var(--sidebar-active-border)]',
   groupChevron: 'w-4 h-4 shrink-0 text-[color:var(--sidebar-fg-muted)] transition-transform duration-200',
+  /* Standalone (parent-less) items: full width, aligned with the group headers */
+  topLevelItems: 'space-y-[var(--sidebar-gap)]',
   groupBody: 'grid transition-[grid-template-rows] duration-200 ease-out',
   groupChildren:
     'ml-5 pl-3 mt-1 mb-1 border-l border-[color:var(--sidebar-guide-line)] space-y-[var(--sidebar-gap)]',
@@ -74,19 +72,20 @@ export const sidebarStyles = {
   itemActive:
     'border-[color:var(--sidebar-active-border)] bg-[color:var(--sidebar-active-bg)] font-semibold text-[color:var(--sidebar-fg)]',
   itemIdle:
-    'border-transparent font-medium text-[color:var(--sidebar-fg-muted)] hover:bg-[color:var(--sidebar-hover-bg)] hover:text-[color:var(--sidebar-fg)]',
+    'border-[color:var(--sidebar-pill-border)] bg-[color:var(--sidebar-pill-bg)] font-medium text-[color:var(--sidebar-fg)] ' +
+    'hover:bg-[color:var(--sidebar-hover-bg)] hover:border-[color:var(--sidebar-active-border)]',
   itemIcon: 'w-[var(--sidebar-icon-size)] h-[var(--sidebar-icon-size)] shrink-0',
   itemLabel: 'flex-1 min-w-0 truncate text-left',
 
   /* ---- Item (collapsed, icon-only) ---- */
   collapsedItem:
-    'relative w-full flex items-center justify-center h-[var(--sidebar-item-height-collapsed)] rounded-[var(--sidebar-radius)] ' +
+    'relative w-full flex items-center justify-center h-[var(--sidebar-item-height-collapsed)] rounded-[var(--sidebar-radius)] border ' +
     'cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-white',
-  collapsedItemActive: 'bg-[color:var(--sidebar-active-bg)] text-[color:var(--sidebar-fg)]',
+  collapsedItemActive:
+    'border-[color:var(--sidebar-active-border)] bg-[color:var(--sidebar-active-bg)] text-[color:var(--sidebar-fg)]',
   collapsedItemIdle:
-    'text-[color:var(--sidebar-fg-muted)] hover:bg-[color:var(--sidebar-hover-bg)] hover:text-[color:var(--sidebar-fg)]',
-  activeBar:
-    'absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[var(--sidebar-active-bar-width)] rounded-r-full bg-[color:var(--sidebar-active-bar)]',
+    'border-[color:var(--sidebar-pill-border)] bg-[color:var(--sidebar-pill-bg)] text-[color:var(--sidebar-fg)] ' +
+    'hover:bg-[color:var(--sidebar-hover-bg)] hover:border-[color:var(--sidebar-active-border)]',
   dot: 'absolute -top-1 -right-1 w-2 h-2 rounded-full ring-2 ring-[color:var(--sidebar-bg-from)] bg-[color:var(--sidebar-dot)]',
   collapsedDivider: 'my-2 border-t border-[color:var(--sidebar-border)]',
 
@@ -111,16 +110,3 @@ export const sidebarStyles = {
     'bg-[color:var(--sidebar-pill-bg)] text-[10px] font-semibold',
   version: 'text-[10px] truncate text-[color:var(--sidebar-heading-fg)]',
 } as const;
-
-/** Badge looks (tuned for the navy background). */
-export const BADGE_TONES: Record<SidebarBadgeTone, string> = {
-  live: 'font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded border border-white/25 bg-white/15 text-white',
-  count: 'font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded bg-white/15 text-white',
-  fast: 'text-[10px] font-semibold text-emerald-300',
-  alert: 'text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950',
-  'tag-indigo': 'font-mono text-[10px] px-1.5 py-0.5 rounded bg-indigo-300/25 text-indigo-100',
-  'tag-sky': 'text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-sky-300/25 text-sky-100',
-  'tag-amber': 'text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-amber-300/25 text-amber-100',
-  'tag-purple': 'text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-purple-300/25 text-purple-100',
-  muted: 'text-[10px] text-white/60',
-};

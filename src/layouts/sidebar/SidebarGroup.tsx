@@ -7,12 +7,16 @@ import type { SidebarGroupConfig } from './sidebar.types';
 interface SidebarGroupProps {
   group: SidebarGroupConfig;
   open: boolean;
+  /** One of this group's pages is the current page. */
+  active?: boolean;
+  /** A page inside this group has pending items. */
+  notify?: boolean;
   onToggle: () => void;
   children: React.ReactNode;
 }
 
 /** Expandable pill header with its child items (expanded sidebar only). */
-export const SidebarGroup: React.FC<SidebarGroupProps> = ({ group, open, onToggle, children }) => {
+export const SidebarGroup: React.FC<SidebarGroupProps> = ({ group, open, active = false, notify = false, onToggle, children }) => {
   const Icon = group.icon;
   const bodyId = `sidebar-group-${group.id}`;
 
@@ -23,12 +27,15 @@ export const SidebarGroup: React.FC<SidebarGroupProps> = ({ group, open, onToggl
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={bodyId}
-        className={s.groupHeader}
+        aria-current={active && !open ? 'page' : undefined}
+        // Open: the highlighted child shows where you are. Closed: the parent carries the highlight.
+        className={cn(s.groupHeader, active && !open ? s.itemActive : s.groupHeaderIdle)}
       >
-        <Icon className={s.itemIcon} />
+        <span className="relative shrink-0">
+          <Icon className={s.itemIcon} />
+          {notify && <span className={s.dot} aria-hidden />}
+        </span>
         <span className="flex-1 min-w-0 truncate text-left">{group.title}</span>
-        {group.tag && <span className={s.groupTag}>{group.tag}</span>}
-        {group.showCount && <span className={s.groupCount}>{group.items.length}</span>}
         <ChevronDown className={cn(s.groupChevron, open ? 'rotate-0' : '-rotate-90')} />
       </button>
 

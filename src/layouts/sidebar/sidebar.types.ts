@@ -1,30 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 
-/** Visual style of a badge. Colors live in sidebar.styles.ts (BADGE_TONES). */
-export type SidebarBadgeTone =
-  | 'live'
-  | 'count'
-  | 'fast'
-  | 'alert'
-  | 'tag-indigo'
-  | 'tag-sky'
-  | 'tag-amber'
-  | 'tag-purple'
-  | 'muted';
-
-export type SidebarBadgeConfig =
-  /** Fixed text, e.g. "Live" or "XLSX". */
-  | { kind: 'text'; text: string; tone: SidebarBadgeTone }
-  /** Value looked up in the `badges` prop by `key` (e.g. candidate count). */
-  | {
-      kind: 'dynamic';
-      key: string;
-      tone: SidebarBadgeTone;
-      fallback?: string | number;
-      hideWhenZero?: boolean;
-      /** Show a small dot on the icon when the sidebar is collapsed. */
-      dotWhenCollapsed?: boolean;
-    };
+/** Live notification state: key -> number of pending / unresolved items (0 or missing = no dot). */
+export type SidebarNotifications = Record<string, number | undefined>;
 
 export interface SidebarItemConfig {
   id: string;
@@ -34,7 +11,8 @@ export interface SidebarItemConfig {
   icon: LucideIcon;
   /** Views that highlight this item (defaults to [viewId]). */
   activeViews?: string[];
-  badge?: SidebarBadgeConfig;
+  /** Key in the notifications prop; the item shows a red dot while that value is above zero. */
+  notify?: string;
   /** Visible only to these roles. Omit = visible to everyone. */
   roles?: string[];
 }
@@ -43,10 +21,6 @@ export interface SidebarGroupConfig {
   id: string;
   title: string;
   icon: LucideIcon;
-  /** Small tag shown on the group header (e.g. "HR Ops"). */
-  tag?: string;
-  /** Show the number of items as a count chip on the group header. */
-  showCount?: boolean;
   items: SidebarItemConfig[];
   roles?: string[];
   /** Initial open state of a collapsible group. Default: false (collapsed). */
@@ -76,5 +50,3 @@ export interface SidebarUser {
   /** Optional profile photo URL (shown in the profile dialog and footer button). */
   photoUrl?: string;
 }
-
-export type SidebarBadgeValues = Record<string, number | string | undefined>;

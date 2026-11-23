@@ -16,12 +16,12 @@ import {
 } from './sidebar.config';
 import { sidebarStyles as s } from './sidebar.styles';
 import type {
-  SidebarBadgeValues,
+  SidebarNotifications,
   SidebarBranding,
   SidebarGroupConfig,
   SidebarUser,
 } from './sidebar.types';
-import { filterGroupsByRole, isItemActive, resolveBadge } from './sidebar.utils';
+import { filterGroupsByRole, hasNotification, isItemActive } from './sidebar.utils';
 
 export interface AppSidebarProps {
   currentView: string;
@@ -29,8 +29,8 @@ export interface AppSidebarProps {
   onNavigate: (view: string, options?: { keepOpen?: boolean }) => void;
   /** Active role (admin / hr / candidate …). Drives role-based visibility and the footer user. */
   role?: string;
-  /** Live values for `dynamic` badges, e.g. { candidateCount: 20, pendingKyc: 3 }. */
-  badges?: SidebarBadgeValues;
+  /** Pending / unresolved item counts per module, e.g. { pendingKyc: 3 }. A module shows a red dot while its count is above zero. */
+  notifications?: SidebarNotifications;
   /** Optional overrides: reuse the sidebar with different content. */
   groups?: SidebarGroupConfig[];
   branding?: SidebarBranding;
@@ -49,7 +49,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   currentView,
   onNavigate,
   role,
-  badges = {},
+  notifications = {},
   groups = SIDEBAR_GROUPS,
   branding = SIDEBAR_BRANDING,
   users = SIDEBAR_USERS,
@@ -69,6 +69,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     else {
       own.toggle();
       onCollapsedChange?.(!collapsed);
+    }
+  };
+
+  // Idempotent "open the rail" (unlike the toggle, it can never collapse an expanded sidebar).
+  const expand = () => {
+    if (mobile || !collapsed) return;
+    if (isControlled) onCollapsedChange?.(false);
+    else {
+      own.setCollapsed(false);
+      onCollapsedChange?.(false);
     }
   };
 
@@ -100,19 +110,21 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const renderItem = (group: SidebarGroupConfig, itemIdx: number) => {
     const item = group.items[itemIdx];
+    const direct = Boolean(group.permanent);
     return (
       <SidebarItem
         key={item.id}
         item={item}
         active={isItemActive(item, currentView)}
         collapsed={collapsed}
-        badge={resolveBadge(item.badge, badges)}
+        notify={hasNotification(item, notifications)}
         // Collapsed: a click on an icon expands the sidebar, opens that icon's menu group
         // (accordion: the others close) and then navigates as usual.
         onClick={() => {
           if (collapsed) {
-            setOpenGroups(Object.fromEntries(groups.map((g) => [g.id, g.id === group.id])));
-            handleToggle();
+            // Standalone items have no menu group to open, so only the rail expands.
+            if (!direct) setOpenGroups(Object.fromEntries(groups.map((g) => [g.id, g.id === group.id])));
+            expand();
           }
           onNavigate(item.viewId);
         }}
@@ -131,7 +143,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           className={cn('sidebar-fade-in', collapsed ? s.navCollapsed : s.navExpanded)}
         >
           {collapsed
-            ? visibleGroups.map((group) => (
+            ? visibleGroups.map((group) =>
+                group.permanent ? (
+                  group.items.map((_, i) => renderItem(group, i))
+                ) : (
                 // Collapsed: ONLY the parent menu icons (no child items). Clicking one expands the
                 // sidebar, opens that group and goes to its first submenu.
                 <SidebarItem
@@ -139,17 +154,18 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   item={{ id: group.id, label: group.title, viewId: group.items[0].viewId, icon: group.icon }}
                   active={group.items.some((i) => isItemActive(i, currentView))}
                   collapsed
-                  badge={group.items.map((i) => resolveBadge(i.badge, badges)).find((b) => b?.dot) ?? null}
+                  notify={group.items.some((i) => hasNotification(i, notifications))}
                   onClick={() => {
                     setOpenGroups(Object.fromEntries(groups.map((g) => [g.id, g.id === group.id])));
-                    handleToggle();
+                    expand();
                     onNavigate(group.items[0].viewId);
                   }}
                 />
-              ))
+                )
+              )
             : visibleGroups.map((group) =>
                 group.permanent ? (
-                  <div key={group.id} className={s.groupChildren}>
+                  <div key={group.id} className={s.topLevelItems}>
                     {group.items.map((_, i) => renderItem(group, i))}
                   </div>
                 ) : (
@@ -157,6 +173,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     key={group.id}
                     group={group}
                     open={openGroups[group.id] ?? false}
+                    active={group.items.some((i) => isItemActive(i, currentView))}
+                    notify={group.items.some((i) => hasNotification(i, notifications))}
                     onToggle={() => handleParentClick(group)}
                   >
                     {group.items.map((_, i) => renderItem(group, i))}

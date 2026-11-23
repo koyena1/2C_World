@@ -3,7 +3,7 @@ import { sidebarStyles } from './sidebar.styles';
 
 interface SidebarTooltipProps {
   label: string;
-  /** Extra text shown after the label (e.g. a badge value). */
+  /** Extra text shown after the label. */
   detail?: string;
   /** Tooltips are only shown while the sidebar is collapsed. */
   enabled: boolean;

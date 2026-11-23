@@ -29,6 +29,13 @@ export interface TrendInput {
    * null : direction has no good/bad meaning, so it is shown neutrally.
    */
   higherIsBetter?: boolean | null;
+  /**
+   * Set when the earlier value can only be bounded (e.g. an undated drop-out may or may not
+   * have been active yet): `previous` is the low bound, this the high bound. The card then
+   * shows the smaller, always-true change, prefixed with "at least", or nothing if the
+   * direction is not certain.
+   */
+  previousHigh?: number;
 }
 
 export const addDays = (iso: string, days: number): string => {
@@ -75,8 +82,25 @@ export interface TrendResult {
  * Turns a TrendInput into something displayable, or null when a percentage would be
  * meaningless (no baseline, or non-finite numbers). Callers hide the indicator on null.
  */
-export const computeTrend = ({ current, previous, higherIsBetter = true }: TrendInput): TrendResult | null => {
-  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous <= 0) return null;
+export const computeTrend = ({ current, previous, previousHigh, period, higherIsBetter = true }: TrendInput): TrendResult | null => {
+  if (!Number.isFinite(current) || !Number.isFinite(previous) || previous < 0) return null;
+
+  // Bounded baseline: report only the change that holds anywhere inside the range.
+  if (previousHigh !== undefined && previousHigh !== previous) {
+    const hi = computeTrend({ current, previous: previousHigh, period, higherIsBetter });
+    const lowDirection = current > previous ? 'up' : current < previous ? 'down' : 'flat';
+    if (!hi || hi.direction === 'flat' || lowDirection !== hi.direction) return null;
+    // Up: the larger baseline gives the smaller (safe) rise. Down: the smaller baseline does.
+    const safe = hi.direction === 'up' ? hi : computeTrend({ current, previous, period, higherIsBetter });
+    return safe ? { ...safe, text: `≥${safe.text}` } : null;
+  }
+
+  // Nothing existed a month ago: a percentage is undefined, so report the real absolute change.
+  if (previous === 0) {
+    if (current === 0) return null;
+    const outcome = higherIsBetter === null ? 'neutral' : (current > 0) === higherIsBetter ? 'good' : 'bad';
+    return { percent: Infinity, direction: 'up', outcome, text: `+${current} new` };
+  }
 
   const percent = ((current - previous) / previous) * 100;
   const flat = percent === 0;

@@ -22,6 +22,7 @@ import { Candidate, FilterOptions } from './types/onboarding';
 import { ThemeProvider } from './context/ThemeContext';
 import { useToast } from './hooks/useToast';
 import { createCandidateFromInvite } from './utils/candidateFactory';
+import { computeKpis } from './modules/dashboard/dashboard.metrics';
 
 function AppContent() {
   // Navigation State - default to dashboard
@@ -67,13 +68,20 @@ function AppContent() {
     (c) => c.overallKycStatus === 'Pending Manual Review' || c.overallKycStatus === 'API Mismatch'
   ).length;
 
+  // Red sidebar dots: modules with pending or unresolved items, from the same live candidate list the dashboard uses.
+  const kpis = computeKpis(candidates);
+  const notifications = {
+    pendingKyc: pendingKycCount,
+    pendingOffers: kpis.pendingOffers,
+    directoryIssues: kpis.blockers,
+  };
+
   return (
     <AppLayout
       currentView={currentView}
       onNavigate={handleSidebarNavigate}
       activeRole={activeRole}
-      pendingKycCount={pendingKycCount}
-      candidateCount={candidates.length}
+      notifications={notifications}
       overlays={
         <>
           {/* Global Toast Notification */}

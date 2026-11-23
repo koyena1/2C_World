@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
-import { totalCandidatesTrend } from '../../utils/candidateTrends';
+import { fullyVerifiedTrend, kycRecordTrend, totalCandidatesTrend } from '../../utils/candidateTrends';
 import { Chip } from '../dashboard/command-center/shared';
 import { Toast } from '../../components/ui/Toast';
 import { useToast } from '../../hooks/useToast';
@@ -531,10 +531,16 @@ export const KycVerificationWorkspace: React.FC<KycVerificationWorkspaceProps> =
           icon={Users}
           tone="info"
         />
-        <KpiCard label="100% Verified" value={clientOverviewMetrics.verifiedCount} icon={CheckCircle2} tone="good" />
-        <KpiCard label="Manual Review" value={clientOverviewMetrics.manualReviewRequired} icon={Eye} tone="violet" />
-        <KpiCard label="Failed Checks" value={clientOverviewMetrics.failedVerifications} icon={XCircle} tone="bad" />
-        <KpiCard label="Bank / ₹1 Pending" value={clientOverviewMetrics.bankPennyPending} icon={CreditCard} tone="warn" />
+        <KpiCard
+          label="100% Verified"
+          value={clientOverviewMetrics.verifiedCount}
+          trend={fullyVerifiedTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient))}
+          icon={CheckCircle2}
+          tone="good"
+        />
+        <KpiCard label="Manual Review" value={clientOverviewMetrics.manualReviewRequired} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'manualReview')} icon={Eye} tone="violet" />
+        <KpiCard label="Failed Checks" value={clientOverviewMetrics.failedVerifications} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'failed')} icon={XCircle} tone="bad" />
+        <KpiCard label="Bank / ₹1 Pending" value={clientOverviewMetrics.bankPennyPending} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'bankPending')} icon={CreditCard} tone="warn" />
       </div>
 
       {/* Department cards */}

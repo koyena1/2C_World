@@ -44,7 +44,7 @@ import { Toast } from '../../components/ui/Toast';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
-import { joinedTrend, totalCandidatesTrend } from '../../utils/candidateTrends';
+import { joinedTrend, kycActionTrend, totalCandidatesTrend, yetToJoinTrend } from '../../utils/candidateTrends';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
 import {
   CLIENT_LIST,
@@ -597,6 +597,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               label="Yet to Join"
               value={candidates.filter((c) => c.joiningStatus === 'Yet to Join').length}
               detail="Upcoming joiners"
+              trend={yetToJoinTrend(candidates)}
               icon={Clock}
               tone="warn"
             />
@@ -604,6 +605,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               label="KYC Action Required"
               value={candidates.filter((c) => c.overallKycStatus === 'Pending Manual Review' || c.overallKycStatus === 'API Mismatch').length}
               detail="Manual review / API mismatch"
+              trend={kycActionTrend(candidates)}
               icon={ShieldCheck}
               tone="bad"
             />

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLayout } from './layouts/AppLayout';
 import { Toast } from './components/ui/Toast';
 import { HrOpsDashboard } from './modules/dashboard/HrOpsDashboard';
@@ -22,12 +22,53 @@ import { Candidate, FilterOptions } from './types/onboarding';
 import { ThemeProvider } from './context/ThemeContext';
 import { useToast } from './hooks/useToast';
 import { createCandidateFromInvite } from './utils/candidateFactory';
+import { ComplianceModule } from './modules/compliance/ComplianceModule';
+import { ContractExitModule } from './modules/contract-exit/ContractExitModule';
+import { RoleProvider } from './context/RoleContext';
+import { PayrollPage } from './modules/payroll/PayrollPage';
+import { LmsPage } from './modules/lms/LmsPage';
+import { SupportTicketPage } from './modules/support/SupportTicketPage';
+import { setTicketCandidate } from './modules/hr-ops/servicesStore';
+import { pathForView, viewFromPath } from './routes';
+import { canOpenView, DEFAULT_ROLE, isAppRole, ROLE_STORAGE_KEY, type AppRole } from './modules/hr-ops/hrOps.config';
+import { safeGetItem, safeSetItem } from './utils/storage';
 import { computeKpis } from './modules/dashboard/dashboard.metrics';
+import { hrOpsCounts } from './modules/dashboard/command-center/HrOpsExtras';
 
 function AppContent() {
-  // Navigation State - default to dashboard
-  const [currentView, setCurrentView] = useState<string>('dashboard');
-  const [activeRole] = useState<string>('admin');
+  // The role is read once (saved choice, else Admin); there is no role selector in the header.
+  const [activeRole] = useState<AppRole>(() => {
+    const saved = safeGetItem(ROLE_STORAGE_KEY);
+    return isAppRole(saved) ? saved : DEFAULT_ROLE;
+  });
+
+  // Navigation state, opened from the browser URL (deep links) and kept in sync with it.
+  const [currentView, setCurrentView] = useState<string>(() => {
+    const fromUrl = viewFromPath(window.location.pathname);
+    return canOpenView(fromUrl, activeRole) ? fromUrl : 'dashboard';
+  });
+
+  /** Show a view and give it its own browser URL (back / forward / refresh then work). */
+  const goTo = (view: string) => {
+    setCurrentView(view);
+    const path = pathForView(view);
+    if (path !== null && window.location.pathname !== path) window.history.pushState({ view }, '', path);
+  };
+
+  useEffect(() => {
+    // A blocked or unknown URL is replaced by the dashboard URL; back / forward re-open the matching view.
+    const sync = () => {
+      const fromUrl = viewFromPath(window.location.pathname);
+      const allowed = canOpenView(fromUrl, activeRole) ? fromUrl : 'dashboard';
+      setCurrentView(allowed);
+      const path = pathForView(allowed);
+      if (path !== null && window.location.pathname !== path) window.history.replaceState({ view: allowed }, '', path);
+    };
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, [activeRole]);
+
   const [candidates, setCandidates] = useState<Candidate[]>(MOCK_CANDIDATES);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate>(MOCK_CANDIDATES[0]);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState<boolean>(false);
@@ -48,20 +89,21 @@ function AppContent() {
 
   const handleOpenCandidateProfile = (cand: Candidate) => {
     setSelectedCandidate(cand);
-    setCurrentView('profile');
+    goTo('profile');
   };
 
   const handleOpenKycWorkspace = (cand: Candidate) => {
     setSelectedCandidate(cand);
-    setCurrentView('kyc');
+    goTo('kyc');
   };
 
   const handleSidebarNavigate = (view: string) => {
+    if (!canOpenView(view, activeRole)) return;
     if (view === 'invite') {
       setIsInviteModalOpen(true);
       return;
     }
-    setCurrentView(view);
+    goTo(view);
   };
 
   const pendingKycCount = candidates.filter(
@@ -70,13 +112,18 @@ function AppContent() {
 
   // Red sidebar dots: modules with pending or unresolved items, from the same live candidate list the dashboard uses.
   const kpis = computeKpis(candidates);
+  const hrOps = hrOpsCounts();
   const notifications = {
     pendingKyc: pendingKycCount,
     pendingOffers: kpis.pendingOffers,
     directoryIssues: kpis.blockers,
+    compliance: hrOps.uanPending + hrOps.esicDuplicates,
+    contractExit: hrOps.contractsExpiring + hrOps.exitDocsPending,
+    attendanceRegularization: hrOps.regularizations,
   };
 
   return (
+    <RoleProvider role={activeRole}>
     <AppLayout
       currentView={currentView}
       onNavigate={handleSidebarNavigate}
@@ -101,6 +148,7 @@ function AppContent() {
         <HrOpsDashboard
           candidates={candidates}
           onNavigate={handleSidebarNavigate}
+          role={activeRole}
           onOpenInviteModal={() => setIsInviteModalOpen(true)}
           onOpenCandidateProfile={(id) => {
             const found = candidates.find((c) => c.id === id || c.userId === id) || candidates[0];
@@ -139,7 +187,11 @@ function AppContent() {
         <CandidateProfile360
           candidate={selectedCandidate}
           onOpenKycDesk={handleOpenKycWorkspace}
-          onBackToDirectory={() => setCurrentView('directory')}
+          onBackToDirectory={() => goTo('directory')}
+          onRaiseTicket={(c) => {
+            setTicketCandidate({ id: c.id, name: `${c.firstName} ${c.lastName}` });
+            goTo('support-ticket');
+          }}
         />
       )}
 
@@ -147,8 +199,19 @@ function AppContent() {
 
       {currentView === 'holidays' && <HolidayMastersModule />}
 
-      {currentView === 'usersettings' && <UserSettingsModule appActiveRole={activeRole} />}
+      {currentView === 'compliance' && canOpenView('compliance', activeRole) && <ComplianceModule candidates={candidates} />}
+
+      {currentView === 'contract-exit' && canOpenView('contract-exit', activeRole) && <ContractExitModule candidates={candidates} onNavigate={handleSidebarNavigate} />}
+
+      {currentView === 'payroll' && canOpenView('payroll', activeRole) && <PayrollPage candidates={candidates} />}
+
+      {currentView === 'lms' && canOpenView('lms', activeRole) && <LmsPage />}
+
+      {currentView === 'support-ticket' && canOpenView('support-ticket', activeRole) && <SupportTicketPage candidates={candidates} />}
+
+      {currentView === 'usersettings' && canOpenView('usersettings', activeRole) && <UserSettingsModule appActiveRole={activeRole} />}
     </AppLayout>
+    </RoleProvider>
   );
 }
 

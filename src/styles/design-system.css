@@ -656,3 +656,38 @@ button[class~="bg-slate-900"][class~="text-white"]:hover:not(:disabled) {
 .cc-table-compact td:first-child { padding-left: 14px; }
 .cc-table-compact th:last-child,
 .cc-table-compact td:last-child { padding-right: 14px; }
+
+/* ---------- Dashboard cards: light-blue border + light-blue hover / active highlight ----------
+   Scoped to .ops-dashboard so other pages keep their current card look. Applies to every card
+   (.cc-card: KPI, section and workflow cards) and to the compact stat tiles (.ops-tile). */
+:root {
+  --ops-card-border: #c9d9f5;
+  --ops-card-hover-bg: #eef4ff;
+  --ops-card-active-bg: #e0ecff;
+}
+html.dark {
+  --ops-card-border: rgb(96 165 250 / 0.3);
+  --ops-card-hover-bg: rgb(59 130 246 / 0.12);
+  --ops-card-active-bg: rgb(59 130 246 / 0.2);
+}
+.ops-dashboard .cc-card,
+.ops-dashboard .ops-tile {
+  border-color: var(--ops-card-border);
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.ops-dashboard .cc-card:hover,
+.ops-dashboard .ops-tile:hover {
+  background-color: var(--ops-card-hover-bg);
+  border-color: var(--cc-accent-border);
+}
+.ops-dashboard .cc-card:active,
+.ops-dashboard .ops-tile:active,
+.ops-dashboard button.cc-card:focus-visible,
+.ops-dashboard button.ops-tile:focus-visible {
+  background-color: var(--ops-card-active-bg);
+  border-color: var(--cc-accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ops-dashboard .cc-card,
+  .ops-dashboard .ops-tile { transition: none; }
+}

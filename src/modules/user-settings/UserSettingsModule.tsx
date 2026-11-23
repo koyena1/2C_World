@@ -36,6 +36,11 @@ import { PermissionRegistrySection } from './PermissionRegistrySection';
 import { ClientAccessMappingSection } from './ClientAccessMappingSection';
 import { MyAccessSection } from './MyAccessSection';
 import { AccessAuditLogSection } from './AccessAuditLogSection';
+import { ExportPermissionsSection } from './ExportPermissionsSection';
+import { DocumentRulesSection } from './DocumentRulesSection';
+import { SwitchMappingSection } from './SwitchMappingSection';
+import { ClientFeaturesSection } from './ClientFeaturesSection';
+import { useFeatureAccess } from '../../context/RoleContext';
 
 // Drawers & Modals
 import { AddEditUserDrawer } from './AddEditUserDrawer';
@@ -57,7 +62,11 @@ export type UserSettingsTab =
   | 'registry' 
   | 'clients' 
   | 'my-access' 
-  | 'audit';
+  | 'audit'
+  | 'switch-mapping'
+  | 'export-permissions'
+  | 'document-rules'
+  | 'client-features';
 
 interface UserSettingsModuleProps {
   initialActiveTab?: UserSettingsTab;
@@ -118,6 +127,11 @@ export const UserSettingsModule: React.FC<UserSettingsModuleProps> = ({
   // Quick Role Assignment drawer state
   const [isAssignDrawerOpen, setIsAssignDrawerOpen] = useState(false);
   const [assignUserTarget, setAssignUserTarget] = useState<UserAccount | null>(null);
+
+  const exportAccess = useFeatureAccess('ob-export');
+  const switchAccess = useFeatureAccess('user-switch');
+  const fileSizeAccess = useFeatureAccess('file-size');
+  const signatureAccess = useFeatureAccess('signature-upload');
 
   // Toast feedback
   const { message: toastMessage, showToast } = useToast();
@@ -559,6 +573,10 @@ export const UserSettingsModule: React.FC<UserSettingsModuleProps> = ({
             { value: 'clients', label: 'Client Access Mapping' },
             { value: 'my-access', label: 'My Access' },
             ...(currentUserRole !== 'HR' ? [{ value: 'audit', label: 'Access Audit Log' }] : []),
+            ...(switchAccess !== 'none' ? [{ value: 'switch-mapping', label: 'Switch Mapping' }] : []),
+            ...(exportAccess !== 'none' ? [{ value: 'export-permissions', label: 'Export Permissions' }] : []),
+            ...(fileSizeAccess !== 'none' ? [{ value: 'document-rules', label: 'Document Rules' }] : []),
+            ...(signatureAccess !== 'none' ? [{ value: 'client-features', label: 'Client Features' }] : []),
           ]}
         />
         {/* 1. USERS & ACCESS */}
@@ -633,6 +651,11 @@ export const UserSettingsModule: React.FC<UserSettingsModuleProps> = ({
             roleDefinition={currentUserRole === 'Super Admin' ? roles[0] : currentUserRole === 'Admin' ? adminRoleDef : hrRoleDef}
           />
         )}
+
+        {activeSection === 'switch-mapping' && switchAccess !== 'none' && <SwitchMappingSection onShowToast={showToast} />}
+        {activeSection === 'export-permissions' && exportAccess !== 'none' && <ExportPermissionsSection onShowToast={showToast} />}
+        {activeSection === 'document-rules' && fileSizeAccess !== 'none' && <DocumentRulesSection onShowToast={showToast} />}
+        {activeSection === 'client-features' && signatureAccess !== 'none' && <ClientFeaturesSection onShowToast={showToast} />}
 
         {/* 7. ACCESS AUDIT LOG */}
         {activeSection === 'audit' && (

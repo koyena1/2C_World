@@ -14,7 +14,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({ clients }) => 
   <SectionCard
     title="Client-wise Analytics"
     subtitle="Onboarding progress and issues by client"
-    className="xl:col-span-12 2xl:col-span-8 xl:order-3 2xl:order-2"
+    className="order-4 xl:order-none"
     action={
       <span className="tone-violet tone-chip w-8 h-8 rounded-lg flex items-center justify-center shrink-0" aria-hidden>
         <Building2 className="w-4 h-4" />

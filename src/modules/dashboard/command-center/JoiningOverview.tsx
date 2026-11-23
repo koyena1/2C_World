@@ -42,7 +42,7 @@ export const JoiningOverview: React.FC<JoiningOverviewProps> = ({ data, onOpenCa
     <SectionCard
       title="Upcoming Joinings & Readiness"
       subtitle="Today's and next 7 days' joiners with readiness status"
-      className="xl:col-span-8"
+      className="order-2 xl:order-none"
       action={
         <span className="tone-warn tone-chip w-8 h-8 rounded-lg flex items-center justify-center shrink-0" aria-hidden>
           <CalendarClock className="w-4 h-4" />
@@ -50,7 +50,7 @@ export const JoiningOverview: React.FC<JoiningOverviewProps> = ({ data, onOpenCa
       }
     >
       <CategoryTabs
-        className="-mt-1 mb-2 -mx-1"
+        className="-mt-2 mb-1 -mx-1"
         value={tab}
         onChange={(v) => setTab(v as JoiningTab)}
         tabs={[
@@ -64,7 +64,7 @@ export const JoiningOverview: React.FC<JoiningOverviewProps> = ({ data, onOpenCa
       ) : (
         <>
           {/* column labels (tablet / desktop) */}
-          <div className={`hidden md:grid ${COLS} gap-3 px-2 py-2 rounded-lg bg-[color:var(--cc-row-hover)] cc-muted text-[11px] font-semibold uppercase tracking-wider`}>
+          <div className={`hidden md:grid ${COLS} gap-3 px-2 py-1.5 rounded-lg bg-[color:var(--cc-row-hover)] cc-muted text-[11px] font-semibold uppercase tracking-wider`}>
             <span>Candidate</span>
             <span>Client</span>
             <span>Designation</span>
@@ -81,7 +81,7 @@ export const JoiningOverview: React.FC<JoiningOverviewProps> = ({ data, onOpenCa
                   <button
                     type="button"
                     onClick={() => onOpenCandidate(c.id)}
-                    className="cc-row w-full text-left px-2 py-2.5 rounded-lg transition-colors"
+                    className="cc-row w-full text-left px-2 py-1.5 rounded-lg transition-colors"
                   >
                     {/* tablet / desktop: one aligned row */}
                     <span className={`hidden md:grid ${COLS} items-center gap-3 text-xs`}>

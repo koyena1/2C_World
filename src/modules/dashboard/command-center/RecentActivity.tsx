@@ -19,7 +19,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ events }) => (
   <SectionCard
     title="Recent Activity"
     subtitle="Latest onboarding, verification and offer updates"
-    className="xl:col-span-7 2xl:col-span-5 xl:order-2 2xl:order-4"
+    className="order-6 xl:order-none"
     action={
       <span className="tone-teal tone-chip w-8 h-8 rounded-lg flex items-center justify-center shrink-0" aria-hidden>
         <History className="w-4 h-4" />

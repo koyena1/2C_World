@@ -33,6 +33,7 @@ import { SectionCard, Chip, ProgressBar } from '../dashboard/command-center/shar
 import { ImportStatusChip } from './ImportStatusChip';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
+import { AllowedFileSizeHint } from '../../components/common/AllowedFileSizeHint';
 interface ImportTypeWorkspaceProps {
   importType: ImportTypeDefinition;
   onBackToHub: () => void;
@@ -456,6 +457,7 @@ export const ImportTypeWorkspace: React.FC<ImportTypeWorkspaceProps> = ({
               <div>
                 <p className="cc-title text-xs font-bold">Click to browse or drag and drop your spreadsheet here</p>
                 <p className="cc-muted text-[11px] mt-1">Supports Microsoft Excel (.xlsx, .xls) and Comma-Separated Values (.csv)</p>
+                <AllowedFileSizeHint rule="bulk" className="mt-0.5" />
               </div>
               <div className="cc-muted flex items-center gap-2 text-[10px] font-mono">
                 <span>Standard UTF-8 Encoding</span>

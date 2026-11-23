@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { Candidate, FilterOptions, JoiningStatus } from '../../types/onboarding';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { ExportCsvControl } from '../hr-ops/ExportCsvControl';
 import { FilterDrawer } from './FilterDrawer';
 import { CandidatePreviewDrawer } from './CandidatePreviewDrawer';
 import { useTheme } from '../../hooks/useTheme';
@@ -567,14 +568,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
           subtitle="Search, filter, track onboarding milestones, statutory KYC, and manage all candidate dossiers"
           actions={
             <>
-              <button
-                type="button"
-                onClick={() => showToast(`Exported ${filteredCandidates.length} candidate records with statutory fields to CSV.`)}
-                className="px-3 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:shadow-none"
-              >
-                <Download className="w-3.5 h-3.5 text-slate-400" />
-                <span className="hidden sm:inline">Export CSV</span>
-              </button>
+              <ExportCsvControl candidates={filteredCandidates} onDone={showToast} />
               <button
                 type="button"
                 onClick={onOpenInviteModal}

@@ -14,6 +14,9 @@ import { RosterSubmodule } from './RosterSubmodule';
 import { CyclesMusterSubmodule } from './CyclesMusterSubmodule';
 import { GeoFenceSubmodule } from './GeoFenceSubmodule';
 import { OvertimeSubmodule } from './OvertimeSubmodule';
+import { RegularizationSubmodule } from './RegularizationSubmodule';
+import { NotificationsSubmodule } from './NotificationsSubmodule';
+import { useFeatureAccess } from '../../context/RoleContext';
 import { 
   AttendanceClientProfile, 
   ATTENDANCE_CLIENTS,
@@ -38,6 +41,8 @@ export const AttendanceModule: React.FC = () => {
     employeeCount: 106
   });
   const { message: toastMessage, showToast } = useToast();
+  const regularizationAccess = useFeatureAccess('attendance-regularization');
+  const notificationsAccess = useFeatureAccess('app-notifications');
 
   const handleContextChange = (clientId: string, locationId: string, branchId: string) => {
     setSelectedClientId(clientId);
@@ -83,6 +88,8 @@ export const AttendanceModule: React.FC = () => {
     { id: 'Cycles', label: 'Cycles & Muster' },
     { id: 'Geo Fence', label: 'Geo Fence' },
     { id: 'Overtime Config', label: 'Overtime Config' },
+    ...(regularizationAccess !== 'none' ? [{ id: 'Regularization', label: 'Regularization' }] : []),
+    ...(notificationsAccess !== 'none' ? [{ id: 'Notifications', label: 'Notifications' }] : []),
   ];
 
   return (
@@ -166,6 +173,14 @@ export const AttendanceModule: React.FC = () => {
 
         {activeTab === 'Overtime Config' && (
           <OvertimeSubmodule onShowToast={showToast} />
+        )}
+
+        {activeTab === 'Regularization' && regularizationAccess !== 'none' && (
+          <RegularizationSubmodule onShowToast={showToast} clientName={selectedClient.name} />
+        )}
+
+        {activeTab === 'Notifications' && notificationsAccess !== 'none' && (
+          <NotificationsSubmodule onShowToast={showToast} clientName={selectedClient.name} />
         )}
       </PageBody>
     </div>

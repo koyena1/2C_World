@@ -4,6 +4,10 @@ import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
 import { fullyVerifiedTrend, kycRecordTrend, totalCandidatesTrend } from '../../utils/candidateTrends';
 import { Chip } from '../dashboard/command-center/shared';
+import { CategoryTabs } from '../../components/page/CategoryTabs';
+import { useFeatureAccess } from '../../context/RoleContext';
+import { KycDashboardView } from './KycDashboardView';
+import { KycReportsView } from './KycReportsView';
 import { Toast } from '../../components/ui/Toast';
 import { useToast } from '../../hooks/useToast';
 import {
@@ -56,7 +60,7 @@ interface KycVerificationWorkspaceProps {
   onOpenCandidate360: (candidate: Candidate) => void;
 }
 
-export const KycVerificationWorkspace: React.FC<KycVerificationWorkspaceProps> = ({
+const KycVerificationDesk: React.FC<KycVerificationWorkspaceProps> = ({
   candidates,
   activeCandidate: propActiveCandidate,
   onSelectCandidate,
@@ -1290,6 +1294,37 @@ export const KycVerificationWorkspace: React.FC<KycVerificationWorkspaceProps> =
         </div>
       )}
       </PageBody>
+    </div>
+  );
+};
+
+/** Req 10: tab bar over the existing Verification Desk plus the Dashboard and Reports views. */
+export const KycVerificationWorkspace: React.FC<KycVerificationWorkspaceProps> = (props) => {
+  const reportsAccess = useFeatureAccess('kyc-reports');
+  const [tab, setTab] = useState<'desk' | 'dashboard' | 'reports'>('desk');
+  const showExtra = reportsAccess !== 'none';
+  const activeTab = showExtra ? tab : 'desk';
+
+  return (
+    <div className="flex-1 flex flex-col">
+      {showExtra && (
+        <div className="cc-topbar border-b">
+          <div className="cc-container">
+            <CategoryTabs
+              value={activeTab}
+              onChange={(v) => setTab(v as 'desk' | 'dashboard' | 'reports')}
+              tabs={[
+                { value: 'desk', label: 'Verification Desk' },
+                { value: 'dashboard', label: 'Dashboard' },
+                { value: 'reports', label: 'Reports' },
+              ]}
+            />
+          </div>
+        </div>
+      )}
+      {activeTab === 'desk' && <KycVerificationDesk {...props} />}
+      {activeTab === 'dashboard' && <KycDashboardView candidates={props.candidates} />}
+      {activeTab === 'reports' && <KycReportsView candidates={props.candidates} />}
     </div>
   );
 };

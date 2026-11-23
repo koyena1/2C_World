@@ -25,7 +25,8 @@ import {
 import { CandidatePipeline } from './command-center/CandidatePipeline';
 import { ClientAnalytics } from './command-center/ClientAnalytics';
 import { JoiningOverview } from './command-center/JoiningOverview';
-import { KpiOverview } from './command-center/KpiOverview';
+import { hrOpsActions } from './command-center/HrOpsExtras';
+import { OperationalOverview } from './command-center/OperationalOverview';
 import { PendingActions } from './command-center/PendingActions';
 import { RecentActivity } from './command-center/RecentActivity';
 import { RecruiterPerformance } from './command-center/RecruiterPerformance';
@@ -36,6 +37,8 @@ interface HrOpsDashboardProps {
   onNavigate: (view: string) => void;
   onOpenInviteModal?: () => void;
   onOpenCandidateProfile?: (candidateId: string) => void;
+  /** Active role: decides which module shortcuts are shown. */
+  role: string;
 }
 
 const formatReferenceDate = (iso: string) =>
@@ -55,6 +58,7 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
   onNavigate,
   onOpenInviteModal,
   onOpenCandidateProfile,
+  role,
 }) => {
   const [clientFilter, setClientFilter] = useState<string>('');
   const [recruiterFilter, setRecruiterFilter] = useState<string>('');
@@ -84,7 +88,7 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
   );
   const pipeline = useMemo(() => computePipeline(candidates), [candidates]);
   const statusMix = useMemo(() => computeStatusMix(candidates), [candidates]);
-  const pendingActions = useMemo(() => computePendingActions(candidates), [candidates]);
+  const pendingActions = useMemo(() => [...computePendingActions(candidates), ...hrOpsActions(role)], [candidates, role]);
   const clients = useMemo(() => computeClientMetrics(candidates), [candidates]);
   const recruiters = useMemo(() => computeRecruiterMetrics(candidates), [candidates]);
   const joining = useMemo(() => computeJoiningOverview(candidates), [candidates]);
@@ -132,26 +136,32 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
       />
 
       <div className="cc-container cc-stack py-5">
-        {/* 1. At a glance */}
-        <KpiOverview kpis={kpis} trends={kpiTrends} onNavigate={onNavigate} />
+        {/* 1. Overview: the three primary KPIs first, then the operational figures */}
+        <OperationalOverview
+          kpis={kpis}
+          trends={kpiTrends}
+          role={role}
+          pendingActions={{ total: pendingActions.reduce((n, a) => n + a.count, 0), categories: pendingActions.filter((a) => a.count > 0).length }}
+          onNavigate={onNavigate}
+        />
 
-        {/* 2. Daily priorities: what needs action, who joins next */}
-        <div className="cc-grid grid-cols-1 xl:grid-cols-12">
-          <PendingActions actions={pendingActions} onNavigate={onNavigate} />
-          <JoiningOverview
-            data={joining}
-            onOpenCandidate={(id) => (onOpenCandidateProfile ? onOpenCandidateProfile(id) : onNavigate('directory'))}
-          />
-        </div>
-
-        {/* 3. Funnel, client health, recruiters, activity.
-            >= 2xl: Pipeline + Client side by side, Recruiters + Activity side by side.
-            below: Pipeline + Activity, then each table gets a full-width row so nothing is clipped. */}
-        <div className="cc-grid grid-cols-1 xl:grid-cols-12">
-          <CandidatePipeline stages={pipeline} statusMix={statusMix} total={kpis.total} />
-          <ClientAnalytics clients={clients} />
-          <RecruiterPerformance recruiters={recruiters} />
-          <RecentActivity events={activity} />
+        {/* 2. Two independent columns from xl up (each card keeps its own height, so expanding Action Required
+            only lengthens the left column and the right column's cards sit directly under each other: no gaps).
+            Below xl the column wrappers disappear (display: contents) and the cards stack in the order set by their order-N classes. */}
+        <div className="cc-grid grid-cols-1 xl:grid-cols-12 items-start">
+          <div className="contents xl:flex xl:flex-col xl:col-span-4 xl:gap-[var(--cc-gap)] xl:min-w-0">
+            <PendingActions actions={pendingActions} onNavigate={onNavigate} />
+            <CandidatePipeline stages={pipeline} statusMix={statusMix} total={kpis.total} />
+            <RecentActivity events={activity} />
+          </div>
+          <div className="contents xl:flex xl:flex-col xl:col-span-8 xl:gap-[var(--cc-gap)] xl:min-w-0">
+            <JoiningOverview
+              data={joining}
+              onOpenCandidate={(id) => (onOpenCandidateProfile ? onOpenCandidateProfile(id) : onNavigate('directory'))}
+            />
+            <ClientAnalytics clients={clients} />
+            <RecruiterPerformance recruiters={recruiters} />
+          </div>
         </div>
       </div>
     </div>

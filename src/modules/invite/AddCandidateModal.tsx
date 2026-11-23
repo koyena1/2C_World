@@ -28,6 +28,8 @@ import { Candidate } from '../../types/onboarding';
 import { useTheme } from '../../hooks/useTheme';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
+import { QrOnboardingPanel } from './QrOnboardingPanel';
+import { useFeatureAccess } from '../../context/RoleContext';
 interface AddCandidateModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -80,7 +82,7 @@ const CLIENT_ONBOARDING_RULES: Record<string, {
   },
 };
 
-const SOURCING_CHANNELS = [
+export const SOURCING_CHANNELS = [
   'Naukri.com',
   'LinkedIn Recruiter',
   'Internal Referral',
@@ -99,9 +101,12 @@ export const AddCandidateModal: React.FC<AddCandidateModalProps> = ({
   onOpenCandidate360,
 }) => {
   const { isDark } = useTheme();
+  const qrAccess = useFeatureAccess('qr-onboarding');
 
   // Stepper state: 1. Client Selection, 2. Candidate Contact Details, 3. Preview & Invite, 4. Success State
   const [step, setStep] = useState<number>(1);
+  // Req 8: 'invite' = existing stepper flow, 'qr' = QR code generation panel
+  const [mode, setMode] = useState<'invite' | 'qr'>('invite');
 
   // Step 1: Client Selection & Optional Placement Details
   const [clientName, setClientName] = useState<string>('Tata Consultancy Services');
@@ -206,6 +211,7 @@ export const AddCandidateModal: React.FC<AddCandidateModalProps> = ({
   const handleForceClose = () => {
     setShowDiscardConfirmation(false);
     handleResetForm();
+    setMode('invite');
     onClose();
   };
 
@@ -449,7 +455,7 @@ export const AddCandidateModal: React.FC<AddCandidateModalProps> = ({
               </span>
               <div>
                 <h2 id="add-candidate-modal-title" className={`text-sm sm:text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                  {step === 4 ? 'Invitation Dispatched Successfully' : 'Add Candidate & Send Invitation'}
+                  {mode === 'qr' ? 'Invite Candidate via QR Code' : step === 4 ? 'Invitation Dispatched Successfully' : 'Add Candidate & Send Invitation'}
                 </h2>
                 <p className={`text-[11px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   Standard candidate onboarding workflow with statutory compliance rules
@@ -469,8 +475,30 @@ export const AddCandidateModal: React.FC<AddCandidateModalProps> = ({
           </button>
         </div>
 
+        {/* Mode switch: Send Invite (existing flow) | QR Code */}
+        {qrAccess !== 'none' && (step === 1 || mode === 'qr') && (
+          <div className={`px-6 py-2.5 border-b shrink-0 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+            <div className="inline-flex rounded-lg border p-0.5 border-slate-300 dark:border-slate-700" role="tablist" aria-label="Invite mode">
+              {([['invite', 'Send Invite'], ['qr', 'QR Code']] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === key}
+                  onClick={() => setMode(key)}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                    mode === key ? 'bg-sky-600 text-white' : isDark ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Stepper Progress Bar (Fixed, visible while scrolling) */}
-        {step < 4 && (
+        {mode === 'invite' && step < 4 && (
           <div className={`px-6 py-3 border-b shrink-0 ${
             isDark ? 'border-slate-800 bg-slate-950/40' : 'border-slate-100 bg-white'
           }`}>
@@ -524,10 +552,14 @@ export const AddCandidateModal: React.FC<AddCandidateModalProps> = ({
         {/* Modal Scrollable Body */}
         <div className={`flex-1 overflow-y-auto p-5 sm:p-7 text-xs space-y-5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
           
+          {mode === 'qr' && qrAccess !== 'none' && (
+            <QrOnboardingPanel onCandidateAdded={onCandidateAdded} sourcingChannels={SOURCING_CHANNELS} />
+          )}
+
           {/* ========================================================================= */}
           {/* STEP 1: CLIENT SELECTION */}
           {/* ========================================================================= */}
-          {step === 1 && (
+          {mode === 'invite' && step === 1 && (
             <div className="space-y-4">
               <div className={`rounded-xl p-4 border ${
                 isDark ? 'bg-sky-950/40 border-sky-800/80 text-sky-200' : 'bg-sky-50/80 border-sky-200/90 text-sky-950'
@@ -1344,7 +1376,7 @@ export const AddCandidateModal: React.FC<AddCandidateModalProps> = ({
         </div>
 
         {/* Modal Persistent Footer (Fixed, visible while scrolling) */}
-        {step < 4 && (
+        {mode === 'invite' && step < 4 && (
           <div className={`px-6 py-4 border-t flex items-center justify-between shrink-0 ${
             isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200'
           }`}>

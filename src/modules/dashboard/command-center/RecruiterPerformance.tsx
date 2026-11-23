@@ -15,7 +15,7 @@ export const RecruiterPerformance: React.FC<RecruiterPerformanceProps> = ({ recr
   <SectionCard
     title="Recruiter Performance"
     subtitle="Key onboarding metrics by recruiter"
-    className="xl:col-span-12 2xl:col-span-7 xl:order-4 2xl:order-3"
+    className="order-5 xl:order-none"
     action={
       <span className="tone-info tone-chip w-8 h-8 rounded-lg flex items-center justify-center shrink-0" aria-hidden>
         <UserRound className="w-4 h-4" />

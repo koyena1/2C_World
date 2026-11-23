@@ -34,3 +34,31 @@ export const Chip: React.FC<{ tone: Tone; children: React.ReactNode; className?:
     {children}
   </span>
 );
+
+interface CompactToggleProps {
+  expanded: boolean;
+  onClick: () => void;
+  /** Label while collapsed, e.g. "View More" or "View". */
+  collapsedLabel: string;
+  expandedLabel?: string;
+  className?: string;
+}
+
+/** Small subtle expand/collapse control that sits beside a section heading. */
+export const CompactToggle: React.FC<CompactToggleProps> = ({ expanded, onClick, collapsedLabel, expandedLabel = 'Show Less', className }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-expanded={expanded}
+    className={cn(
+      'inline-flex items-center gap-1 h-6 px-2 rounded-md border border-[color:var(--cc-card-border)] cc-muted text-[11px] font-semibold',
+      'hover:text-[color:var(--cc-title)] hover:border-[color:var(--cc-hover-border)] transition-colors whitespace-nowrap',
+      className
+    )}
+  >
+    {expanded ? expandedLabel : collapsedLabel}
+    <svg viewBox="0 0 24 24" className={cn('w-3 h-3 transition-transform', expanded && 'rotate-180')} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  </button>
+);

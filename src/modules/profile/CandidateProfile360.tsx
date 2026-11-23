@@ -30,6 +30,7 @@ import { useToast } from '../../hooks/useToast';
 import { Toast } from '../../components/ui/Toast';
 import { PageHeader } from '../../components/page/PageHeader';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
+import { CandidateComplianceTab } from './CandidateComplianceTab';
 import { Chip, ProgressBar } from '../dashboard/command-center/shared';
 import { DocumentPreviewModal, DocumentPreviewData } from '../../components/common/DocumentPreviewModal';
 
@@ -38,12 +39,15 @@ interface CandidateProfile360Props {
   candidate: Candidate;
   onOpenKycDesk: (cand: Candidate) => void;
   onBackToDirectory: () => void;
+  /** Opens the Support Ticket page with this candidate prefilled. */
+  onRaiseTicket?: (candidate: Candidate) => void;
 }
 
 export const CandidateProfile360: React.FC<CandidateProfile360Props> = ({
   candidate: initialCandidate,
   onOpenKycDesk,
   onBackToDirectory,
+  onRaiseTicket,
 }) => {
   const { isDark } = useTheme();
   const [candidate, setCandidate] = useState<Candidate>(initialCandidate);
@@ -111,6 +115,7 @@ export const CandidateProfile360: React.FC<CandidateProfile360Props> = ({
     { id: 'bank', label: 'Bank & ₹1 Test', completion: candidate.pennyTestStatus === 'Verified' ? 100 : 50 },
     { id: 'documents', label: 'Documents', completion: 80 },
     { id: 'letters', label: 'Letters & Offer', completion: 100 },
+    { id: 'compliance', label: 'Compliance & Signature', completion: 100 },
     { id: 'timeline', label: 'Timeline & Logs', completion: 100 },
   ];
 
@@ -1022,6 +1027,8 @@ export const CandidateProfile360: React.FC<CandidateProfile360Props> = ({
             )}
           </div>
         )}
+
+        {activeTab === 'compliance' && <CandidateComplianceTab candidate={candidate} onRaiseTicket={onRaiseTicket} />}
 
         {/* Tab 9: Letters & Offer Acceptance */}
         {activeTab === 'letters' && (

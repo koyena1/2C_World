@@ -6,16 +6,22 @@
 import {
   Calendar,
   CalendarCheck,
+  FileSignature,
   FileText,
+  GraduationCap,
+  LifeBuoy,
   LayoutDashboard,
   Settings,
   ShieldCheck,
   UploadCloud,
   UserCheck,
   UserPlus,
+  Wallet,
+  Scale,
   Users,
   Workflow,
 } from 'lucide-react';
+import { rolesForView } from '../../modules/hr-ops/hrOps.config';
 import type { SidebarBranding, SidebarGroupConfig, SidebarUser } from './sidebar.types';
 
 export const SIDEBAR_STORAGE_KEY = '2coms_sidebar_collapsed';
@@ -108,12 +114,50 @@ export const SIDEBAR_GROUPS: SidebarGroupConfig[] = [
         label: 'Attendance & Cycles',
         viewId: 'attendance',
         icon: CalendarCheck,
+        notify: 'attendanceRegularization',
       },
       {
         id: 'holidays',
         label: 'Holiday Masters',
         viewId: 'holidays',
         icon: Calendar,
+      },
+      {
+        id: 'contract-exit',
+        label: 'Contract & Exit',
+        viewId: 'contract-exit',
+        icon: FileSignature,
+        notify: 'contractExit',
+        roles: rolesForView('contract-exit'),
+      },
+      {
+        id: 'compliance',
+        label: 'Compliance',
+        viewId: 'compliance',
+        icon: Scale,
+        notify: 'compliance',
+        roles: rolesForView('compliance'),
+      },
+      {
+        id: 'payroll',
+        label: 'Payroll',
+        viewId: 'payroll',
+        icon: Wallet,
+        roles: rolesForView('payroll'),
+      },
+      {
+        id: 'lms',
+        label: 'LMS',
+        viewId: 'lms',
+        icon: GraduationCap,
+        roles: rolesForView('lms'),
+      },
+      {
+        id: 'support-ticket',
+        label: 'Support Ticket',
+        viewId: 'support-ticket',
+        icon: LifeBuoy,
+        roles: rolesForView('support-ticket'),
       },
       {
         id: 'profile',
@@ -126,6 +170,7 @@ export const SIDEBAR_GROUPS: SidebarGroupConfig[] = [
         label: 'User Settings',
         viewId: 'usersettings',
         icon: Settings,
+        roles: rolesForView('usersettings'),
       },
     ],
   },
@@ -136,6 +181,7 @@ export const SIDEBAR_USERS: Record<string, SidebarUser> = {
   admin: { name: 'Ananya (Ops Lead)', email: 'ananya.m@2coms.com', initials: 'OP', roleLabel: 'Admin' },
   candidate: { name: 'Priya Sharma (Candidate)', initials: 'CD', roleLabel: 'Candidate' },
   hr: { name: 'Vikram (Client HR)', initials: 'HR', roleLabel: 'HR' },
+  hrbp: { name: 'HR Business Partner', initials: 'HB', roleLabel: 'HRBP' },
 };
 
 export const DEFAULT_SIDEBAR_USER_KEY = 'hr';

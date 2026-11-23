@@ -87,7 +87,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   // Group open/closed state (accordion). Only `defaultOpen` groups start open; clicking a
   // heading opens that group and closes every other one (clicking an open heading closes it).
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(groups.map((g) => [g.id, g.defaultOpen ?? false]))
+    Object.fromEntries(groups.map((g) => [g.id, (g.defaultOpen ?? false) || g.items.some((i) => isItemActive(i, currentView))]))
   );
 
   const userKey = users[role ?? DEFAULT_SIDEBAR_USER_KEY] ? (role ?? DEFAULT_SIDEBAR_USER_KEY) : DEFAULT_SIDEBAR_USER_KEY;

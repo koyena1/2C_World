@@ -81,6 +81,8 @@ export const FloatingMenu: React.FC<FloatingMenuProps> = ({ anchor, onClose, cla
           maxHeight: pos?.maxHeight,
           // measured first, shown once placed (no flash in the wrong spot)
           visibility: pos ? 'visible' : 'hidden',
+          // never animate left/top: a caller's `duration-*` class would otherwise glide the menu from its first spot
+          transition: 'none',
         }}
       >
         {children}

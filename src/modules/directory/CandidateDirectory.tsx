@@ -330,7 +330,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                                   <FloatingMenu
                                     anchor={menuAnchor}
                                     onClose={() => setActiveActionMenuId(null)}
-                                    className={`w-52 rounded-lg shadow-xl border py-1 text-left text-xs divide-y animate-in fade-in duration-100 ${
+                                    className={`w-52 rounded-lg shadow-xl border py-1 text-left text-xs divide-y dropdown-pop ${
                                       isDark
                                         ? 'bg-slate-900 border-slate-750 divide-slate-800 text-slate-200'
                                         : 'bg-white border-slate-200 divide-slate-100 text-slate-700'

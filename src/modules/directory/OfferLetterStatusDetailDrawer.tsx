@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { downloadCsv } from '../../utils/download';
+import { useRole } from '../../context/RoleContext';
+import { applyExportPolicy } from '../hr-ops/exportPolicyStore';
 import {
   X,
   FileText,
@@ -84,6 +86,7 @@ export const OfferLetterStatusDetailDrawer: React.FC<OfferLetterStatusDetailDraw
     });
   }, [statusCandidates, selectedClientFilter, searchQuery]);
 
+  const { role: exportRole } = useRole();
   if (!isOpen || !status) return null;
 
   // Status-specific themes & metadata (without invented 24h or mandatory Aadhaar eSign rules)
@@ -150,7 +153,8 @@ export const OfferLetterStatusDetailDrawer: React.FC<OfferLetterStatusDetailDraw
       c.grossSalaryMonthly,
       `"${c.blockingIssue}"`
     ]);
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const allowed = applyExportPolicy(headers, rows, exportRole);
+    const csvContent = [allowed.headers.join(','), ...allowed.rows.map((r) => r.join(','))].join('\n');
     downloadCsv(csvContent, `${status.replace(/\s+/g, '_')}_Candidates_${new Date().toISOString().split('T')[0]}.csv`);
   };
 

@@ -72,7 +72,7 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
     <div className="space-y-4">
       {/* Top Summary Metrics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3.5 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3.5 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Selected</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -86,7 +86,7 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-xl p-3.5 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-xl p-3.5 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Pending</span>
             <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -100,7 +100,7 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Not Linked</span>
             <UserX className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -114,7 +114,7 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-xl p-3.5 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-xl p-3.5 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Employees</span>
             <Users className="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -130,7 +130,7 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
       </div>
 
       {/* Control Bar: Status Tabs, Search & Export */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Status Filter Tabs */}
         <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
           {(['All', 'Selected', 'Pending', 'Not Linked'] as const).map(tab => (

@@ -139,7 +139,7 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
       {/* Summary Metrics & Entitlement Policy Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Pooled (Mandatory + Choice Pool) */}
-        <div className="bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 shadow-2xs relative overflow-hidden">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 shadow-2xs relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-sky-800 dark:text-sky-300">Total Pooled</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
@@ -158,7 +158,7 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
         </div>
 
         {/* Mandatory Count */}
-        <div className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Mandatory Holidays</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -177,7 +177,7 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
         </div>
 
         {/* Choice Pool */}
-        <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-800 dark:text-amber-300">Choice Pool</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
@@ -196,7 +196,7 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
         </div>
 
         {/* Choice Selections & Visibility */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Intake Progress</span>
             <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${

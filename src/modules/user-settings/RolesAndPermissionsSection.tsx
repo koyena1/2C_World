@@ -70,7 +70,7 @@ export const RolesAndPermissionsSection: React.FC<RolesAndPermissionsSectionProp
           return (
             <div
               key={role.id}
-              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs p-5 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all"
+              className="cc-card-hover rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs p-5 flex flex-col justify-between"
             >
               {/* Header */}
               <div className="space-y-3">

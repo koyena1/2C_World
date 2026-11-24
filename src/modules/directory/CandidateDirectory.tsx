@@ -1,3 +1,4 @@
+import { FloatingMenu } from '../../components/ui/FloatingMenu';
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
@@ -104,6 +105,12 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [expandedCardIds, setExpandedCardIds] = useState<string[]>([]);
   const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
+  // The three-dot button of the open row menu: the menu is placed next to it (see FloatingMenu).
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const toggleActionMenu = (id: string, trigger: HTMLElement) => {
+    setMenuAnchor(trigger);
+    setActiveActionMenuId((current) => (current === id ? null : id));
+  };
   const { message: toastMessage, showToast } = useToast(3000);
   const [statusChangeModalCandidate, setStatusChangeModalCandidate] = useState<Candidate | null>(null);
   const [newSelectedStatus, setNewSelectedStatus] = useState<JoiningStatus>('Joined');
@@ -320,12 +327,10 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
   // Row action menu (shared by the desktop table row and the phone card)
   const renderActionMenu = (candidate: Candidate) => (
     activeActionMenuId === candidate.id && (
-                                  <>
-                                    <div
-                                      className="fixed inset-0 z-20"
-                                      onClick={() => setActiveActionMenuId(null)}
-                                    />
-                                    <div className={`absolute right-0 mt-1 w-52 rounded-lg shadow-xl border py-1 z-30 text-left text-xs divide-y animate-in fade-in duration-100 ${
+                                  <FloatingMenu
+                                    anchor={menuAnchor}
+                                    onClose={() => setActiveActionMenuId(null)}
+                                    className={`w-52 rounded-lg shadow-xl border py-1 text-left text-xs divide-y animate-in fade-in duration-100 ${
                                       isDark
                                         ? 'bg-slate-900 border-slate-750 divide-slate-800 text-slate-200'
                                         : 'bg-white border-slate-200 divide-slate-100 text-slate-700'
@@ -478,8 +483,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                                           <span>Delete Candidate</span>
                                         </button>
                                       </div>
-                                    </div>
-                                  </>
+                                  </FloatingMenu>
                                 )
   );
 
@@ -1377,7 +1381,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                 return (
                   <article
                     key={candidate.id}
-                    className={`cc-card p-3 space-y-2.5 ${isSelected ? 'ring-1 ring-sky-500/70' : ''}`}
+                    className={`cc-card cc-card-hover p-3 space-y-2.5 ${isSelected ? 'cc-card-selected ring-1 ring-sky-500/70' : ''}`}
                   >
                     {/* Identity + status */}
                     <div className="flex items-start gap-2.5">
@@ -1447,7 +1451,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                       <div className="relative ml-auto">
                         <button
                           type="button"
-                          onClick={() => setActiveActionMenuId(activeActionMenuId === candidate.id ? null : candidate.id)}
+                          onClick={(e) => toggleActionMenu(candidate.id, e.currentTarget)}
                           className="cc-page-btn"
                           aria-label="Candidate actions"
                         >
@@ -1778,11 +1782,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                               <div className="relative inline-block text-left">
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    setActiveActionMenuId(
-                                      activeActionMenuId === candidate.id ? null : candidate.id
-                                    )
-                                  }
+                                  onClick={(e) => toggleActionMenu(candidate.id, e.currentTarget)}
                                   className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                                     isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                                   }`}

@@ -935,28 +935,28 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
                   <span className="text-base font-bold text-sky-800 dark:text-sky-300 font-mono mt-0.5 block">{reportSingleDate}</span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Tuesday · Working Day</span>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Present On Duty</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400 font-mono">5 Staff</span>
                   </div>
                   <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium block mt-0.5">83.3% On Time</span>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Absent Today</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl font-bold text-rose-600 dark:text-rose-400 font-mono">1 Staff</span>
                   </div>
                   <span className="text-[11px] text-rose-500 dark:text-rose-400 font-medium block mt-0.5">Unplanned</span>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Late Arrivals</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl font-bold text-amber-700 dark:text-amber-400 font-mono">2 Staff</span>
                   </div>
                   <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium block mt-0.5">Exceeded Grace Window</span>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">On Approved Leave</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl font-bold text-indigo-700 dark:text-indigo-400 font-mono">1 Staff</span>
@@ -1327,22 +1327,22 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
             <div className="space-y-4">
               {/* MONTHLY SUMMARY KPI ROW */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+                <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Total Employees</span>
                   <span className="text-2xl font-bold text-slate-900 dark:text-white block font-mono">142</span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Active rostered headcount for August</span>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+                <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Total Present</span>
                   <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 block font-mono">3,218 Days</span>
                   <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">89.2% Overall Attendance Rate</span>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+                <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Total Absent</span>
                   <span className="text-2xl font-bold text-rose-600 dark:text-rose-400 block font-mono">184 Days</span>
                   <span className="text-[11px] text-rose-500 dark:text-rose-400 font-medium">5.1% Total Absenteeism</span>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+                <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Avg Work Hours</span>
                   <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 block font-mono">08h 42m / Day</span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Compliant (≥ 8h statutory rule)</span>

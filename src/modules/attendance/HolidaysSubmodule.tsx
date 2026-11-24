@@ -162,22 +162,22 @@ export const HolidaysSubmodule: React.FC<HolidaysSubmoduleProps> = ({ onShowToas
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Total Holidays in {selectedYear}</span>
           <span className="text-2xl font-bold text-slate-900 dark:text-white block font-mono mt-0.5">{holidays.length} Days</span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">Statutory gazetted calendar</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Mandatory National</span>
           <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 block font-mono mt-0.5">7 Days</span>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">100% Paid Statutory Rest</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">State Specific</span>
           <span className="text-2xl font-bold text-sky-600 dark:text-sky-400 block font-mono mt-0.5">1 Day</span>
           <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium">Telangana Formation Day</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Restricted / Optional</span>
           <span className="text-2xl font-bold text-amber-600 dark:text-amber-400 block font-mono mt-0.5">1 Day</span>
           <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Optional festival entitlement</span>

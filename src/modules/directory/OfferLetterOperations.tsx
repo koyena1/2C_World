@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { downloadCsv, downloadText } from '../../utils/download';
+import { useRole } from '../../context/RoleContext';
+import { applyExportPolicy } from '../hr-ops/exportPolicyStore';
 import {
   FileText,
   Send,
@@ -433,6 +435,7 @@ export const OfferLetterOperations: React.FC<OfferLetterOperationsProps> = ({
     );
   };
 
+  const { role: exportRole } = useRole();
   const handleExportCsv = () => {
     const headers = [
       'Candidate Name',
@@ -468,9 +471,10 @@ export const OfferLetterOperations: React.FC<OfferLetterOperationsProps> = ({
       c.annualCtc,
       `"${c.blockingIssue}"`
     ]);
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const allowed = applyExportPolicy(headers, rows, exportRole);
+    const csvContent = [allowed.headers.join(','), ...allowed.rows.map((r) => r.join(','))].join('\n');
     downloadCsv(csvContent, `Offer_Letter_Operations_Report_${new Date().toISOString().split('T')[0]}.csv`);
-    notify(`Exported ${filteredCandidates.length} offer letter records to CSV.`);
+    notify(`Exported ${filteredCandidates.length} offer letter records to CSV.${allowed.removed.length ? ` Excluded for your role: ${allowed.removed.join(', ')}.` : ''}`);
   };
 
   // ---------------------------------------------------------------------------
@@ -714,7 +718,7 @@ export const OfferLetterOperations: React.FC<OfferLetterOperationsProps> = ({
               }}
               title={`Click to filter the table by ${card.label}`}
               className={`cc-card cc-card-link tone-${card.tone} p-3 sm:p-4 flex flex-col gap-2 sm:gap-3 text-left select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 ${
-                active ? 'ring-2 ring-[color:var(--tone)]' : ''
+                active ? 'cc-card-selected ring-2 ring-[color:var(--tone)]' : ''
               }`}
             >
               <div className="flex items-center justify-between gap-2">

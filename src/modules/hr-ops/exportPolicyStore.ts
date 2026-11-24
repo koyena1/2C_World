@@ -106,3 +106,21 @@ export const useExportPolicy = (): ExportPolicyState => useSyncExternalStore(sub
 
 export const toCsv = (rows: string[][]): string =>
   rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+
+/** Columns of the other CSV exports that correspond to an export field (so the same policy applies everywhere). */
+const COLUMN_FIELD: Record<string, string> = { 'Gross Monthly': 'grossSalary', 'Annual CTC': 'grossSalary', 'Gross Salary': 'grossSalary', Phone: 'phone', Email: 'email' };
+
+/** Drops the columns the role may not export. `removed` lists them so the UI can tell the user. */
+export const applyExportPolicy = <T,>(headers: string[], rows: T[][], role: AppRole, userId?: string) => {
+  const allowed = new Set(getAllowedExportFields(role, userId));
+  const keep = headers.map((h) => !(h in COLUMN_FIELD) || allowed.has(COLUMN_FIELD[h]));
+  return {
+    headers: headers.filter((_, i) => keep[i]),
+    rows: rows.map((row) => row.filter((_, i) => keep[i])),
+    removed: headers.filter((_, i) => !keep[i]),
+  };
+};
+
+/** The app role a User Settings user belongs to (Super Admin / Admin -> admin, HR* -> hr, anything else -> hrbp). */
+export const roleOfSystemRole = (systemRole: string): AppRole =>
+  systemRole === 'Super Admin' || systemRole === 'Admin' ? 'admin' : systemRole.startsWith('HR') ? 'hr' : 'hrbp';

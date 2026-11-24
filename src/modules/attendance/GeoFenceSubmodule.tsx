@@ -170,22 +170,22 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="cc-card-hover bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Defined Sites</span>
           <span className="text-2xl font-bold text-slate-900 block font-mono mt-0.5">{locations.length}</span>
           <span className="text-[11px] text-slate-500">Across 3 metropolitan hubs</span>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="cc-card-hover bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Enrolled Mobile Users</span>
           <span className="text-2xl font-bold text-sky-700 block font-mono mt-0.5">218</span>
           <span className="text-[11px] text-sky-600 font-medium">GPS Geofence App enabled</span>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="cc-card-hover bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Strict Enforcement</span>
           <span className="text-2xl font-bold text-emerald-700 block font-mono mt-0.5">Active</span>
           <span className="text-[11px] text-emerald-600 font-medium">Blocks punches outside radius</span>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="cc-card-hover bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Wi-Fi Beacons</span>
           <span className="text-2xl font-bold text-slate-800 block font-mono mt-0.5">3 SSIDs</span>
           <span className="text-[11px] text-slate-500">Secondary verification layer</span>

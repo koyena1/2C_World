@@ -134,14 +134,13 @@ export const BulkImportHub: React.FC<BulkImportHubProps> = ({ onSelectImportType
 
         {/* Donut + recent activity */}
         <div className="cc-grid grid-cols-1 xl:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-          <SectionCard hoverable title="Import Categories" subtitle="Import workflows available per category">
+          <SectionCard title="Import Categories" subtitle="Import workflows available per category">
             <div className="flex-1 flex items-center justify-center">
               <DonutChart slices={donutSlices} total={totalImportTypes} caption="workflows" ariaLabel="Import workflows by category" />
             </div>
           </SectionCard>
 
           <SectionCard
-            hoverable
             title="Recent Global Import Activity"
             subtitle="System-wide audit trail of Excel imports processed across all modules"
             action={<span className="cc-muted text-[11px] font-mono whitespace-nowrap">Live Enterprise Activity</span>}

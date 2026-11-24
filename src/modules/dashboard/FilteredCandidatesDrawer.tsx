@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { useRole } from '../../context/RoleContext';
+import { applyExportPolicy } from '../hr-ops/exportPolicyStore';
 import {
   X,
   Search,
@@ -153,6 +155,7 @@ export const FilteredCandidatesDrawer: React.FC<FilteredCandidatesDrawerProps> =
   };
 
   // CSV Export
+  const { role: exportRole } = useRole();
   const handleExportCSV = () => {
     if (processedCandidates.length === 0) {
       if (onShowToast) onShowToast('No candidates available to export.');
@@ -191,7 +194,8 @@ export const FilteredCandidatesDrawer: React.FC<FilteredCandidatesDrawerProps> =
       `"${c.email}"`,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const allowed = applyExportPolicy(headers, rows, exportRole);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [allowed.headers.join(','), ...allowed.rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);

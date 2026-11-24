@@ -102,22 +102,22 @@ export const OvertimeSubmodule: React.FC<OvertimeSubmoduleProps> = ({ onShowToas
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Total OT Logged</span>
           <span className="text-2xl font-bold text-slate-900 dark:text-white block font-mono mt-0.5">11h 25m</span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">Across 4 qualifying staff</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">Total Est. Payout</span>
           <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 block font-mono mt-0.5">₹8,220</span>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Approved statutory wage</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block">Pending Supervisor Sign-Off</span>
           <span className="text-2xl font-bold text-amber-700 dark:text-amber-300 block font-mono mt-0.5">1 Claim</span>
           <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Requires supervisor action</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 block">Comp-Off Converted</span>
           <span className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 block font-mono mt-0.5">1 Day</span>
           <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">Credited to leave ledger</span>

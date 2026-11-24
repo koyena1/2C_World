@@ -158,7 +158,7 @@ export const InsuranceTab: React.FC<{ candidates: Candidate[] }> = ({ candidates
               const enrolled = mine.filter((e) => e.status === 'Enrolled').length;
               const pct = clientCandidates.length ? Math.round((enrolled / clientCandidates.length) * 100) : 0;
               return (
-                <div key={p.id} className="cc-card p-3.5 flex flex-col gap-3">
+                <div key={p.id} className="cc-card cc-card-hover p-3.5 flex flex-col gap-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5">

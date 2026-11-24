@@ -112,7 +112,7 @@ export const ComplianceFormsTab: React.FC<{ candidates: Candidate[] }> = ({ cand
                   setFormId(formId === f.id ? 'all' : f.id);
                   setLimit(PAGE_SIZE);
                 }}
-                className={cn('cc-card cc-card-hover text-left p-3.5 flex flex-col gap-2', formId === f.id && 'ring-2 ring-[color:var(--cc-accent)]')}
+                className={cn('cc-card cc-card-hover text-left p-3.5 flex flex-col gap-2', formId === f.id && 'cc-card-selected ring-2 ring-[color:var(--cc-accent)]')}
                 aria-pressed={formId === f.id}
               >
                 <div className="flex items-start justify-between gap-2">

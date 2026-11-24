@@ -170,22 +170,22 @@ export const ShiftsSubmodule: React.FC<ShiftsSubmoduleProps> = ({ onShowToast })
 
       {/* KPI Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Total Defined Shifts</span>
           <span className="text-2xl font-bold text-slate-900 dark:text-white block font-mono mt-0.5">{shifts.length}</span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">Active rotational patterns</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-sky-200 dark:border-sky-900/60 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-sky-200 dark:border-sky-900/60 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 block">Primary General Shift</span>
           <span className="text-2xl font-bold text-sky-700 dark:text-sky-300 block font-mono mt-0.5">86 Staff</span>
           <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium">09:00 AM — 06:00 PM</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 block">Rotational Night Shift</span>
           <span className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 block font-mono mt-0.5">6 Staff</span>
           <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">11:00 PM — 07:30 AM</span>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs">
+        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs">
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">Default Grace Time</span>
           <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 block font-mono mt-0.5">15 Mins</span>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Client statutory standard</span>

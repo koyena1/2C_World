@@ -574,7 +574,7 @@ export const UserSettingsModule: React.FC<UserSettingsModuleProps> = ({
             { value: 'my-access', label: 'My Access' },
             ...(currentUserRole !== 'HR' ? [{ value: 'audit', label: 'Access Audit Log' }] : []),
             ...(switchAccess !== 'none' ? [{ value: 'switch-mapping', label: 'Switch Mapping' }] : []),
-            ...(exportAccess !== 'none' ? [{ value: 'export-permissions', label: 'Export Permissions' }] : []),
+            ...(exportAccess !== 'none' ? [{ value: 'export-permissions', label: 'OB Data Export' }] : []),
             ...(fileSizeAccess !== 'none' ? [{ value: 'document-rules', label: 'Document Rules' }] : []),
             ...(signatureAccess !== 'none' ? [{ value: 'client-features', label: 'Client Features' }] : []),
           ]}

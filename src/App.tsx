@@ -30,17 +30,13 @@ import { LmsPage } from './modules/lms/LmsPage';
 import { SupportTicketPage } from './modules/support/SupportTicketPage';
 import { setTicketCandidate } from './modules/hr-ops/servicesStore';
 import { pathForView, viewFromPath } from './routes';
-import { canOpenView, DEFAULT_ROLE, isAppRole, ROLE_STORAGE_KEY, type AppRole } from './modules/hr-ops/hrOps.config';
-import { safeGetItem, safeSetItem } from './utils/storage';
+import { canOpenView, DEFAULT_ROLE, type AppRole } from './modules/hr-ops/hrOps.config';
 import { computeKpis } from './modules/dashboard/dashboard.metrics';
 import { hrOpsCounts } from './modules/dashboard/command-center/HrOpsExtras';
 
 function AppContent() {
-  // The role is read once (saved choice, else Admin); there is no role selector in the header.
-  const [activeRole] = useState<AppRole>(() => {
-    const saved = safeGetItem(ROLE_STORAGE_KEY);
-    return isAppRole(saved) ? saved : DEFAULT_ROLE;
-  });
+  // The app always runs as Admin (there is no role selector, and a role saved earlier in the browser is ignored).
+  const [activeRole] = useState<AppRole>(DEFAULT_ROLE);
 
   // Navigation state, opened from the browser URL (deep links) and kept in sync with it.
   const [currentView, setCurrentView] = useState<string>(() => {

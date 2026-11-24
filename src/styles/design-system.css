@@ -657,9 +657,12 @@ button[class~="bg-slate-900"][class~="text-white"]:hover:not(:disabled) {
 .cc-table-compact th:last-child,
 .cc-table-compact td:last-child { padding-right: 14px; }
 
-/* ---------- Dashboard cards: light-blue border + light-blue hover / active highlight ----------
-   Scoped to .ops-dashboard so other pages keep their current card look. Applies to every card
-   (.cc-card: KPI, section and workflow cards) and to the compact stat tiles (.ops-tile). */
+/* ---------- Card hover / active: individual cards only ----------
+   Light-blue background + border with a smooth transition. It applies ONLY to individual cards
+   (KPI / stat cards, clickable content cards) that carry .cc-card-hover, .cc-card-link or .ops-tile;
+   parent sections and card groups (plain .cc-card containers, SectionCard) never react.
+   .cc-card-selected keeps the same highlight on a selected / active card.
+   !important is needed because legacy cards get their surface from broader selectors above. */
 :root {
   --ops-card-border: #c9d9f5;
   --ops-card-hover-bg: #eef4ff;
@@ -670,24 +673,36 @@ html.dark {
   --ops-card-hover-bg: rgb(59 130 246 / 0.12);
   --ops-card-active-bg: rgb(59 130 246 / 0.2);
 }
+.cc-card-hover,
+.cc-card-link,
+.ops-tile {
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.cc-card-hover:hover,
+.cc-card-link:hover,
+.ops-tile:hover {
+  background-color: var(--ops-card-hover-bg) !important;
+  border-color: var(--cc-accent-border) !important;
+}
+.cc-card-hover:active,
+.cc-card-link:active,
+.ops-tile:active,
+button.cc-card-hover:focus-visible,
+button.cc-card-link:focus-visible,
+button.ops-tile:focus-visible,
+.cc-card-selected,
+.cc-card-selected:hover {
+  background-color: var(--ops-card-active-bg) !important;
+  border-color: var(--cc-accent) !important;
+}
+
+/* Dashboard: resting light-blue border on its cards (a look only, no hover on parents) */
 .ops-dashboard .cc-card,
 .ops-dashboard .ops-tile {
   border-color: var(--ops-card-border);
-  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-}
-.ops-dashboard .cc-card:hover,
-.ops-dashboard .ops-tile:hover {
-  background-color: var(--ops-card-hover-bg);
-  border-color: var(--cc-accent-border);
-}
-.ops-dashboard .cc-card:active,
-.ops-dashboard .ops-tile:active,
-.ops-dashboard button.cc-card:focus-visible,
-.ops-dashboard button.ops-tile:focus-visible {
-  background-color: var(--ops-card-active-bg);
-  border-color: var(--cc-accent);
 }
 @media (prefers-reduced-motion: reduce) {
-  .ops-dashboard .cc-card,
-  .ops-dashboard .ops-tile { transition: none; }
+  .cc-card-hover,
+  .cc-card-link,
+  .ops-tile { transition: none; }
 }

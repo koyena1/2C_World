@@ -916,7 +916,13 @@ export const CandidateProfile360: React.FC<CandidateProfile360Props> = ({
                   Verified documents, identity cards, educational certificates, and employment records
                 </p>
               </div>
-              <span className="text-xs text-slate-400 font-mono px-2.5 py-1 rounded border border-slate-700 bg-slate-950/40">
+              <span
+                className={`text-xs font-mono font-semibold px-2.5 py-1 rounded border ${
+                  isDark
+                    ? 'text-sky-300 border-sky-500/40 bg-sky-500/10'
+                    : 'text-sky-800 border-sky-300 bg-sky-50'
+                }`}
+              >
                 {candidate.documents.length} Files Uploaded
               </span>
             </div>

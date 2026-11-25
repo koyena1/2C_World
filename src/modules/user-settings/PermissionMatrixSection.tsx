@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SelectMenu } from '../../components/ui/SelectMenu';
 import { 
   Shield, 
   Lock, 
@@ -140,23 +141,17 @@ export const PermissionMatrixSection: React.FC<PermissionMatrixSectionProps> = (
 
         {/* Role Selector Tabs & Save Button */}
         <div className="flex items-center gap-3 flex-wrap justify-between lg:justify-end min-w-0 max-w-full">
-          <div className="overflow-x-auto min-w-0 max-w-full pb-0.5 scrollbar-thin">
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 w-max shrink-0">
+          <div className="w-full sm:w-56 shrink-0">
+            <SelectMenu
+              value={selectedRoleName}
+              onChange={(e) => onSelectRole(e.target.value)}
+              aria-label="Select role"
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
+            >
               {roles.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => onSelectRole(r.name)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-                    selectedRoleName === r.name
-                      ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {r.name}
-                </button>
+                <option key={r.id} value={r.name}>{r.name}</option>
               ))}
-            </div>
+            </SelectMenu>
           </div>
 
           {canEdit && hasChanges && (

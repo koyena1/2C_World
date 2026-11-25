@@ -19,7 +19,6 @@ import {
   AlertTriangle, 
   CheckCircle2, 
   X, 
-  ArrowLeft,
   Sliders,
   Filter,
   ShieldCheck,
@@ -700,14 +699,6 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
           {/* Reports Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <button
-                type="button"
-                onClick={() => setViewSubPage('cycles-list')}
-                className="inline-flex items-center gap-1.5 text-xs text-sky-500 hover:text-sky-400 font-semibold mb-1"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to Cycles</span>
-              </button>
               <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Attendance Reports</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Client: <strong className="text-slate-800 dark:text-slate-200">2COMS Services</strong> · Cycle: <strong className="text-slate-800 dark:text-slate-200">{selectedCycleForReport.name}</strong> ({selectedCycleForReport.startDate} - {selectedCycleForReport.endDate})
@@ -1606,14 +1597,6 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <button
-                type="button"
-                onClick={() => setViewSubPage('reports')}
-                className="inline-flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-800 font-semibold mb-1"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to Daily Attendance Report</span>
-              </button>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                 Kolkata Permitted Offices Configuration
               </h1>

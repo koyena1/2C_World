@@ -17,6 +17,7 @@ import { formatAuditTime } from '../hr-ops/auditStore';
 import { MOCK_USERS } from '../../data/mockUserSettingsData';
 import { MOCK_CANDIDATES } from '../../data/mockOnboardingData';
 import { ViewOnlyNote } from './SettingsParts';
+import { ExportDataPanel } from './ExportDataPanel';
 
 const roleOfUser = roleOfSystemRole;
 
@@ -152,6 +153,13 @@ export const ExportPermissionsSection: React.FC<{ onShowToast: (m: string) => vo
       text: 'Unauthorised and sensitive fields are left out of the downloaded file. See exactly what a user gets.',
       status: `${sensitiveCount} sensitive fields protected`,
     },
+    {
+      n: 4,
+      id: 'ob-export-data',
+      title: 'Export Data',
+      text: 'Select candidates and authorised fields, then download CSV or Excel with a logged history.',
+      status: 'Run an export',
+    },
   ];
 
   return (
@@ -162,7 +170,7 @@ export const ExportPermissionsSection: React.FC<{ onShowToast: (m: string) => vo
         title="OB Data Export – Role-Based Access Control"
         subtitle="Controls who can export onboarding data from the Candidate Directory (and the other Export CSV buttons), and which fields end up in the file."
       >
-        <ol className="grid gap-3 md:grid-cols-3">
+        <ol className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {overview.map((o) => (
             <li key={o.n}>
               <button
@@ -349,6 +357,16 @@ export const ExportPermissionsSection: React.FC<{ onShowToast: (m: string) => vo
               Not in the file ({blockedFields.length}): {blockedFields.map((f) => f.label).join(', ')}.
             </p>
           )}
+        </SectionCard>
+      </div>
+
+      <div id="ob-export-data" className="scroll-mt-4">
+        <SectionCard
+          step={4}
+          title="Export Data"
+          subtitle="Pick candidates, choose from the fields you are authorised to export, and download as CSV or Excel. Every export is recorded."
+        >
+          <ExportDataPanel onShowToast={onShowToast} />
         </SectionCard>
       </div>
 

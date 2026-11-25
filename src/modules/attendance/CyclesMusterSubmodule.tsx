@@ -529,7 +529,7 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
                     placeholder="Filter by name..."
                     value={cycleSearchQuery}
                     onChange={(e) => setCycleSearchQuery(e.target.value)}
-                    className="cc-input pl-9"
+                    className="cc-input !pl-9"
                   />
                 </div>
               </div>

@@ -46,6 +46,8 @@ import { Toast } from '../../components/ui/Toast';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { joinedTrend, kycActionTrend, totalCandidatesTrend, yetToJoinTrend } from '../../utils/candidateTrends';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
 import {
@@ -119,6 +121,35 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
   const [sortBy, setSortBy] = useState<string>('doj_asc');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+  const kd = useKpiDetail<'total' | 'yet' | 'kyc' | 'joined'>();
+  const kdDetail: KpiDetailData | null = kd.activeId
+    ? {
+        title: { total: 'Total Candidates', yet: 'Yet to Join', kyc: 'KYC Action Required', joined: 'Joined & Active' }[kd.activeId],
+        columns: [
+          { key: 'name', label: 'Candidate' },
+          { key: 'uid', label: 'User ID', className: 'font-mono whitespace-nowrap' },
+          { key: 'client', label: 'Client' },
+          { key: 'doj', label: 'Date of joining', className: 'whitespace-nowrap' },
+          { key: 'joining', label: 'Joining status' },
+          { key: 'kyc', label: 'KYC status' },
+        ],
+        rows: candidates
+          .filter((c) =>
+            kd.activeId === 'yet' ? c.joiningStatus === 'Yet to Join'
+            : kd.activeId === 'kyc' ? c.overallKycStatus === 'Pending Manual Review' || c.overallKycStatus === 'API Mismatch'
+            : kd.activeId === 'joined' ? c.joiningStatus === 'Joined'
+            : true
+          )
+          .map((c) => ({
+            name: `${c.firstName} ${c.lastName}`.trim(),
+            uid: c.userId,
+            client: c.clientName,
+            doj: c.dateOfJoining || '—',
+            joining: <StatusBadge type="joining" status={c.joiningStatus} size="sm" />,
+            kyc: <StatusBadge type="kyc" status={c.overallKycStatus} size="sm" />,
+          })),
+      }
+    : null;
 
   // Reset page when filters or tabs change
   useEffect(() => {
@@ -590,8 +621,10 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
       <>
           {/* Quick Metrics Strip */}
           <div className="cc-grid grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="Total Candidates" value={candidates.length} detail="Live pool" trend={totalCandidatesTrend(candidates)} icon={Users} tone="info" />
+            <KpiCard onClick={() => kd.toggle('total')} active={kd.isActive('total')} label="Total Candidates" value={candidates.length} detail="Live pool" trend={totalCandidatesTrend(candidates)} icon={Users} tone="info" />
             <KpiCard
+              onClick={() => kd.toggle('yet')}
+              active={kd.isActive('yet')}
               label="Yet to Join"
               value={candidates.filter((c) => c.joiningStatus === 'Yet to Join').length}
               detail="Upcoming joiners"
@@ -600,6 +633,8 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               tone="warn"
             />
             <KpiCard
+              onClick={() => kd.toggle('kyc')}
+              active={kd.isActive('kyc')}
               label="KYC Action Required"
               value={candidates.filter((c) => c.overallKycStatus === 'Pending Manual Review' || c.overallKycStatus === 'API Mismatch').length}
               detail="Manual review / API mismatch"
@@ -608,6 +643,8 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               tone="bad"
             />
             <KpiCard
+              onClick={() => kd.toggle('joined')}
+              active={kd.isActive('joined')}
               label="Joined & Active"
               value={candidates.filter((c) => c.joiningStatus === 'Joined').length}
               detail="Completed onboarding"
@@ -616,6 +653,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               tone="good"
             />
           </div>
+          <KpiDetailPanel detail={kdDetail} onClose={kd.close} />
 
           {/* ========================================================================= */}
           {/* PRIMARY FILTER TOOLBAR & SMART SEARCH                                      */}

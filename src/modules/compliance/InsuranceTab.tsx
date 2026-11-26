@@ -3,6 +3,8 @@ import { BadgeCheck, Building2, Hourglass, Pencil, Plus, ShieldCheck, UserMinus,
 import type { Candidate } from '../../types/onboarding';
 import { SectionCard } from '../../components/page/SectionCard';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Toast } from '../../components/ui/Toast';
 import { useToast } from '../../hooks/useToast';
@@ -107,6 +109,72 @@ export const InsuranceTab: React.FC<{ candidates: Candidate[] }> = ({ candidates
     showToast(`${cand ? nameOf(cand) : 'Employee'} enrolled`);
   };
 
+  const { activeId, toggle, close, isActive } = useKpiDetail<'plans' | 'enrolled' | 'pending' | 'optedOut' | 'premium'>();
+  const enrolRows = (status?: EnrolStatus) =>
+    clientEnrolments
+      .filter((e) => !status || e.status === status)
+      .map((e) => ({ e, cand: candidates.find((c) => c.id === e.candidateId)!, plan: plans.find((p) => p.id === e.planId)! }));
+  const detail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    if (activeId === 'plans') {
+      return {
+        title: `Insurance plans: ${client}`,
+        columns: [
+          { key: 'name', label: 'Plan' },
+          { key: 'type', label: 'Type' },
+          { key: 'insurer', label: 'Insurer' },
+          { key: 'period', label: 'Policy period', className: 'whitespace-nowrap' },
+          { key: 'health', label: 'Policy status' },
+        ],
+        rows: clientPlans.map((p) => {
+          const h = policyHealth(p);
+          return {
+            name: <span className="cc-title font-semibold">{p.name}</span>,
+            type: p.type,
+            insurer: p.insurer,
+            period: `${fmtDate(p.policyStart)} to ${fmtDate(p.policyEnd)}`,
+            health: <Chip tone={h.status === 'Active' ? 'good' : h.status === 'Expiring soon' ? 'warn' : 'bad'}>{h.status}</Chip>,
+          };
+        }),
+      };
+    }
+    if (activeId === 'premium') {
+      const list = enrolRows('Enrolled');
+      return {
+        title: 'Employer premium: enrolled employees',
+        subtitle: `${list.length} enrolled, total ${fmtInr(employerCost)} per year`,
+        columns: [
+          { key: 'emp', label: 'Employee' },
+          { key: 'plan', label: 'Plan' },
+          { key: 'premium', label: 'Yearly premium', align: 'right', className: 'whitespace-nowrap' },
+          { key: 'employer', label: 'Employer share', align: 'right', className: 'whitespace-nowrap' },
+        ],
+        rows: list.map(({ cand, plan }) => ({
+          emp: <span className="cc-title font-semibold">{nameOf(cand)}</span>,
+          plan: `${plan.name} (${plan.type})`,
+          premium: fmtInr(plan.premium),
+          employer: fmtInr(premiumSplit(plan).employer),
+        })),
+      };
+    }
+    const status: EnrolStatus = activeId === 'enrolled' ? 'Enrolled' : activeId === 'pending' ? 'Pending' : 'Opted-out';
+    return {
+      title: `${status} employees`,
+      columns: [
+        { key: 'emp', label: 'Employee' },
+        { key: 'plan', label: 'Plan' },
+        { key: 'status', label: 'Status' },
+        { key: 'on', label: 'Enrolled on', className: 'whitespace-nowrap' },
+      ],
+      rows: enrolRows(status).map(({ e, cand, plan }) => ({
+        emp: <span className="cc-title font-semibold">{nameOf(cand)}</span>,
+        plan: `${plan.name} (${plan.type})`,
+        status: <Chip tone={STATUS_TONE[e.status]}>{e.status}</Chip>,
+        on: fmtDate(e.enrolledOn),
+      })),
+    };
+  })();
+
   return (
     <div className="cc-stack">
       <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:justify-between">
@@ -135,12 +203,13 @@ export const InsuranceTab: React.FC<{ candidates: Candidate[] }> = ({ candidates
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label="Plans" value={clientPlans.length} detail={expiring ? `${expiring} expiring or expired` : 'All policies active'} icon={ShieldCheck} tone={expiring ? 'warn' : 'info'} />
-        <KpiCard label="Enrolled" value={countStatus('Enrolled')} detail={`of ${clientEnrolments.length} enrolment records`} icon={BadgeCheck} tone="good" />
-        <KpiCard label="Pending" value={countStatus('Pending')} detail="Form or dependants awaited" icon={Hourglass} tone="warn" />
-        <KpiCard label="Opted out" value={countStatus('Opted-out')} detail="Covered elsewhere" icon={UserMinus} tone="muted" />
-        <KpiCard label="Employer premium" value={fmtInr(employerCost)} detail="Yearly, for enrolled employees" icon={Wallet} tone="violet" className="col-span-2 lg:col-span-1" />
+        <KpiCard label="Plans" value={clientPlans.length} detail={expiring ? `${expiring} expiring or expired` : 'All policies active'} icon={ShieldCheck} tone={expiring ? 'warn' : 'info'} onClick={() => toggle('plans')} active={isActive('plans')} />
+        <KpiCard label="Enrolled" value={countStatus('Enrolled')} detail={`of ${clientEnrolments.length} enrolment records`} icon={BadgeCheck} tone="good" onClick={() => toggle('enrolled')} active={isActive('enrolled')} />
+        <KpiCard label="Pending" value={countStatus('Pending')} detail="Form or dependants awaited" icon={Hourglass} tone="warn" onClick={() => toggle('pending')} active={isActive('pending')} />
+        <KpiCard label="Opted out" value={countStatus('Opted-out')} detail="Covered elsewhere" icon={UserMinus} tone="muted" onClick={() => toggle('optedOut')} active={isActive('optedOut')} />
+        <KpiCard label="Employer premium" value={fmtInr(employerCost)} detail="Yearly, for enrolled employees" icon={Wallet} tone="violet" className="col-span-2 lg:col-span-1" onClick={() => toggle('premium')} active={isActive('premium')} />
       </div>
+      <KpiDetailPanel detail={detail} onClose={close} />
 
       <SectionCard title="Plans" subtitle={`Insurance plans configured for ${client}`}>
         {clientPlans.length === 0 ? (

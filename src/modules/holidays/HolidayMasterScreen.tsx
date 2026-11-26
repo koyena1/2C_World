@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { HolidayCalendar, HolidayMasterItem } from '../../data/mockHolidayMasterData';
 import { HolidayYearView } from './HolidayYearView';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
 interface HolidayMasterScreenProps {
@@ -54,6 +56,7 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
   const [holidaySearchQuery, setHolidaySearchQuery] = useState('');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<'All' | 'Mandatory' | 'Optional'>('All');
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  const { activeId, toggle, close, isActive } = useKpiDetail<'pooled' | 'mandatory' | 'choice' | 'optional'>();
 
   // Active calendar
   const activeCalendar = useMemo(() => {
@@ -100,6 +103,27 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
 
   const mandatoryCount = calendarHolidays.filter(h => h.type === 'Mandatory').length;
   const optionalCount = calendarHolidays.filter(h => h.type === 'Optional').length;
+
+  const kpiDetail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      pooled: { title: 'Total Pooled', f: (_h: HolidayMasterItem) => true },
+      mandatory: { title: 'Mandatory', f: (h: HolidayMasterItem) => h.type === 'Mandatory' },
+      choice: { title: 'Choice Pool', f: (h: HolidayMasterItem) => h.type === 'Optional' },
+      optional: { title: 'Optional Available', f: (h: HolidayMasterItem) => h.type === 'Optional' },
+    }[activeId];
+    return {
+      title: cfg.title,
+      columns: [
+        { key: 'date', label: 'Date', className: 'whitespace-nowrap' },
+        { key: 'day', label: 'Day' },
+        { key: 'name', label: 'Holiday' },
+        { key: 'type', label: 'Type' },
+        { key: 'status', label: 'Status' },
+      ],
+      rows: calendarHolidays.filter(cfg.f).map(h => ({ date: h.date, day: h.dayOfWeek, name: h.name, type: h.type, status: h.status })),
+    };
+  })();
 
   return (
     <div className="space-y-5 animate-in fade-in duration-200">
@@ -226,7 +250,7 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
       {/* Policy Summary Cards (Preserving exact statutory logic) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Pooled */}
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 shadow-2xs group relative">
+        <button type="button" onClick={() => toggle('pooled')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 shadow-2xs group relative cc-card-link cursor-pointer text-left ${isActive('pooled') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-sky-800 dark:text-sky-300">Total Pooled</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
@@ -242,10 +266,10 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Total holiday entitlement for assigned employees
           </p>
-        </div>
+        </button>
 
         {/* Mandatory */}
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 shadow-2xs group">
+        <button type="button" onClick={() => toggle('mandatory')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 shadow-2xs group cc-card-link cursor-pointer text-left ${isActive('mandatory') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Mandatory</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -261,10 +285,10 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Fixed observed holidays for all employees
           </p>
-        </div>
+        </button>
 
         {/* Choice Pool */}
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xs group">
+        <button type="button" onClick={() => toggle('choice')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xs group cc-card-link cursor-pointer text-left ${isActive('choice') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-800 dark:text-amber-300">Choice Pool</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
@@ -280,10 +304,10 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Number of optional holidays employee may choose
           </p>
-        </div>
+        </button>
 
         {/* Optional Available */}
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs group">
+        <button type="button" onClick={() => toggle('optional')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs group cc-card-link cursor-pointer text-left ${isActive('optional') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Optional Available</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -299,8 +323,10 @@ export const HolidayMasterScreen: React.FC<HolidayMasterScreenProps> = ({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Total optional choices provided in this calendar
           </p>
-        </div>
+        </button>
       </div>
+
+      <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
       {/* Main Content: List View vs Year View */}
       {viewMode === 'year' ? (

@@ -4,6 +4,8 @@ import type { Candidate } from '../../types/onboarding';
 import { PageHeader } from '../../components/page/PageHeader';
 import { SectionCard } from '../../components/page/SectionCard';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { Toast } from '../../components/ui/Toast';
 import { useToast } from '../../hooks/useToast';
 import { useFeatureAccess, useRole } from '../../context/RoleContext';
@@ -43,7 +45,34 @@ export const PayrollPage: React.FC<{ candidates: Candidate[] }> = ({ candidates 
   );
   const failing = rows.filter((r) => r.checks.some((k) => !k.pass));
   const ready = rows.length - failing.length;
-  const canAdvance = canRun && !done && (step > 0 || failing.length === 0 || acknowledged);
+  const { activeId, toggle, close, isActive } = useKpiDetail<'joined' | 'ready' | 'open'>();
+  const detail: KpiDetailData | null = activeId
+    ? {
+        title: activeId === 'joined' ? 'Joined employees' : activeId === 'ready' ? 'Ready for payroll' : 'Open checks',
+        columns: [
+          { key: 'emp', label: 'Employee' },
+          { key: 'client', label: 'Client' },
+          { key: 'doj', label: 'Joining date', className: 'whitespace-nowrap' },
+          { key: 'validation', label: 'Validation' },
+        ],
+        rows: rows
+          .filter(({ checks }) => activeId === 'joined' || (activeId === 'ready') === checks.every((k) => k.pass))
+          .map(({ c, checks }) => {
+            const bad = checks.filter((k) => !k.pass);
+            return {
+              emp: <span className="cc-title font-semibold">{c.firstName} {c.lastName}</span>,
+              client: c.clientName,
+              doj: c.dateOfJoining || '—',
+              validation: bad.length === 0 ? (
+                <span className="text-emerald-700 dark:text-emerald-300">All checks passed</span>
+              ) : (
+                <span className="text-amber-700 dark:text-amber-300">{bad.map((k) => k.label).join(', ')}</span>
+              ),
+            };
+          }),
+      }
+    : null;
+  const canAdvance =canRun && !done && (step > 0 || failing.length === 0 || acknowledged);
 
   const advance = () => {
     const finished = STEPS[step];
@@ -79,10 +108,11 @@ export const PayrollPage: React.FC<{ candidates: Candidate[] }> = ({ candidates 
 
       <div className="cc-container cc-stack py-5">
         <div className="cc-grid grid-cols-1 sm:grid-cols-3">
-          <KpiCard label="Joined employees" value={rows.length} detail="In this payroll run" icon={Users} tone="info" />
-          <KpiCard label="Ready" value={ready} detail="Passed every validation" icon={CheckCircle2} tone="good" />
-          <KpiCard label="Open checks" value={failing.length} detail="Need attention before payroll" icon={ClipboardCheck} tone={failing.length ? 'warn' : 'good'} />
+          <KpiCard label="Joined employees" value={rows.length} detail="In this payroll run" icon={Users} tone="info" onClick={() => toggle('joined')} active={isActive('joined')} />
+          <KpiCard label="Ready" value={ready} detail="Passed every validation" icon={CheckCircle2} tone="good" onClick={() => toggle('ready')} active={isActive('ready')} />
+          <KpiCard label="Open checks" value={failing.length} detail="Need attention before payroll" icon={ClipboardCheck} tone={failing.length ? 'warn' : 'good'} onClick={() => toggle('open')} active={isActive('open')} />
         </div>
+        <KpiDetailPanel detail={detail} onClose={close} />
 
         <SectionCard
           title="Payroll run"

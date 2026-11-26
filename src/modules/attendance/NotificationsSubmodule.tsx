@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Bell, Mail, MessageSquare, Send, Smartphone } from 'lucide-react';
 import { SectionCard } from '../../components/page/SectionCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { Chip, ProgressBar } from '../dashboard/command-center/shared';
 import { useFeatureAccess, useRole } from '../../context/RoleContext';
 import { logAudit, useAuditLog, formatAuditTime } from '../hr-ops/auditStore';
@@ -58,6 +60,7 @@ export const NotificationsSubmodule: React.FC<NotificationsSubmoduleProps> = ({ 
   const [selectedId, setSelectedId] = useState('N1');
   const [draft, setDraft] = useState<Record<string, string>>({});
   const history = useAuditLog({ area: AREA });
+  const { activeId, toggle, close, isActive } = useKpiDetail<NotificationStatus>();
 
   const selected = events.find((e) => e.id === selectedId) ?? events[0];
   const draftText = draft[selected.id] ?? selected.template;
@@ -66,6 +69,22 @@ export const NotificationsSubmodule: React.FC<NotificationsSubmoduleProps> = ({ 
   const total = events.length;
   const completed = events.filter((e) => e.status === 'Live').length;
   const counts = STATUS_ORDER.map((s) => ({ s, n: events.filter((e) => e.status === s).length }));
+
+  const kpiDetail: KpiDetailData | null = activeId ? {
+    title: `${activeId} notifications`,
+    columns: [
+      { key: 'event', label: 'Event' },
+      { key: 'status', label: 'Status' },
+      { key: 'channels', label: 'Channels on' },
+      { key: 'owner', label: 'Owner' },
+    ],
+    rows: events.filter((e) => e.status === activeId).map((e) => ({
+      event: e.event,
+      status: <Chip tone={STATUS_TONE[e.status]}>{e.status}</Chip>,
+      channels: CHANNELS.filter((c) => e.channels[c.key]).map((c) => c.label).join(', ') || 'None',
+      owner: e.owner,
+    })),
+  } : null;
 
   const audit = (action: string, subjectId: string) =>
     logAudit({ area: AREA, action, subjectId, actorId: actor.id, actorName: actor.name });
@@ -144,15 +163,20 @@ export const NotificationsSubmodule: React.FC<NotificationsSubmoduleProps> = ({ 
           </div>
           <ProgressBar value={(completed / total) * 100} tone="good" label="Notifications completed" />
           <div className="flex flex-wrap gap-2 pt-1">
-            {counts.map(({ s, n }) => <Chip key={s} tone={STATUS_TONE[s]}>{n} {s}</Chip>)}
+            {counts.map(({ s, n }) => (
+              <button key={s} type="button" onClick={() => toggle(s)} aria-pressed={isActive(s)} className={cn('rounded-full cursor-pointer', isActive(s) && 'ring-2 ring-[var(--cc-accent)]')}>
+                <Chip tone={STATUS_TONE[s]}>{n} {s}</Chip>
+              </button>
+            ))}
           </div>
         </div>
       </SectionCard>
+      <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
       {/* Catalogue */}
       <SectionCard title="Notification catalogue" subtitle="Channels can be switched on only once a notification is live">
         <div className="cc-table-wrap">
-          <table className="cc-table">
+          <table className="cc-table-stack cc-table">
             <thead>
               <tr>
                 <th>Event</th>
@@ -258,7 +282,7 @@ export const NotificationsSubmodule: React.FC<NotificationsSubmoduleProps> = ({ 
         action={<Chip tone="muted">{totals.sent.toLocaleString('en-IN')} sent · {totals.failed.toLocaleString('en-IN')} failed</Chip>}
       >
         <div className="cc-table-wrap">
-          <table className="cc-table">
+          <table className="cc-table-stack cc-table">
             <thead>
               <tr>
                 <th>Event</th>

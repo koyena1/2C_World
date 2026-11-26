@@ -2,6 +2,8 @@ import React, { useMemo, useRef, useState } from 'react';
 import { CheckCircle2, ClipboardCheck, Download, FileSpreadsheet, ListChecks, Pencil, Trash2, UploadCloud, XCircle } from 'lucide-react';
 import { SectionCard } from '../../../components/page/SectionCard';
 import { KpiCard } from '../../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../../hooks/useKpiDetail';
 import { Chip } from '../../dashboard/command-center/shared';
 import { cn } from '../../../utils/cn';
 import { downloadCsv } from '../../../utils/download';
@@ -121,14 +123,43 @@ export const UploadValidator: React.FC<Props> = ({ notify }) => {
 
   const pending = Object.keys(drafts).length;
 
+  const { activeId, toggle, close, isActive } = useKpiDetail<'checked' | 'valid' | 'errors' | 'duplicates'>();
+  const detail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      checked: { title: 'Rows checked', f: () => true },
+      valid: { title: 'Valid rows', f: (r: EsicUploadRow) => !results[r.id] },
+      errors: { title: 'Rows with errors', f: (r: EsicUploadRow) => !!results[r.id] },
+      duplicates: { title: 'Duplicate numbers', f: (r: EsicUploadRow) => results[r.id]?.kind === 'duplicate' },
+    }[activeId];
+    return {
+      title: cfg.title,
+      columns: [
+        { key: 'row', label: 'Row', className: 'whitespace-nowrap' },
+        { key: 'emp', label: 'Employee' },
+        { key: 'client', label: 'Client' },
+        { key: 'esic', label: 'ESIC number', className: 'font-mono whitespace-nowrap' },
+        { key: 'result', label: 'Result' },
+      ],
+      rows: rows.filter(cfg.f).map((r) => ({
+        row: r.rowNo,
+        emp: <span className="cc-title font-semibold">{r.employeeName}</span>,
+        client: r.client,
+        esic: r.esicNumber || '(blank)',
+        result: results[r.id] ? <Chip tone={results[r.id]?.kind === 'duplicate' ? 'warn' : 'bad'}>{results[r.id]?.message}</Chip> : <Chip tone="good">Valid</Chip>,
+      })),
+    };
+  })();
+
   return (
     <div className="cc-stack">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Rows checked" value={rows.length} detail={fileName} icon={ListChecks} tone="info" />
-        <KpiCard label="Valid rows" value={validCount} detail="Ready to be saved" icon={CheckCircle2} tone="good" />
-        <KpiCard label="Rows with errors" value={errorRows.length} detail="Need a correction" icon={XCircle} tone={errorRows.length ? 'bad' : 'good'} />
-        <KpiCard label="Duplicate numbers" value={duplicateCount} detail="Number already used by someone else" icon={ClipboardCheck} tone={duplicateCount ? 'warn' : 'good'} />
+        <KpiCard label="Rows checked" value={rows.length} detail={fileName} icon={ListChecks} tone="info" onClick={() => toggle('checked')} active={isActive('checked')} />
+        <KpiCard label="Valid rows" value={validCount} detail="Ready to be saved" icon={CheckCircle2} tone="good" onClick={() => toggle('valid')} active={isActive('valid')} />
+        <KpiCard label="Rows with errors" value={errorRows.length} detail="Need a correction" icon={XCircle} tone={errorRows.length ? 'bad' : 'good'} onClick={() => toggle('errors')} active={isActive('errors')} />
+        <KpiCard label="Duplicate numbers" value={duplicateCount} detail="Number already used by someone else" icon={ClipboardCheck} tone={duplicateCount ? 'warn' : 'good'} onClick={() => toggle('duplicates')} active={isActive('duplicates')} />
       </div>
+      <KpiDetailPanel detail={detail} onClose={close} />
 
       <SectionCard
         title="Upload ESIC numbers"

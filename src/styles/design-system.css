@@ -320,6 +320,14 @@ html.dark .cc-tab-active:hover { color: #0b1220; }
   font-weight: 600;
   color: var(--cc-title);
 }
+/* A label with an icon keeps the icon beside the text. (display: block above is un-layered, so it would
+   otherwise beat a utility `flex` on the label and stack the icon on top of the heading.) */
+.cc-label:has(> svg) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cc-label:has(> svg) > svg { flex-shrink: 0; }
 .cc-hint { margin-top: 4px; font-size: 0.6875rem; color: var(--cc-muted); }
 
 .cc-input {
@@ -378,6 +386,57 @@ html.dark .cc-tab-active:hover { color: #0b1220; }
   border-radius: 0.75rem;
 }
 .cc-table { width: 100%; text-align: left; font-size: 0.75rem; color: var(--cc-text); }
+
+/* Opt-in: on phones each row becomes a labelled card instead of a sideways-scrolling table.
+   Cell labels come from the header text (see useStackedTables). Add `cc-table-stack` to the <table>. */
+@media (max-width: 1023px) {
+  .cc-table-wrap:has(> .cc-table-stack) { border: 0; overflow: visible; background: transparent; }
+  .cc-table-stack, .cc-table-stack tbody, .cc-table-stack tr, .cc-table-stack td { display: block; width: 100%; }
+  .cc-table-stack thead { display: none; }
+  .cc-table-stack tbody tr {
+    margin-bottom: 10px;
+    padding: 4px 0;
+    border: 1px solid var(--cc-card-border);
+    border-radius: 0.75rem;
+    background-color: var(--cc-card-bg);
+  }
+  .cc-table-stack tbody tr + tr td { border-top: 0; }
+  .cc-table-stack td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 14px;
+    text-align: right;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+  .cc-table-stack td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--cc-muted);
+  }
+  .cc-table-stack td { max-width: none; white-space: normal; text-overflow: clip; }
+  .cc-table-stack td.truncate { overflow: visible; }
+  .cc-table-stack td > * { max-width: 100%; }
+  .cc-table-stack td > .flex { flex-wrap: wrap; justify-content: flex-end; }
+  .cc-table-stack td[data-label=""]::before { display: none; }
+  .cc-table-stack td[data-label=""] { justify-content: flex-end; }
+  .cc-table-stack td[colspan] { justify-content: center; text-align: center; }
+  .cc-table-stack td[colspan]::before { display: none; }
+}
+/* Tablet: two columns of label/value pairs per card. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .cc-table-stack tbody tr { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; }
+  .cc-table-stack td[colspan] { grid-column: 1 / -1; }
+  .cc-table-stack td:first-child, .cc-table-stack td:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
 .cc-table th {
   position: sticky;
   top: 0;

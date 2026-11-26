@@ -45,6 +45,8 @@ import {
   KolkataPermittedOffice
 } from '../../data/mockAttendanceData';
 import { useTheme } from '../../hooks/useTheme';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
@@ -81,6 +83,7 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
   const [currentBranchId, setCurrentBranchId] = useState<string>(propBranchId || 'all');
   const [cycleStatusFilter, setCycleStatusFilter] = useState<'All' | 'Open' | 'Locked'>('All');
   const [cycleSearchQuery, setCycleSearchQuery] = useState<string>('');
+  const { activeId, toggle, close, isActive } = useKpiDetail<'dDate' | 'dPresent' | 'dAbsent' | 'dLate' | 'dLeave' | 'mEmp' | 'mPresent' | 'mAbsent' | 'mHours'>();
 
   // Interactive Live Punch Simulator State for Candidate Attendance Validation Showcase
   const [testCandidateName, setTestCandidateName] = useState<string>('Priya Sharma');
@@ -448,6 +451,69 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
     });
   }, [dailyMusterLog, dailySearchQuery, selectedDepartment, myTeamOnly, currentLocationId, currentBranchId, activeLocationObj, activeBranchObj, isKolkataZone]);
 
+  const kpiDetail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const isLate = (e: DailyMusterLogEntry) => e.status === 'Present' && /^[1-9]/.test(e.lateMins);
+    if (activeId.startsWith('d')) {
+      const cfg = {
+        dDate: { title: 'Date Inspected', f: (_e: DailyMusterLogEntry) => true },
+        dPresent: { title: 'Present On Duty', f: (e: DailyMusterLogEntry) => e.status === 'Present' },
+        dAbsent: { title: 'Absent Today', f: (e: DailyMusterLogEntry) => e.status === 'Absent' },
+        dLate: { title: 'Late Arrivals', f: isLate },
+        dLeave: { title: 'On Approved Leave', f: (e: DailyMusterLogEntry) => e.status === 'On Leave' },
+      }[activeId as 'dDate' | 'dPresent' | 'dAbsent' | 'dLate' | 'dLeave'];
+      return {
+        title: cfg.title,
+        subtitle: undefined,
+        columns: [
+          { key: 'emp', label: 'Employee' },
+          { key: 'dept', label: 'Department' },
+          { key: 'shift', label: 'Shift' },
+          { key: 'in', label: 'In / Out', className: 'font-mono whitespace-nowrap' },
+          { key: 'late', label: 'Late by', className: 'font-mono' },
+          { key: 'loc', label: 'Punched at' },
+          { key: 'status', label: 'Status' },
+        ],
+        rows: dailyMusterLog.filter(cfg.f).map(e => ({
+          emp: `${e.name} (${e.empCode})`, dept: e.department, shift: e.shiftCode, in: `${e.inTime} / ${e.outTime}`, late: e.lateMins,
+          loc: e.punchedLocation, status: e.status,
+        })),
+      };
+    }
+    if (activeId === 'mHours') {
+      return {
+        title: 'Avg Work Hours',
+        subtitle: 'Worked hours per attendance record (daily muster)',
+        columns: [
+          { key: 'emp', label: 'Employee' },
+          { key: 'dept', label: 'Department' },
+          { key: 'date', label: 'Date', className: 'whitespace-nowrap' },
+          { key: 'shift', label: 'Shift' },
+          { key: 'hours', label: 'Total hours', className: 'font-mono' },
+          { key: 'status', label: 'Status' },
+        ],
+        rows: dailyMusterLog.filter(e => e.status === 'Present' || e.status === 'Half Day').map(e => ({ emp: `${e.name} (${e.empCode})`, dept: e.department, date: e.date, shift: e.shiftCode, hours: e.totalHours, status: e.status })),
+      };
+    }
+    const titles = { mEmp: 'Total Employees', mPresent: 'Total Present', mAbsent: 'Total Absent' } as const;
+    const sorted = [...filteredEmployees];
+    if (activeId === 'mPresent') sorted.sort((a, b) => b.present - a.present);
+    if (activeId === 'mAbsent') sorted.sort((a, b) => b.absent - a.absent);
+    return {
+      title: titles[activeId as 'mEmp' | 'mPresent' | 'mAbsent'],
+      columns: [
+        { key: 'emp', label: 'Employee' },
+        { key: 'dept', label: 'Department' },
+        { key: 'present', label: 'Present', align: 'right' as const },
+        { key: 'absent', label: 'Absent', align: 'right' as const },
+        { key: 'leave', label: 'Leave', align: 'right' as const },
+        { key: 'late', label: 'Late days', align: 'right' as const },
+        { key: 'pct', label: 'Attendance %', align: 'right' as const },
+      ],
+      rows: sorted.map(e => ({ emp: `${e.name} (${e.empCode})`, dept: e.department, present: e.present, absent: e.absent, leave: e.leave, late: e.lateDays, pct: `${e.attendancePct}%` })),
+    };
+  })();
+
   return (
     <div className="space-y-6">
       {/* ========================================================================= */}
@@ -455,6 +521,7 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
       {/* ========================================================================= */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <CategoryTabs
+          selectBelow="md"
           value={viewSubPage}
           onChange={(v) => {
             if (v === 'reports') {
@@ -588,7 +655,7 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
             action={<span className="cc-muted text-[11px] font-mono whitespace-nowrap">{filteredCycles.length} of {cycles.length} Cycles</span>}
           >
             <div className="cc-table-wrap">
-              <table className="cc-table">
+              <table className="cc-table-stack cc-table">
                 <thead>
                   <tr>
                     <th>Cycle Name</th>
@@ -921,40 +988,41 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
             <div className="space-y-4">
               {/* Daily KPI Bar for the selected date */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <button type="button" onClick={() => toggle('dDate')} className={`cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('dDate') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Date Inspected</span>
                   <span className="text-base font-bold text-sky-800 dark:text-sky-300 font-mono mt-0.5 block">{reportSingleDate}</span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Tuesday · Working Day</span>
-                </div>
-                <div className="cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                </button>
+                <button type="button" onClick={() => toggle('dPresent')} className={`cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('dPresent') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Present On Duty</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400 font-mono">5 Staff</span>
                   </div>
                   <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium block mt-0.5">83.3% On Time</span>
-                </div>
-                <div className="cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                </button>
+                <button type="button" onClick={() => toggle('dAbsent')} className={`cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('dAbsent') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Absent Today</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl font-bold text-rose-600 dark:text-rose-400 font-mono">1 Staff</span>
                   </div>
                   <span className="text-[11px] text-rose-500 dark:text-rose-400 font-medium block mt-0.5">Unplanned</span>
-                </div>
-                <div className="cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                </button>
+                <button type="button" onClick={() => toggle('dLate')} className={`cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('dLate') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Late Arrivals</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl font-bold text-amber-700 dark:text-amber-400 font-mono">2 Staff</span>
                   </div>
                   <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium block mt-0.5">Exceeded Grace Window</span>
-                </div>
-                <div className="cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                </button>
+                <button type="button" onClick={() => toggle('dLeave')} className={`cc-card-hover bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('dLeave') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">On Approved Leave</span>
                   <div className="flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl font-bold text-indigo-700 dark:text-indigo-400 font-mono">1 Staff</span>
                   </div>
                   <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium block mt-0.5">Earned Leave (EL)</span>
-                </div>
+                </button>
               </div>
+              <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
               {/* ======================================================================= */}
               {/* 2. CANDIDATE ATTENDANCE MAPPING DISPLAY (PROMPT REQUIREMENT #2)         */}
@@ -1175,8 +1243,8 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
               {/* Daily Muster Data Grid */}
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <Clock className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                       Daily Attendance Report for {reportSingleDate}
                     </h3>
@@ -1197,7 +1265,124 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile / tablet: one card per employee (desktop keeps the table below) */}
+                <div className="lg:hidden p-3 grid gap-3 md:grid-cols-2">
+                  {filteredDailyMuster.length === 0 && (
+                    <p className="md:col-span-2 text-center text-xs text-slate-500 dark:text-slate-400 py-6">No attendance records match your search.</p>
+                  )}
+                  {filteredDailyMuster.map((log, index) => {
+                    const isPermittedKolkata = log.validationResult.includes('Permitted Kolkata Office');
+                    const isSameOffice = log.validationResult.includes('Same Office');
+                    const isRejected = log.validationResult.includes('Rejected') || log.validationResult.includes('Outside');
+                    const chip = 'inline-flex items-start gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold leading-snug border';
+                    return (
+                      <article key={log.id} className="min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden flex flex-col">
+                        {/* Header: who + status */}
+                        <header className="flex items-start justify-between gap-3 px-4 pt-3.5 pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono text-[11px] text-slate-400">#{index + 1}</span>
+                              <h4 className="text-sm font-bold text-slate-900 dark:text-white break-words">{log.name}</h4>
+                              {log.isMyTeam && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 rounded font-semibold">My Team</span>
+                              )}
+                            </div>
+                            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 break-words">
+                              <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{log.empCode}</span>
+                              <span className="mx-1.5">·</span>
+                              {log.department}
+                            </p>
+                          </div>
+                          <div className="shrink-0">
+                            {log.status === 'Present' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                Present
+                              </span>
+                            )}
+                            {log.status === 'Absent' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                Absent
+                              </span>
+                            )}
+                          </div>
+                        </header>
+
+                        {/* Details */}
+                        <dl className="px-4 py-3 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                          <div className="col-span-2 flex items-baseline justify-between gap-3">
+                            <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">In / Out</dt>
+                            <dd className="text-right font-mono">
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">{log.inTime} – {log.outTime}</span>
+                              <span className="block text-[10px] text-slate-500 dark:text-slate-400">{log.totalHours} ({log.shiftCode})</span>
+                            </dd>
+                          </div>
+                          <div className="min-w-0">
+                            <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Work zone</dt>
+                            <dd>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-200 dark:border-slate-700">
+                                {log.workZone || 'Kolkata'}
+                              </span>
+                            </dd>
+                          </div>
+                          <div className="min-w-0">
+                            <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Mapped location</dt>
+                            <dd className="font-semibold text-slate-900 dark:text-white break-words">{log.mappedLocation || `${log.workZone} / ${log.mappedOffice}`}
+                              <span className="block font-normal text-[10px] text-slate-500 dark:text-slate-400">Office: {log.mappedOffice || 'RDB'}</span>
+                            </dd>
+                          </div>
+                          <div className="col-span-2 min-w-0">
+                            <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Punched location</dt>
+                            <dd className="font-semibold text-slate-900 dark:text-white break-words">{log.punchedLocation}
+                              <span className="block font-normal text-[11px] text-slate-500 dark:text-slate-400 break-words">{log.punchSource}</span>
+                            </dd>
+                          </div>
+                        </dl>
+
+                        {/* Validation */}
+                        <div className="mx-4 mb-3 min-w-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Validation result</p>
+                          {isPermittedKolkata && (
+                            <span className={`${chip} bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border-sky-300 dark:border-sky-800`}>
+                              <ShieldCheck className="w-3.5 h-3.5 mt-px text-sky-500 shrink-0" />
+                              <span>Accepted: Permitted Kolkata Office</span>
+                            </span>
+                          )}
+                          {isSameOffice && (
+                            <span className={`${chip} bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800`}>
+                              <CheckCircle2 className="w-3.5 h-3.5 mt-px text-emerald-500 shrink-0" />
+                              <span>Accepted: Same Office</span>
+                            </span>
+                          )}
+                          {isRejected && (
+                            <span className={`${chip} bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800`}>
+                              <AlertTriangle className="w-3.5 h-3.5 mt-px text-rose-500 shrink-0" />
+                              <span>Rejected: Outside Permitted Location</span>
+                            </span>
+                          )}
+                          <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400 break-words">{log.validationReason}</p>
+                        </div>
+
+                        {/* Action */}
+                        <footer className="mt-auto px-4 pb-4">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCandidateValidation(log);
+                              setValidationModalCandidate(log);
+                            }}
+                            className="w-full h-10 text-xs font-semibold rounded-lg bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900 border border-sky-200 dark:border-sky-800 transition-colors"
+                          >
+                            View Mapping
+                          </button>
+                        </footer>
+                      </article>
+                    );
+                  })}
+                </div>
+
+                <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
                     <thead className="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                       <tr>
@@ -1296,9 +1481,11 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
                                   setSelectedCandidateValidation(log);
                                   setValidationModalCandidate(log);
                                 }}
-                                className="px-2.5 py-1 text-xs font-semibold rounded bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 hover:bg-sky-100 border border-sky-200 dark:border-sky-800 transition-colors"
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-md bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900 border border-sky-200 dark:border-sky-800 transition-colors cursor-pointer"
+                                title="View Mapping"
+                                aria-label="View Mapping"
                               >
-                                View Mapping
+                                <Eye className="w-3.5 h-3.5" aria-hidden />
                               </button>
                             </td>
                           </tr>
@@ -1318,27 +1505,28 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
             <div className="space-y-4">
               {/* MONTHLY SUMMARY KPI ROW */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+                <button type="button" onClick={() => toggle('mEmp')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 cc-card-link cursor-pointer text-left ${isActive('mEmp') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Total Employees</span>
                   <span className="text-2xl font-bold text-slate-900 dark:text-white block font-mono">142</span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Active rostered headcount for August</span>
-                </div>
-                <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+                </button>
+                <button type="button" onClick={() => toggle('mPresent')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 cc-card-link cursor-pointer text-left ${isActive('mPresent') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Total Present</span>
                   <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 block font-mono">3,218 Days</span>
                   <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">89.2% Overall Attendance Rate</span>
-                </div>
-                <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+                </button>
+                <button type="button" onClick={() => toggle('mAbsent')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 cc-card-link cursor-pointer text-left ${isActive('mAbsent') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Total Absent</span>
                   <span className="text-2xl font-bold text-rose-600 dark:text-rose-400 block font-mono">184 Days</span>
                   <span className="text-[11px] text-rose-500 dark:text-rose-400 font-medium">5.1% Total Absenteeism</span>
-                </div>
-                <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1">
+                </button>
+                <button type="button" onClick={() => toggle('mHours')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-1 cc-card-link cursor-pointer text-left ${isActive('mHours') ? 'cc-card-selected' : ''}`}>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 block">Avg Work Hours</span>
                   <span className="text-2xl font-bold text-slate-800 dark:text-slate-200 block font-mono">08h 42m / Day</span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Compliant (≥ 8h statutory rule)</span>
-                </div>
+                </button>
               </div>
+              <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
               {/* EMPLOYEE SUMMARY DATA GRID */}
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden">
@@ -1366,7 +1554,7 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
 
                 {/* Table with Expandable Rows */}
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+                  <table className="cc-table-stack w-full text-left text-xs text-slate-700 dark:text-slate-300">
                     <thead className="bg-slate-50 dark:bg-slate-800/60 text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
                       <tr>
                         <th className="w-10 px-3 py-3 text-center"></th>
@@ -1466,7 +1654,7 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
                                     </div>
 
                                     <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-2xs">
-                                      <table className="w-full text-left text-xs">
+                                      <table className="cc-table-stack w-full text-left text-xs">
                                         <thead className="bg-slate-100 dark:bg-slate-800 text-[10px] uppercase font-bold text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                                           <tr>
                                             <th className="px-3 py-2">Date</th>
@@ -1644,7 +1832,7 @@ export const CyclesMusterSubmodule: React.FC<CyclesMusterSubmoduleProps> = ({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <table className="cc-table-stack w-full text-left text-xs text-slate-700 dark:text-slate-300">
                 <thead className="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="px-5 py-3.5">Office Name</th>

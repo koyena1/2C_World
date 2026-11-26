@@ -21,6 +21,8 @@ import {
 } from '../../data/mockAttendanceData';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
 interface OvertimeSubmoduleProps {
   onShowToast: (msg: string) => void;
 }
@@ -34,6 +36,7 @@ export const OvertimeSubmodule: React.FC<OvertimeSubmoduleProps> = ({ onShowToas
   const [filterDept, setFilterDept] = useState('All Departments');
   const [filterStatus, setFilterStatus] = useState('All Statuses');
   const [searchQuery, setSearchQuery] = useState('');
+  const { activeId, toggle, close, isActive } = useKpiDetail<'total' | 'payout' | 'pending' | 'compoff'>();
 
   const handleSaveConfig = () => {
     onShowToast('Overtime calculation formula and rate multipliers saved successfully.');
@@ -64,6 +67,31 @@ export const OvertimeSubmodule: React.FC<OvertimeSubmoduleProps> = ({ onShowToas
                         r.empCode.toLowerCase().includes(searchQuery.toLowerCase());
     return matchDept && matchStatus && matchSearch;
   });
+
+  const kpiDetail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      total: { title: 'Total OT Logged', f: (_r: OvertimeLogRecord) => true },
+      payout: { title: 'Total Est. Payout', f: (r: OvertimeLogRecord) => r.status === 'Approved' },
+      pending: { title: 'Pending Supervisor Sign-Off', f: (r: OvertimeLogRecord) => r.status === 'Pending Supervisor Approval' },
+      compoff: { title: 'Comp-Off Converted', f: (r: OvertimeLogRecord) => r.status === 'Converted to Comp-Off' },
+    }[activeId];
+    const list = records.filter(cfg.f);
+    return {
+      title: cfg.title,
+      subtitle: activeId === 'payout' ? `${list.length} approved record${list.length === 1 ? '' : 's'} making up the payout` : undefined,
+      columns: [
+        { key: 'emp', label: 'Employee' },
+        { key: 'dept', label: 'Department' },
+        { key: 'date', label: 'Date', className: 'whitespace-nowrap' },
+        { key: 'ot', label: 'OT duration', className: 'font-mono whitespace-nowrap' },
+        { key: 'rate', label: 'Rate' },
+        { key: 'payout', label: 'Payout', align: 'right' as const, className: 'font-mono' },
+        { key: 'status', label: 'Status' },
+      ],
+      rows: list.map(r => ({ emp: `${r.name} (${r.empCode})`, dept: r.department, date: r.date, ot: r.otDuration, rate: r.rateType, payout: `₹${r.calculatedPayout.toLocaleString('en-IN')}`, status: r.status })),
+    };
+  })();
 
   return (
     <div className="space-y-6">
@@ -102,27 +130,28 @@ export const OvertimeSubmodule: React.FC<OvertimeSubmoduleProps> = ({ onShowToas
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <button type="button" onClick={() => toggle('total')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('total') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Total OT Logged</span>
           <span className="text-2xl font-bold text-slate-900 dark:text-white block font-mono mt-0.5">11h 25m</span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">Across 4 qualifying staff</span>
-        </div>
-        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs">
+        </button>
+        <button type="button" onClick={() => toggle('payout')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('payout') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">Total Est. Payout</span>
           <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 block font-mono mt-0.5">₹8,220</span>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Approved statutory wage</span>
-        </div>
-        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-2xs">
+        </button>
+        <button type="button" onClick={() => toggle('pending')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('pending') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block">Pending Supervisor Sign-Off</span>
           <span className="text-2xl font-bold text-amber-700 dark:text-amber-300 block font-mono mt-0.5">1 Claim</span>
           <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Requires supervisor action</span>
-        </div>
-        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 shadow-2xs">
+        </button>
+        <button type="button" onClick={() => toggle('compoff')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('compoff') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 block">Comp-Off Converted</span>
           <span className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 block font-mono mt-0.5">1 Day</span>
           <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">Credited to leave ledger</span>
-        </div>
+        </button>
       </div>
+      <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
       {/* VIEW 1: OT LOGS & APPROVALS DESK */}
       {activeTab === 'records' && (
@@ -169,7 +198,7 @@ export const OvertimeSubmodule: React.FC<OvertimeSubmoduleProps> = ({ onShowToas
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <table className="cc-table-stack w-full text-left text-xs text-slate-700 dark:text-slate-300">
               <thead className="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider font-semibold text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="px-4 py-3">Emp Code</th>

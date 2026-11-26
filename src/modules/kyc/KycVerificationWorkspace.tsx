@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { fullyVerifiedTrend, kycRecordTrend, totalCandidatesTrend } from '../../utils/candidateTrends';
 import { Chip } from '../dashboard/command-center/shared';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
@@ -230,6 +232,54 @@ const KycVerificationDesk: React.FC<KycVerificationWorkspaceProps> = ({
       verifiedCount,
     };
   }, [candidates, selectedClient]);
+
+  const kd = useKpiDetail<'total' | 'verified' | 'manual' | 'failed' | 'bank'>();
+  const kpiDetail: KpiDetailData | null = useMemo(() => {
+    if (!kd.activeId) return null;
+    const pool = selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient);
+    const nameOf = (c: Candidate) => `${c.firstName} ${c.lastName}`.trim();
+    if (kd.activeId === 'total' || kd.activeId === 'verified') {
+      const list = kd.activeId === 'total' ? pool : pool.filter((c) => c.kycRecords.every((r) => r.status === 'Verified') && c.pennyTestStatus === 'Verified');
+      return {
+        title: kd.activeId === 'total' ? 'Total Candidates' : '100% Verified',
+        columns: [
+          { key: 'name', label: 'Candidate' },
+          { key: 'uid', label: 'User ID', className: 'font-mono whitespace-nowrap' },
+          { key: 'client', label: 'Client' },
+          { key: 'kyc', label: 'KYC status' },
+          { key: 'penny', label: 'Rs 1 status' },
+        ],
+        rows: list.map((c) => ({ name: nameOf(c), uid: c.userId, client: c.clientName, kyc: c.overallKycStatus, penny: c.pennyTestStatus })),
+      };
+    }
+    const match = (c: Candidate, r: Candidate['kycRecords'][number]) =>
+      kd.activeId === 'manual'
+        ? r.status === 'Pending Manual Review'
+        : kd.activeId === 'failed'
+          ? r.status === 'API Mismatch' || (r.documentType === 'Bank' && c.pennyTestStatus === 'Failed')
+          : r.documentType === 'Bank' && (r.status === 'Pending Manual Review' || c.pennyTestStatus === 'Pending');
+    return {
+      title: { manual: 'Manual Review', failed: 'Failed Checks', bank: 'Bank / ₹1 Pending' }[kd.activeId],
+      columns: [
+        { key: 'name', label: 'Candidate' },
+        { key: 'uid', label: 'User ID', className: 'font-mono whitespace-nowrap' },
+        { key: 'client', label: 'Client' },
+        { key: 'doc', label: 'Document' },
+        { key: 'status', label: 'Check status' },
+        { key: 'penny', label: 'Rs 1 status' },
+      ],
+      rows: pool.flatMap((c) =>
+        c.kycRecords.filter((r) => match(c, r)).map((r) => ({
+          name: nameOf(c),
+          uid: c.userId,
+          client: c.clientName,
+          doc: r.documentType,
+          status: <Chip tone={r.status === 'Verified' ? 'good' : r.status === 'Pending Manual Review' ? 'warn' : 'bad'}>{r.status}</Chip>,
+          penny: c.pennyTestStatus,
+        }))
+      ),
+    };
+  }, [kd.activeId, candidates, selectedClient]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Department-wise breakdown
   const departmentBreakdown = useMemo(() => {
@@ -529,6 +579,8 @@ const KycVerificationDesk: React.FC<KycVerificationWorkspaceProps> = ({
       {/* KPIs: five non-overlapping measures */}
       <div className="cc-grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
         <KpiCard
+          onClick={() => kd.toggle('total')}
+          active={kd.isActive('total')}
           label="Total Candidates"
           value={clientOverviewMetrics.totalCandidates}
           trend={totalCandidatesTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient))}
@@ -536,16 +588,19 @@ const KycVerificationDesk: React.FC<KycVerificationWorkspaceProps> = ({
           tone="info"
         />
         <KpiCard
+          onClick={() => kd.toggle('verified')}
+          active={kd.isActive('verified')}
           label="100% Verified"
           value={clientOverviewMetrics.verifiedCount}
           trend={fullyVerifiedTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient))}
           icon={CheckCircle2}
           tone="good"
         />
-        <KpiCard label="Manual Review" value={clientOverviewMetrics.manualReviewRequired} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'manualReview')} icon={Eye} tone="violet" />
-        <KpiCard label="Failed Checks" value={clientOverviewMetrics.failedVerifications} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'failed')} icon={XCircle} tone="bad" />
-        <KpiCard label="Bank / ₹1 Pending" value={clientOverviewMetrics.bankPennyPending} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'bankPending')} icon={CreditCard} tone="warn" />
+        <KpiCard onClick={() => kd.toggle('manual')} active={kd.isActive('manual')} label="Manual Review" value={clientOverviewMetrics.manualReviewRequired} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'manualReview')} icon={Eye} tone="violet" />
+        <KpiCard onClick={() => kd.toggle('failed')} active={kd.isActive('failed')} label="Failed Checks" value={clientOverviewMetrics.failedVerifications} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'failed')} icon={XCircle} tone="bad" />
+        <KpiCard onClick={() => kd.toggle('bank')} active={kd.isActive('bank')} label="Bank / ₹1 Pending" value={clientOverviewMetrics.bankPennyPending} trend={kycRecordTrend(selectedClient === 'all' ? candidates : candidates.filter((c) => c.clientName === selectedClient), 'bankPending')} icon={CreditCard} tone="warn" />
       </div>
+      <KpiDetailPanel detail={kpiDetail} onClose={kd.close} />
 
       {/* Department cards */}
       {activeWorkflowLevel !== 'inspect' && (

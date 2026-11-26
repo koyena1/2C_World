@@ -16,6 +16,8 @@ import {
 import { ShiftDefinition, INITIAL_SHIFTS } from '../../data/mockAttendanceData';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
 interface ShiftsSubmoduleProps {
   onShowToast: (msg: string) => void;
 }
@@ -24,6 +26,7 @@ export const ShiftsSubmodule: React.FC<ShiftsSubmoduleProps> = ({ onShowToast })
   const [subTab, setSubTab] = useState<'shifts' | 'muster'>('shifts');
   const [shifts, setShifts] = useState<ShiftDefinition[]>(INITIAL_SHIFTS);
   const [searchQuery, setSearchQuery] = useState('');
+  const { activeId, toggle, close, isActive } = useKpiDetail<'total' | 'general' | 'night' | 'grace'>();
   
   // Modal state for Add/Edit shift
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -120,6 +123,28 @@ export const ShiftsSubmodule: React.FC<ShiftsSubmoduleProps> = ({ onShowToast })
     }
   };
 
+  const kpiDetail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      total: { title: 'Total Defined Shifts', f: (_x: ShiftDefinition) => true },
+      general: { title: 'Primary General Shift', f: (x: ShiftDefinition) => x.code === 'GS' },
+      night: { title: 'Rotational Night Shift', f: (x: ShiftDefinition) => x.code === 'NS' },
+      grace: { title: 'Default Grace Time', f: (_x: ShiftDefinition) => true },
+    }[activeId];
+    return {
+      title: cfg.title,
+      columns: [
+        { key: 'shift', label: 'Shift' },
+        { key: 'timing', label: 'Timing', className: 'whitespace-nowrap' },
+        { key: 'hours', label: 'Effective hours', className: 'font-mono' },
+        { key: 'grace', label: 'Grace', align: 'right' as const },
+        { key: 'staff', label: 'Assigned staff', align: 'right' as const },
+        { key: 'status', label: 'Status' },
+      ],
+      rows: shifts.filter(cfg.f).map(x => ({ shift: `${x.name} (${x.code})`, timing: `${x.startTime} — ${x.endTime}`, hours: x.effectiveWorkHours, grace: `${x.graceTimeMins} mins`, staff: x.assignedEmployees, status: x.status })),
+    };
+  })();
+
   return (
     <div className="space-y-6">
       {/* Header & Sub-tab Navigation */}
@@ -170,27 +195,28 @@ export const ShiftsSubmodule: React.FC<ShiftsSubmoduleProps> = ({ onShowToast })
 
       {/* KPI Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+        <button type="button" onClick={() => toggle('total')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('total') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Total Defined Shifts</span>
           <span className="text-2xl font-bold text-slate-900 dark:text-white block font-mono mt-0.5">{shifts.length}</span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">Active rotational patterns</span>
-        </div>
-        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-sky-200 dark:border-sky-900/60 shadow-2xs">
+        </button>
+        <button type="button" onClick={() => toggle('general')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-sky-200 dark:border-sky-900/60 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('general') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 block">Primary General Shift</span>
           <span className="text-2xl font-bold text-sky-700 dark:text-sky-300 block font-mono mt-0.5">86 Staff</span>
           <span className="text-[11px] text-sky-600 dark:text-sky-400 font-medium">09:00 AM — 06:00 PM</span>
-        </div>
-        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 shadow-2xs">
+        </button>
+        <button type="button" onClick={() => toggle('night')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('night') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 block">Rotational Night Shift</span>
           <span className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 block font-mono mt-0.5">6 Staff</span>
           <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">11:00 PM — 07:30 AM</span>
-        </div>
-        <div className="cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs">
+        </button>
+        <button type="button" onClick={() => toggle('grace')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('grace') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">Default Grace Time</span>
           <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 block font-mono mt-0.5">15 Mins</span>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Client statutory standard</span>
-        </div>
+        </button>
       </div>
+      <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
       {/* VIEW 1: SHIFT CONFIGURATIONS */}
       {subTab === 'shifts' && (
@@ -213,7 +239,7 @@ export const ShiftsSubmodule: React.FC<ShiftsSubmoduleProps> = ({ onShowToast })
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <table className="cc-table-stack w-full text-left text-xs text-slate-700 dark:text-slate-300">
               <thead className="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider font-semibold text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="px-4 py-3">Shift Code</th>
@@ -331,7 +357,7 @@ export const ShiftsSubmodule: React.FC<ShiftsSubmoduleProps> = ({ onShowToast })
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <table className="cc-table-stack w-full text-left text-xs text-slate-700 dark:text-slate-300">
               <thead className="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase tracking-wider font-semibold text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="px-4 py-3">Emp Code</th>

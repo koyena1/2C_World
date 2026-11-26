@@ -4,6 +4,8 @@ import type { Candidate } from '../../types/onboarding';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { SectionCard } from '../../components/page/SectionCard';
 import { DonutChart, type DonutSlice } from '../../components/page/DonutChart';
 import { SelectMenu } from '../../components/ui/SelectMenu';
@@ -50,6 +52,60 @@ export const KycDashboardView: React.FC<KycDashboardViewProps> = ({ candidates }
   const pendingRows = rows.filter((r) => r.bucket === 'Pending');
   const avgPendingAge = pendingRows.length ? Math.round((pendingRows.reduce((s, r) => s + r.ageDays, 0) / pendingRows.length) * 10) / 10 : 0;
   const fullyCleared = scopeCandidates.filter((c) => c.overallKycStatus === 'Verified' && c.pennyTestStatus === 'Verified').length;
+
+  const kd = useKpiDetail<'candidates' | 'cleared' | 'rate' | 'pending' | 'failed' | 'age'>();
+  const candCols = [
+    { key: 'name', label: 'Candidate' },
+    { key: 'uid', label: 'User ID', className: 'font-mono whitespace-nowrap' },
+    { key: 'client', label: 'Client' },
+    { key: 'kyc', label: 'KYC status' },
+    { key: 'penny', label: 'Rs 1 status' },
+  ];
+  const candRow = (c: Candidate) => ({ name: `${c.firstName} ${c.lastName}`.trim(), uid: c.userId, client: c.clientName, kyc: c.overallKycStatus, penny: c.pennyTestStatus });
+  const checkCols = [
+    { key: 'name', label: 'Candidate' },
+    { key: 'client', label: 'Client' },
+    { key: 'doc', label: 'Document' },
+    { key: 'status', label: 'Status' },
+    { key: 'age', label: 'Age', align: 'right' as const },
+    { key: 'upd', label: 'Last updated', className: 'whitespace-nowrap' },
+  ];
+  const checkRow = (r: KycFlatRow) => ({
+    name: r.candidateName,
+    client: r.clientName,
+    doc: r.docType,
+    status: <Chip tone={r.bucket === 'Verified' ? 'good' : r.bucket === 'Failed' ? 'bad' : r.bucket === 'Pending' ? 'warn' : 'muted'}>{r.rawStatus}</Chip>,
+    age: `${r.ageDays}d`,
+    upd: r.lastUpdated,
+  });
+  const detail: KpiDetailData | null = !kd.activeId
+    ? null
+    : kd.activeId === 'candidates'
+      ? { title: 'Candidates in scope', columns: candCols, rows: scopeCandidates.map(candRow) }
+      : kd.activeId === 'cleared'
+        ? { title: 'Fully Cleared', columns: candCols, rows: scopeCandidates.filter((c) => c.overallKycStatus === 'Verified' && c.pennyTestStatus === 'Verified').map(candRow) }
+        : kd.activeId === 'rate'
+          ? {
+              title: 'Verification Rate: checks per document',
+              subtitle: `${verified} of ${applicable} applicable checks verified (${pct(verified, applicable)}%)`,
+              columns: [
+                { key: 'doc', label: 'Document' },
+                { key: 'ver', label: 'Verified', align: 'right' },
+                { key: 'app', label: 'Applicable', align: 'right' },
+                { key: 'rate', label: 'Rate', align: 'right' },
+              ],
+              rows: KYC_DOC_TYPES.map((doc) => {
+                const d = rows.filter((r) => r.docType === doc);
+                const app = d.filter((r) => r.bucket !== 'Skipped').length;
+                const ver = count(d, 'Verified');
+                return { doc: DOC_LABEL[doc], ver, app, rate: `${pct(ver, app)}%` };
+              }),
+            }
+          : kd.activeId === 'pending'
+            ? { title: 'Pending checks', columns: checkCols, rows: rows.filter((r) => r.bucket === 'Pending').map(checkRow) }
+            : kd.activeId === 'failed'
+              ? { title: 'Failed checks', columns: checkCols, rows: rows.filter((r) => r.bucket === 'Failed').map(checkRow) }
+              : { title: 'Pending checks by age', subtitle: `Average ${avgPendingAge} days since last update`, columns: checkCols, rows: [...pendingRows].sort((a, b) => b.ageDays - a.ageDays).map(checkRow) };
 
   const slices: DonutSlice[] = [
     { key: 'verified', label: 'Verified', count: verified, tone: 'good' },
@@ -122,13 +178,14 @@ export const KycDashboardView: React.FC<KycDashboardViewProps> = ({ candidates }
       />
       <PageBody>
         <div className="cc-grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
-          <KpiCard label="Candidates" value={scopeCandidates.length} detail={`${rows.length} KYC checks`} icon={Users} tone="info" />
-          <KpiCard label="Fully Cleared" value={fullyCleared} detail="KYC and Rs 1 verified" icon={CheckCircle2} tone="good" />
-          <KpiCard label="Verification Rate" value={`${pct(verified, applicable)}%`} detail={`${verified} of ${applicable} checks`} icon={Percent} tone="teal" />
-          <KpiCard label="Pending" value={pending} detail="Awaiting review / input" icon={Clock} tone="warn" />
-          <KpiCard label="Failed" value={failed} detail="Mismatch or rejected" icon={XCircle} tone="bad" />
-          <KpiCard label="Avg Pending Age" value={`${avgPendingAge}d`} detail="Since last update" icon={Hourglass} tone="violet" />
+          <KpiCard onClick={() => kd.toggle('candidates')} active={kd.isActive('candidates')} label="Candidates" value={scopeCandidates.length} detail={`${rows.length} KYC checks`} icon={Users} tone="info" />
+          <KpiCard onClick={() => kd.toggle('cleared')} active={kd.isActive('cleared')} label="Fully Cleared" value={fullyCleared} detail="KYC and Rs 1 verified" icon={CheckCircle2} tone="good" />
+          <KpiCard onClick={() => kd.toggle('rate')} active={kd.isActive('rate')} label="Verification Rate" value={`${pct(verified, applicable)}%`} detail={`${verified} of ${applicable} checks`} icon={Percent} tone="teal" />
+          <KpiCard onClick={() => kd.toggle('pending')} active={kd.isActive('pending')} label="Pending" value={pending} detail="Awaiting review / input" icon={Clock} tone="warn" />
+          <KpiCard onClick={() => kd.toggle('failed')} active={kd.isActive('failed')} label="Failed" value={failed} detail="Mismatch or rejected" icon={XCircle} tone="bad" />
+          <KpiCard onClick={() => kd.toggle('age')} active={kd.isActive('age')} label="Avg Pending Age" value={`${avgPendingAge}d`} detail="Since last update" icon={Hourglass} tone="violet" />
         </div>
+        <KpiDetailPanel detail={detail} onClose={kd.close} />
 
         <div className="cc-grid grid-cols-1 lg:grid-cols-2">
           <SectionCard title="Status Distribution" subtitle="All KYC checks in scope">

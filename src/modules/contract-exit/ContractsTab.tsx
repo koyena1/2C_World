@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import type { Candidate } from '../../types/onboarding';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Toast } from '../../components/ui/Toast';
 import { useToast } from '../../hooks/useToast';
@@ -137,6 +139,45 @@ export const ContractsTab: React.FC<{ candidates: Candidate[]; onNavigate?: (vie
     }),
     [contracts, callLog] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  const { activeId, toggle, close, isActive } = useKpiDetail<'expiring' | 'intimations' | 'closures' | 'calls'>();
+  const contractCols = [
+    { key: 'name', label: 'Employee' },
+    { key: 'client', label: 'Client' },
+    { key: 'end', label: 'End date', className: 'whitespace-nowrap' },
+    { key: 'left', label: 'Days left' },
+    { key: 'status', label: 'Status' },
+  ];
+  const contractRow = (c: ContractRecord) => ({
+    name: c.employeeName,
+    client: c.clientName,
+    end: formatContractDate(effectiveEndDate(c)),
+    left: <Chip tone={daysTone(dl(c), isClosed(c))}>{daysLabel(dl(c))}</Chip>,
+    status: c.closureStatus,
+  });
+  const detail: KpiDetailData | null = !activeId
+    ? null
+    : activeId === 'expiring'
+      ? { title: 'Expiring in 35 days', columns: contractCols, rows: open.filter((c) => dl(c) >= 0 && dl(c) <= REMINDER_DAYS).map(contractRow) }
+      : activeId === 'intimations'
+        ? {
+            title: 'Intimations due',
+            columns: [...contractCols, { key: 'poc', label: 'Client POC' }],
+            rows: open.filter((c) => dl(c) >= 0 && dl(c) <= INTIMATION_DAYS && !c.intimationSentAt).map((c) => ({ ...contractRow(c), poc: c.pocName })),
+          }
+        : activeId === 'closures'
+          ? { title: 'Closures in progress', columns: contractCols, rows: contracts.filter((c) => c.closureStatus === 'Closure initiated').map(contractRow) }
+          : {
+              title: 'Auto-calls today',
+              columns: [
+                { key: 'name', label: 'Employee' },
+                { key: 'wf', label: 'Workflow' },
+                { key: 'attempt', label: 'Attempt' },
+                { key: 'outcome', label: 'Outcome' },
+                { key: 'at', label: 'Time', className: 'whitespace-nowrap' },
+              ],
+              rows: callLog.filter((r) => r.at.startsWith(REF)).map((r) => ({ name: r.employeeName, wf: r.workflow, attempt: r.attempt, outcome: r.outcome, at: r.at })),
+            };
 
   const rows = useMemo(
     () =>
@@ -280,11 +321,12 @@ export const ContractsTab: React.FC<{ candidates: Candidate[]; onNavigate?: (vie
       {showClosure && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <KpiCard label="Expiring in 35 days" value={kpis.expiring} detail="Contracts not yet closed" icon={CalendarClock} tone="warn" />
-            <KpiCard label="Intimations due" value={kpis.intimationsDue} detail="Client email pending (30-day rule)" icon={Mail} tone="bad" />
-            <KpiCard label="Closures in progress" value={kpis.closures} detail="Awaiting experience letter" icon={FileCheck2} tone="info" />
-            <KpiCard label="Auto-calls today" value={kpis.callsToday} detail="Extension and closure workflows" icon={PhoneCall} tone="teal" />
+            <KpiCard onClick={() => toggle('expiring')} active={isActive('expiring')} label="Expiring in 35 days" value={kpis.expiring} detail="Contracts not yet closed" icon={CalendarClock} tone="warn" />
+            <KpiCard onClick={() => toggle('intimations')} active={isActive('intimations')} label="Intimations due" value={kpis.intimationsDue} detail="Client email pending (30-day rule)" icon={Mail} tone="bad" />
+            <KpiCard onClick={() => toggle('closures')} active={isActive('closures')} label="Closures in progress" value={kpis.closures} detail="Awaiting experience letter" icon={FileCheck2} tone="info" />
+            <KpiCard onClick={() => toggle('calls')} active={isActive('calls')} label="Auto-calls today" value={kpis.callsToday} detail="Extension and closure workflows" icon={PhoneCall} tone="teal" />
           </div>
+          <KpiDetailPanel detail={detail} onClose={close} />
           {!canManage && (
             <p className="cc-muted text-[11px] flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5" /> View only: you can review contracts but not change them.

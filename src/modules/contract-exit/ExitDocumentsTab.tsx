@@ -1,6 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ClipboardList, FolderOpen, Plus, Search, Upload } from 'lucide-react';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { AllowedFileSizeHint } from '../../components/common/AllowedFileSizeHint';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Toast } from '../../components/ui/Toast';
@@ -60,6 +62,30 @@ export const ExitDocumentsTab: React.FC<{ candidates: Candidate[] }> = () => {
   const totalDone = tracked.reduce((s, t) => s + t.done, 0);
   const open = tracked.find((t) => t.c.id === openId);
 
+  const kd = useKpiDetail<'tracked' | 'pending' | 'overdue' | 'received'>();
+  const kdRows = kd.activeId === 'pending' ? tracked.filter((t) => t.pending > 0) : kd.activeId === 'overdue' ? tracked.filter((t) => t.overdue) : tracked;
+  const detail: KpiDetailData | null = kd.activeId
+    ? {
+        title: { tracked: 'Cases tracked', pending: 'Pending documentation', overdue: 'Overdue', received: 'Documents received (per case)' }[kd.activeId],
+        columns: [
+          { key: 'emp', label: 'Employee' },
+          { key: 'client', label: 'Client' },
+          { key: 'type', label: 'Exit type' },
+          { key: 'lwd', label: 'LWD', className: 'whitespace-nowrap' },
+          { key: 'docs', label: 'Documents', className: 'whitespace-nowrap' },
+          { key: 'state', label: 'State' },
+        ],
+        rows: kdRows.map((t) => ({
+          emp: `${t.c.employee} (${t.c.empCode})`,
+          client: t.c.client,
+          type: t.c.exitType,
+          lwd: t.c.lwd ? formatExitDate(t.c.lwd) : '—',
+          docs: `${t.done} of ${t.req}`,
+          state: t.overdue ? <Chip tone="bad">Overdue</Chip> : t.pending > 0 ? <Chip tone="warn">Pending</Chip> : <Chip tone="good">Complete</Chip>,
+        })),
+      }
+    : null;
+
   const onFile = (f: File | undefined) => {
     if (!f || !open) return;
     const prev = docs[open.c.id]?.[targetDoc.current];
@@ -72,11 +98,12 @@ export const ExitDocumentsTab: React.FC<{ candidates: Candidate[] }> = () => {
   return (
     <div className="cc-stack">
       <div className="cc-grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Cases tracked" value={tracked.length} detail="Exit cases needing documents" icon={FolderOpen} tone="info" onClick={() => setState('all')} />
-        <KpiCard label="Pending documentation" value={pendingCases} detail="Cases with a document outstanding" icon={ClipboardList} tone="warn" onClick={() => setState('pending')} />
-        <KpiCard label="Overdue" value={tracked.filter((t) => t.overdue).length} detail="LWD passed, documents missing" icon={AlertTriangle} tone="bad" onClick={() => setState('overdue')} />
-        <KpiCard label="Documents received" value={`${totalReq ? Math.round((totalDone / totalReq) * 100) : 0}%`} detail={`${totalDone} of ${totalReq} required`} icon={CheckCircle2} tone="good" />
+        <KpiCard label="Cases tracked" value={tracked.length} detail="Exit cases needing documents" icon={FolderOpen} tone="info" onClick={() => { setState('all'); kd.toggle('tracked'); }} active={kd.isActive('tracked')} />
+        <KpiCard label="Pending documentation" value={pendingCases} detail="Cases with a document outstanding" icon={ClipboardList} tone="warn" onClick={() => { setState('pending'); kd.toggle('pending'); }} active={kd.isActive('pending')} />
+        <KpiCard label="Overdue" value={tracked.filter((t) => t.overdue).length} detail="LWD passed, documents missing" icon={AlertTriangle} tone="bad" onClick={() => { setState('overdue'); kd.toggle('overdue'); }} active={kd.isActive('overdue')} />
+        <KpiCard label="Documents received" value={`${totalReq ? Math.round((totalDone / totalReq) * 100) : 0}%`} detail={`${totalDone} of ${totalReq} required`} icon={CheckCircle2} tone="good" onClick={() => kd.toggle('received')} active={kd.isActive('received')} />
       </div>
+      <KpiDetailPanel detail={detail} onClose={kd.close} />
 
       <SectionCard
         title="Exit documentation tracker"

@@ -12,6 +12,8 @@ import {
   Tag
 } from 'lucide-react';
 import { HolidayCalendar, HolidayEmployeeRecord } from '../../data/mockHolidayMasterData';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
 
 interface SelectionReportsViewProps {
   calendar: HolidayCalendar;
@@ -26,6 +28,7 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
 }) => {
   const [activeStatusTab, setActiveStatusTab] = useState<'All' | 'Selected' | 'Pending' | 'Not Linked'>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const { activeId, toggle, close, isActive } = useKpiDetail<'selected' | 'pending' | 'notlinked' | 'total'>();
 
   // Employees in this calendar scope
   const calendarEmployees = useMemo(() => {
@@ -68,11 +71,35 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
     onShowToast(`Exported selection report for ${filteredEmployees.length} employees.`);
   };
 
+  const kpiDetail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      selected: { title: 'Selected', st: 'Selected' },
+      pending: { title: 'Pending', st: 'Pending' },
+      notlinked: { title: 'Not Linked', st: 'Not Linked' },
+      total: { title: 'Total Employees', st: null },
+    }[activeId];
+    const list = calendarEmployees.filter(x => cfg.st === null || x.selectionStatus === cfg.st);
+    return {
+      title: cfg.title,
+      columns: [
+        { key: 'id', label: 'Employee ID', className: 'font-mono whitespace-nowrap' },
+        { key: 'name', label: 'Name' },
+        { key: 'dept', label: 'Department' },
+        { key: 'client', label: 'Client' },
+        { key: 'cal', label: 'Calendar' },
+        { key: 'sel', label: 'Selection' },
+        { key: 'hol', label: 'Optional holidays' },
+      ],
+      rows: list.map(x => ({ id: x.employeeId, name: x.name, dept: x.department, client: x.client, cal: x.calendarName || calendar.name, sel: x.selectionStatus, hol: x.selectedHolidays.join('; ') || 'None' })),
+    };
+  })();
+
   return (
     <div className="space-y-4">
       {/* Top Summary Metrics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3.5 shadow-2xs">
+        <button type="button" onClick={() => toggle('selected')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3.5 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('selected') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Selected</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -84,9 +111,9 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
           <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium mt-1">
             Optional holiday choices submitted
           </p>
-        </div>
+        </button>
 
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-xl p-3.5 shadow-2xs">
+        <button type="button" onClick={() => toggle('pending')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-xl p-3.5 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('pending') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Pending</span>
             <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -98,9 +125,9 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
           <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium mt-1">
             Linked to calendar, choices not finalized
           </p>
-        </div>
+        </button>
 
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs">
+        <button type="button" onClick={() => toggle('notlinked')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('notlinked') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Not Linked</span>
             <UserX className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -112,9 +139,9 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
           <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
             Active in region but not mapped to calendar
           </p>
-        </div>
+        </button>
 
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-xl p-3.5 shadow-2xs">
+        <button type="button" onClick={() => toggle('total')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-xl p-3.5 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('total') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Employees</span>
             <Users className="w-4 h-4 text-sky-600 dark:text-sky-400" />
@@ -126,8 +153,10 @@ export const SelectionReportsView: React.FC<SelectionReportsViewProps> = ({
           <p className="text-[10px] text-sky-700 dark:text-sky-400 font-medium mt-1">
             {totalCount > 0 ? `${Math.round((selectedCount / totalCount) * 100)}% overall intake completion` : 'No candidates'}
           </p>
-        </div>
+        </button>
       </div>
+
+      <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
       {/* Control Bar: Status Tabs, Search & Export */}
       <div className="cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">

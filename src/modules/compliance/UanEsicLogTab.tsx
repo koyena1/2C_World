@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { CheckCircle2, Clock, FileClock, History, Pencil, Search, ShieldOff, Users } from 'lucide-react';
 import type { Candidate } from '../../types/onboarding';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { SectionCard, Chip } from '../dashboard/command-center/shared';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Toast } from '../../components/ui/Toast';
@@ -131,15 +133,48 @@ export const UanEsicLogTab: React.FC<{ candidates: Candidate[] }> = ({ candidate
     showToast(`UAN / ESIC updated for ${name}`);
   };
 
+  const { activeId, toggle, close, isActive } = useKpiDetail<'total' | 'uanPending' | 'esicPending' | 'complete' | 'month'>();
+  const detail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      total: { title: 'Candidates tracked', f: () => true },
+      uanPending: { title: 'UAN pending', f: (r: UanEsicRecord) => r.uanStatus === 'Pending' },
+      esicPending: { title: 'ESIC pending', f: (r: UanEsicRecord) => r.esicStatus === 'Pending' },
+      complete: { title: 'Up to date', f: (r: UanEsicRecord) => overall(r) === 'complete' },
+      month: { title: 'Updated this month', f: (r: UanEsicRecord) => r.updatedAt.startsWith(REF_MONTH) || touchedLive.has(r.candidateId) },
+    }[activeId];
+    return {
+      title: cfg.title,
+      columns: [
+        { key: 'cand', label: 'Candidate' },
+        { key: 'client', label: 'Client' },
+        { key: 'uan', label: 'UAN', className: 'font-mono whitespace-nowrap' },
+        { key: 'esic', label: 'ESIC', className: 'font-mono whitespace-nowrap' },
+        { key: 'status', label: 'Status' },
+      ],
+      rows: candidates
+        .map((c) => ({ c, r: recOf(c.id) }))
+        .filter(({ r }) => cfg.f(r))
+        .map(({ c, r }) => ({
+          cand: <span className="cc-title font-semibold">{`${c.firstName} ${c.lastName}`}</span>,
+          client: c.clientName,
+          uan: r.uan || <Empty label="Not set" />,
+          esic: r.esic || <Empty label={r.esicStatus === 'Not applicable' ? 'Not applicable' : 'Not set'} />,
+          status: <StatusChip r={r} />,
+        })),
+    };
+  })();
+
   return (
     <div className="cc-stack">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label="Candidates tracked" value={kpis.total} detail="With a UAN / ESIC record" icon={Users} tone="info" />
-        <KpiCard label="UAN pending" value={kpis.uanPending} detail="UAN not registered yet" icon={Clock} tone="warn" onClick={() => { setStatus('uan-pending'); resetPage(); }} />
-        <KpiCard label="ESIC pending" value={kpis.esicPending} detail="ESIC number awaited" icon={FileClock} tone="bad" onClick={() => { setStatus('esic-pending'); resetPage(); }} />
-        <KpiCard label="Up to date" value={kpis.complete} detail={`${kpis.total ? Math.round((kpis.complete / kpis.total) * 100) : 0}% fully recorded`} icon={CheckCircle2} tone="good" onClick={() => { setStatus('complete'); resetPage(); }} />
-        <KpiCard label="Updated this month" value={kpis.month} detail="Records touched in October 2026" icon={ShieldOff} tone="violet" className="col-span-2 lg:col-span-1" />
+        <KpiCard label="Candidates tracked" value={kpis.total} detail="With a UAN / ESIC record" icon={Users} tone="info" onClick={() => toggle('total')} active={isActive('total')} />
+        <KpiCard label="UAN pending" value={kpis.uanPending} detail="UAN not registered yet" icon={Clock} tone="warn" onClick={() => { setStatus('uan-pending'); resetPage(); toggle('uanPending'); }} active={isActive('uanPending')} />
+        <KpiCard label="ESIC pending" value={kpis.esicPending} detail="ESIC number awaited" icon={FileClock} tone="bad" onClick={() => { setStatus('esic-pending'); resetPage(); toggle('esicPending'); }} active={isActive('esicPending')} />
+        <KpiCard label="Up to date" value={kpis.complete} detail={`${kpis.total ? Math.round((kpis.complete / kpis.total) * 100) : 0}% fully recorded`} icon={CheckCircle2} tone="good" onClick={() => { setStatus('complete'); resetPage(); toggle('complete'); }} active={isActive('complete')} />
+        <KpiCard label="Updated this month" value={kpis.month} detail="Records touched in October 2026" icon={ShieldOff} tone="violet" className="col-span-2 lg:col-span-1" onClick={() => toggle('month')} active={isActive('month')} />
       </div>
+      <KpiDetailPanel detail={detail} onClose={close} />
 
       <SectionCard
         title="UAN & ESIC update log"

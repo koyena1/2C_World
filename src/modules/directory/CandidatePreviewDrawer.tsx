@@ -1,29 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  ExternalLink, 
-  Phone, 
-  Mail, 
-  Building2, 
-  MapPin, 
-  Calendar, 
-  ShieldCheck, 
-  CheckCircle2, 
-  AlertCircle, 
-  FileText,
-  UserCheck,
-  Send,
-  Copy,
-  ChevronRight,
-  Eye,
-  Check,
-  User,
-  CreditCard,
-  Briefcase
-} from 'lucide-react';
+import { X, ExternalLink, ShieldCheck, AlertCircle, ChevronRight, Eye, Check, Copy } from 'lucide-react';
 import { Candidate } from '../../types/onboarding';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { useTheme } from '../../hooks/useTheme';
+import { SectionCard } from '../../components/page/SectionCard';
+import { ProgressBar } from '../dashboard/command-center/shared';
 import { DocumentPreviewModal, DocumentPreviewData } from '../../components/common/DocumentPreviewModal';
 
 interface CandidatePreviewDrawerProps {
@@ -33,13 +13,24 @@ interface CandidatePreviewDrawerProps {
   onOpenKycWorkspace: (candidate: Candidate) => void;
 }
 
+/** An individual info tile: light-blue background + border on hover (.cc-card-hover), never on the section around it. */
+const TILE =
+  'cc-card-hover rounded-xl border border-[color:var(--cc-card-border)] bg-[color:var(--cc-card-bg)] p-3 min-w-0';
+const LABEL = 'cc-muted block text-[10px] font-semibold uppercase tracking-wide';
+
+const Field: React.FC<{ label: string; children: React.ReactNode; className?: string }> = ({ label, children, className = '' }) => (
+  <div className={TILE}>
+    <span className={LABEL}>{label}</span>
+    <p className={`cc-title text-xs font-semibold mt-1 break-words ${className}`}>{children}</p>
+  </div>
+);
+
 export const CandidatePreviewDrawer: React.FC<CandidatePreviewDrawerProps> = ({
   candidate,
   onClose,
   onOpenFullProfile,
   onOpenKycWorkspace,
 }) => {
-  const { isDark } = useTheme();
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<DocumentPreviewData | null>(null);
 
@@ -72,258 +63,156 @@ export const CandidatePreviewDrawer: React.FC<CandidatePreviewDrawerProps> = ({
 
   return (
     <>
-      <div 
-        className="fixed inset-0 z-50 overflow-hidden bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6"
+      <div
+        className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6"
         role="dialog"
         aria-modal="true"
+        aria-label="Candidate Details"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div 
-          className={`w-full max-w-4xl max-h-[88vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 border ${
-            isDark ? 'bg-slate-900 border-slate-750 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
-          }`}
+        <div
+          className="w-full max-w-4xl max-h-[94vh] sm:max-h-[90vh] rounded-[1.25rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-[color:var(--panel-border)] text-xs cc-text"
+          style={{ background: 'var(--panel-bg)' }}
         >
-          {/* ========================================================================= */}
-          {/* MODAL HEADER                                                              */}
-          {/* ========================================================================= */}
-          <div className={`px-6 py-4 border-b flex items-center justify-between shrink-0 ${
-            isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200'
-          }`}>
-            <div className="flex items-center gap-3">
-              <span className={`font-mono text-xs font-bold px-2.5 py-1 rounded-md border ${
-                isDark ? 'bg-sky-950/80 text-sky-400 border-sky-800' : 'bg-sky-50 text-sky-700 border-sky-200'
-              }`}>
-                {candidate.userId}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Candidate Details</span>
-                <span className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>·</span>
-                <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{candidate.clientName}</span>
+          {/* HEADER */}
+          <div className="px-4 sm:px-6 py-3 border-b border-[color:var(--cc-topbar-border)] bg-[color:var(--cc-topbar-bg)] flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="cc-accent-chip font-mono text-xs font-bold px-2.5 py-1 rounded-lg whitespace-nowrap">{candidate.userId}</span>
+              <div className="min-w-0">
+                <h1 className="cc-title text-sm font-bold leading-tight">Candidate Details</h1>
+                <p className="cc-muted text-[11px] truncate">{candidate.clientName}</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200'
-              }`}
-              title="Close (Esc)"
-            >
-              <X className="w-5 h-5" />
+            <button type="button" onClick={onClose} className="cc-btn cc-btn-secondary !w-8 !h-8 !px-0 shrink-0" title="Close" aria-label="Close">
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* ========================================================================= */}
-          {/* MODAL BODY (SCROLLABLE)                                                   */}
-          {/* ========================================================================= */}
-          <div className={`flex-1 overflow-y-auto p-6 space-y-6 text-xs ${
-            isDark ? 'text-slate-300' : 'text-slate-700'
-          }`}>
-            {/* Candidate Primary Summary Header */}
-            <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-              isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50/80 border-slate-200'
-            }`}>
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-full bg-sky-600/20 text-sky-400 border-2 border-sky-500/40 flex items-center justify-center font-bold text-lg shrink-0">
+          {/* BODY (scrolls) */}
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 sm:p-6 flex flex-col gap-3 sm:gap-4">
+            {/* Candidate summary */}
+            <section className="cc-card p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="cc-accent-chip w-12 h-12 rounded-full flex items-center justify-center font-bold text-base shrink-0">
                   {candidate.firstName[0]}{candidate.lastName[0]}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                      {candidate.firstName} {candidate.lastName}
-                    </h2>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <h2 className="cc-title text-base sm:text-lg font-bold break-words">{candidate.firstName} {candidate.lastName}</h2>
                     {candidate.oldEmployeeId && (
-                      <span className={`text-[10px] px-2 py-0.5 rounded border font-mono ${
-                        isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-200 text-slate-700 border-slate-300'
-                      }`}>
+                      <span className="cc-muted text-[10px] px-2 py-0.5 rounded-md border border-[color:var(--cc-card-border)] font-mono">
                         Ex-Emp: {candidate.oldEmployeeId}
                       </span>
                     )}
                   </div>
-                  <p className={`text-xs font-medium mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    {candidate.designation} · {candidate.department}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
+                  <p className="cc-muted text-xs font-medium mt-0.5">{candidate.designation} · {candidate.department}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <StatusBadge type="joining" status={candidate.joiningStatus} />
                     <StatusBadge type="penny" status={candidate.pennyTestStatus} />
                   </div>
                 </div>
               </div>
 
-              {/* Profile Progress */}
-              <div className="sm:text-right shrink-0">
-                <span className={`text-[10px] uppercase tracking-wider font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Profile Completion
-                </span>
-                <div className="flex items-center gap-2.5 mt-1">
-                  <div className={`w-28 rounded-full h-2.5 overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
-                    <div
-                      className="bg-sky-600 h-2.5 rounded-full transition-all duration-300"
-                      style={{ width: `${candidate.onboardingCompletionPct}%` }}
-                    />
-                  </div>
-                  <span className={`font-mono text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    {candidate.onboardingCompletionPct}%
-                  </span>
+              <div className="sm:w-48 shrink-0 border-t sm:border-t-0 border-[color:var(--cc-divider)] pt-3 sm:pt-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="cc-muted text-[10px] uppercase tracking-wider font-semibold">Profile Completion</span>
+                  <span className="cc-title font-mono text-sm font-bold">{candidate.onboardingCompletionPct}%</span>
                 </div>
+                <ProgressBar value={candidate.onboardingCompletionPct} tone="info" className="mt-1.5" label="Profile completion" />
               </div>
-            </div>
+            </section>
 
-            {/* Contact Details Card */}
-            <div className={`rounded-xl p-4 border space-y-3 ${
-              isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-white border-slate-200'
-            }`}>
-              <h3 className={`font-bold uppercase text-[10px] tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Contact & Communication
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                  isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <div className="min-w-0 pr-2">
-                    <span className="text-[10px] text-slate-400 block">Email Address</span>
-                    <span className={`font-medium truncate block ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                      {candidate.email}
-                    </span>
+            {/* Contact & Communication */}
+            <SectionCard title="Contact & Communication">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                <div className={`${TILE} flex items-center justify-between gap-2`}>
+                  <div className="min-w-0">
+                    <span className={LABEL}>Email Address</span>
+                    <p className="cc-title text-xs font-semibold mt-1 truncate">{candidate.email}</p>
                   </div>
                   <button
                     type="button"
                     onClick={handleCopyEmail}
-                    className="p-1 rounded text-sky-500 hover:text-sky-400 hover:bg-sky-500/10 cursor-pointer shrink-0"
+                    className="p-1.5 rounded-md cc-muted hover:text-[color:var(--cc-accent)] hover:bg-[color:var(--cc-accent-soft)] cursor-pointer shrink-0 transition-colors"
                     title="Copy Email"
+                    aria-label="Copy email"
                   >
-                    {copiedEmail ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedEmail ? <Check className="w-3.5 h-3.5 text-[color:var(--cc-good)]" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
 
-                <div className={`p-2.5 rounded-lg border flex items-center justify-between ${
-                  isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">Contact Phone</span>
-                    <span className={`font-medium block ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                      {candidate.phone}
-                    </span>
+                <div className={`${TILE} flex items-center justify-between gap-2`}>
+                  <div className="min-w-0">
+                    <span className={LABEL}>Contact Phone</span>
+                    <p className="cc-title text-xs font-semibold mt-1">{candidate.phone}</p>
                   </div>
-                  <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 font-medium">
+                  <span className="tone-good tone-chip text-[10px] px-1.5 py-0.5 rounded-md font-semibold whitespace-nowrap shrink-0">
                     WhatsApp Active
                   </span>
                 </div>
 
-                <div className={`p-2.5 rounded-lg border ${
-                  isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <span className="text-[10px] text-slate-400 block">Emergency Contact</span>
-                  <span className={`font-medium block truncate ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                    {candidate.emergencyContact}
-                  </span>
-                </div>
+                <Field label="Emergency Contact" className="truncate">{candidate.emergencyContact}</Field>
               </div>
-            </div>
+            </SectionCard>
 
-            {/* Job & Deployment Info */}
-            <div className="space-y-2">
-              <h3 className={`font-bold uppercase text-[10px] tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                Deployment & Sourcing
-              </h3>
-              <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl border ${
-                isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-white border-slate-200'
-              }`}>
-                <div>
-                  <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Client Organization</span>
-                  <p className={`font-semibold mt-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>{candidate.clientName}</p>
-                </div>
-                <div>
-                  <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Work Location / Branch</span>
-                  <p className={`font-medium mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{candidate.workLocation}</p>
-                </div>
-                <div>
-                  <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Date of Joining</span>
-                  <p className={`font-mono font-medium mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{candidate.dateOfJoining}</p>
-                </div>
-                <div>
-                  <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>End of Contract</span>
-                  <p className={`font-mono font-medium mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{candidate.endOfContract || 'Ongoing / Indefinite'}</p>
-                </div>
-                <div>
-                  <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gross Monthly CTC</span>
-                  <p className={`font-mono font-semibold mt-0.5 text-emerald-500`}>₹ {candidate.grossSalaryMonthly?.toLocaleString('en-IN')}</p>
-                </div>
-                <div>
-                  <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Assigned Recruiter</span>
-                  <p className={`font-medium mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{candidate.recruiterName}</p>
-                </div>
-                <div>
-                  <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Candidate Source</span>
-                  <p className={`font-medium mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{candidate.source}</p>
-                </div>
-                <div>
-                  <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Registration Date</span>
-                  <p className={`font-mono font-medium mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{candidate.registrationDate}</p>
-                </div>
+            {/* Deployment & Sourcing */}
+            <SectionCard title="Deployment & Sourcing">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+                <Field label="Client Organization">{candidate.clientName}</Field>
+                <Field label="Work Location / Branch">{candidate.workLocation}</Field>
+                <Field label="Date of Joining" className="font-mono">{candidate.dateOfJoining}</Field>
+                <Field label="End of Contract" className="font-mono">{candidate.endOfContract || 'Ongoing / Indefinite'}</Field>
+                <Field label="Gross Monthly CTC" className="font-mono !text-[color:var(--cc-good)]">
+                  ₹ {candidate.grossSalaryMonthly?.toLocaleString('en-IN')}
+                </Field>
+                <Field label="Assigned Recruiter">{candidate.recruiterName}</Field>
+                <Field label="Candidate Source">{candidate.source}</Field>
+                <Field label="Registration Date" className="font-mono">{candidate.registrationDate}</Field>
               </div>
-            </div>
+            </SectionCard>
 
-            {/* KYC & Statutory Checks Grid with View Document buttons */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className={`font-bold uppercase text-[10px] tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                  KYC & Statutory Verification Checks
-                </h3>
+            {/* KYC & Statutory Verification */}
+            <SectionCard
+              title="KYC & Statutory Verification Checks"
+              action={
                 <button
                   type="button"
                   onClick={() => onOpenKycWorkspace(candidate)}
-                  className="text-xs text-sky-500 hover:text-sky-400 font-semibold flex items-center gap-1 cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs font-semibold cursor-pointer whitespace-nowrap text-[color:var(--cc-accent)] hover:underline"
                 >
                   <span>Open Full KYC Desk</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              }
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 {candidate.kycRecords.map((kyc) => {
                   const isUploaded = kyc.status !== 'Not Started' && kyc.documentAvailability !== 'Missing Document';
                   return (
-                    <div
-                      key={kyc.id}
-                      className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${
-                        isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-white border-slate-200'
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className={`font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{kyc.documentType}</p>
-                          <StatusBadge type="kyc" status={kyc.status} size="sm" />
-                        </div>
-                        <p className={`font-mono text-[11px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                          {kyc.documentNumber}
-                        </p>
-                        <p className="text-[10px] text-slate-400 truncate max-w-[180px] mt-0.5">
-                          {kyc.documentFileName || `${kyc.documentType}_Proof.pdf`}
-                        </p>
+                    <div key={kyc.id} className={`${TILE} flex flex-col gap-2`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="cc-title text-sm font-bold">{kyc.documentType}</p>
+                        <StatusBadge type="kyc" status={kyc.status} size="sm" />
                       </div>
-
-                      <div className="shrink-0 flex items-center gap-2">
+                      <div className="min-w-0">
+                        <p className="cc-text font-mono text-[11px] break-all">{kyc.documentNumber}</p>
+                        <p className="cc-muted text-[10px] truncate mt-0.5">{kyc.documentFileName || `${kyc.documentType}_Proof.pdf`}</p>
+                      </div>
+                      <div className="mt-auto pt-2 border-t border-[color:var(--cc-divider)]">
                         {isUploaded ? (
                           <button
                             type="button"
                             onClick={() => openDocPreview(kyc)}
-                            className={`px-2.5 py-1 text-xs font-semibold rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${
-                              isDark
-                                ? 'bg-sky-950/80 text-sky-300 border-sky-800 hover:bg-sky-600 hover:text-white'
-                                : 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-600 hover:text-white'
-                            }`}
+                            className="cc-btn cc-btn-tone tone-info !h-8 w-full"
                             title="View Document Preview"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            <span>View Doc</span>
+                            <span>View Document</span>
                           </button>
                         ) : (
-                          <span className={`px-2 py-0.5 text-[10px] font-semibold rounded border border-dashed ${
-                            isDark ? 'border-slate-700 text-slate-500 bg-slate-900' : 'border-slate-300 text-slate-400 bg-slate-50'
-                          }`}>
+                          <span className="cc-muted inline-flex items-center justify-center w-full h-8 text-[11px] font-semibold rounded-lg border border-dashed border-[color:var(--cc-card-border)]">
                             Not Uploaded
                           </span>
                         )}
@@ -332,64 +221,35 @@ export const CandidatePreviewDrawer: React.FC<CandidatePreviewDrawerProps> = ({
                   );
                 })}
               </div>
-            </div>
+            </SectionCard>
 
-            {/* Missing Fields Warning if any */}
+            {/* Pending mandatory items */}
             {candidate.missingFields.length > 0 && (
-              <div className={`p-4 rounded-xl border ${
-                isDark ? 'bg-amber-950/40 border-amber-800/80 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'
-              }`}>
+              <section className="rounded-[var(--cc-card-radius)] border p-3.5 sm:p-4 bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-800/80 dark:text-amber-200">
                 <div className="flex items-center gap-2 font-bold text-xs">
                   <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
                   <span>Pending Mandatory Items ({candidate.missingFields.length})</span>
                 </div>
-                <ul className={`list-disc list-inside mt-2 space-y-1 text-xs ${
-                  isDark ? 'text-amber-300/90' : 'text-amber-800'
-                }`}>
+                <ul className="list-disc list-inside mt-2 space-y-1 text-xs text-amber-800 dark:text-amber-300/90">
                   {candidate.missingFields.map((f, i) => (
                     <li key={i}>{f}</li>
                   ))}
                 </ul>
-              </div>
+              </section>
             )}
           </div>
 
-          {/* ========================================================================= */}
-          {/* MODAL FOOTER                                                              */}
-          {/* ========================================================================= */}
-          <div className={`px-6 py-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 ${
-            isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-50 border-slate-200'
-          }`}>
-            <button
-              type="button"
-              onClick={onClose}
-              className={`px-4 py-2 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
-                isDark
-                  ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
-                  : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-              }`}
-            >
+          {/* FOOTER */}
+          <div className="px-4 sm:px-6 py-3 border-t border-[color:var(--cc-topbar-border)] bg-[color:var(--cc-topbar-bg)] flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2.5 shrink-0">
+            <button type="button" onClick={onClose} className="cc-btn cc-btn-secondary w-full sm:w-auto">
               Close
             </button>
-
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => onOpenKycWorkspace(candidate)}
-                className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 border cursor-pointer ${
-                  isDark
-                    ? 'text-slate-200 bg-slate-800 hover:bg-slate-700 border-slate-700'
-                    : 'text-slate-700 bg-white border-slate-300 hover:bg-slate-100'
-                }`}
-              >
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-2">
+              <button type="button" onClick={() => onOpenKycWorkspace(candidate)} className="cc-btn cc-btn-secondary w-full sm:w-auto">
                 <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
                 <span>Open KYC Desk</span>
               </button>
-              <button
-                type="button"
-                onClick={() => onOpenFullProfile(candidate)}
-                className="px-5 py-2 text-xs font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-500 transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-              >
+              <button type="button" onClick={() => onOpenFullProfile(candidate)} className="cc-btn cc-btn-primary w-full sm:w-auto">
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>Open Candidate 360</span>
               </button>

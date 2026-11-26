@@ -25,6 +25,8 @@ import {
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
 import { DonutChart } from '../../components/page/DonutChart';
 import { SectionCard, Chip } from '../dashboard/command-center/shared';
@@ -76,6 +78,51 @@ export const BulkImportHub: React.FC<BulkImportHubProps> = ({ onSelectImportType
     tone: styleOf(cat.name).tone,
   }));
 
+  const kd = useKpiDetail<'categories' | 'workflows' | 'batches' | 'accuracy'>();
+  const logCols = [
+    { key: 'id', label: 'Batch ID', className: 'font-mono whitespace-nowrap' },
+    { key: 'type', label: 'Import type' },
+    { key: 'client', label: 'Client / scope' },
+    { key: 'on', label: 'Uploaded on', className: 'whitespace-nowrap' },
+    { key: 'rows', label: 'Rows (passed / total)', align: 'right' as const },
+    { key: 'status', label: 'Status' },
+  ];
+  const kdDetail: KpiDetailData | null = !kd.activeId
+    ? null
+    : kd.activeId === 'categories'
+      ? {
+          title: 'Categories',
+          columns: [
+            { key: 'name', label: 'Category' },
+            { key: 'desc', label: 'Description' },
+            { key: 'n', label: 'Workflows', align: 'right' },
+          ],
+          rows: IMPORT_CATEGORIES.map((cat) => ({ name: cat.name, desc: cat.description, n: ALL_IMPORT_TYPES.filter((t) => t.category === cat.name).length })),
+        }
+      : kd.activeId === 'workflows'
+        ? {
+            title: 'Import Workflows',
+            columns: [
+              { key: 'name', label: 'Workflow' },
+              { key: 'cat', label: 'Category' },
+              { key: 'fmt', label: 'Formats' },
+              { key: 'cols', label: 'Template columns', align: 'right' },
+            ],
+            rows: ALL_IMPORT_TYPES.map((t) => ({ name: t.name, cat: t.category, fmt: t.supportedFileFormats.join(', '), cols: t.templateHeaders.length })),
+          }
+        : kd.activeId === 'batches'
+          ? {
+              title: 'Recent Batches',
+              subtitle: `Latest ${INITIAL_IMPORT_LOGS.length} batches from the audit trail`,
+              columns: logCols,
+              rows: INITIAL_IMPORT_LOGS.map((l) => ({ id: l.id, type: l.importTypeName, client: l.clientOrEntity, on: l.uploadedOn, rows: `${l.insertedRows} / ${l.totalRows}`, status: <ImportStatusChip status={l.status} /> })),
+            }
+          : {
+              title: 'Engine Accuracy: pre-flight pass rate per batch',
+              columns: [...logCols.slice(0, 2), { key: 'rate', label: 'Pass rate', align: 'right' as const }, ...logCols.slice(4)],
+              rows: INITIAL_IMPORT_LOGS.map((l) => ({ id: l.id, type: l.importTypeName, rate: `${l.totalRows ? Math.round((l.insertedRows / l.totalRows) * 1000) / 10 : 0}%`, rows: `${l.insertedRows} / ${l.totalRows}`, status: <ImportStatusChip status={l.status} /> })),
+            };
+
   const tabs = [
     { value: 'All', label: 'All Categories', count: totalImportTypes },
     ...IMPORT_CATEGORIES.map(cat => ({
@@ -126,11 +173,12 @@ export const BulkImportHub: React.FC<BulkImportHubProps> = ({ onSelectImportType
 
         {/* KPI cards */}
         <div className="cc-grid grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Categories" value={totalCategories} detail="Enterprise operations" icon={Layers} tone="info" />
-          <KpiCard label="Import Workflows" value={totalImportTypes} detail="Ready for Excel ingestion" icon={Workflow} tone="good" />
-          <KpiCard label="Recent Batches" value={148} detail="This financial month" icon={History} tone="violet" />
-          <KpiCard label="Engine Accuracy" value="98.4%" detail="Pre-flight validation rate" icon={Gauge} tone="teal" />
+          <KpiCard onClick={() => kd.toggle('categories')} active={kd.isActive('categories')} label="Categories" value={totalCategories} detail="Enterprise operations" icon={Layers} tone="info" />
+          <KpiCard onClick={() => kd.toggle('workflows')} active={kd.isActive('workflows')} label="Import Workflows" value={totalImportTypes} detail="Ready for Excel ingestion" icon={Workflow} tone="good" />
+          <KpiCard onClick={() => kd.toggle('batches')} active={kd.isActive('batches')} label="Recent Batches" value={148} detail="This financial month" icon={History} tone="violet" />
+          <KpiCard onClick={() => kd.toggle('accuracy')} active={kd.isActive('accuracy')} label="Engine Accuracy" value="98.4%" detail="Pre-flight validation rate" icon={Gauge} tone="teal" />
         </div>
+        <KpiDetailPanel detail={kdDetail} onClose={kd.close} />
 
         {/* Donut + recent activity */}
         <div className="cc-grid grid-cols-1 xl:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">

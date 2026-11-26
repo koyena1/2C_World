@@ -4,6 +4,8 @@ import type { Candidate } from '../../types/onboarding';
 import { PageHeader } from '../../components/page/PageHeader';
 import { SectionCard } from '../../components/page/SectionCard';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Toast } from '../../components/ui/Toast';
@@ -53,6 +55,31 @@ export const SupportTicketPage: React.FC<{ candidates: Candidate[] }> = ({ candi
   const sorted = useMemo(() => [...candidates].sort((a, b) => a.firstName.localeCompare(b.firstName)), [candidates]);
   const count = (s: string) => tickets.filter((t) => t.status === s).length;
 
+  const { activeId, toggle, close, isActive } = useKpiDetail<'Open' | 'In progress' | 'Escalated' | 'Resolved'>();
+  const detail: KpiDetailData | null = activeId
+    ? {
+        title: `${activeId} tickets`,
+        columns: [
+          { key: 'id', label: 'Ticket', className: 'whitespace-nowrap' },
+          { key: 'subject', label: 'Subject' },
+          { key: 'category', label: 'Category' },
+          { key: 'priority', label: 'Priority' },
+          { key: 'agent', label: 'Agent' },
+          { key: 'status', label: 'Status' },
+        ],
+        rows: tickets
+          .filter((t) => t.status === activeId)
+          .map((t) => ({
+            id: <span className="cc-title font-semibold">{t.id}</span>,
+            subject: t.subject,
+            category: t.category,
+            priority: t.priority,
+            agent: agentName(t.agentId),
+            status: <span className={`tone-chip rounded-full px-2 py-0.5 text-[11px] font-semibold ${STATUS_TONE[t.status] ?? ''}`}>{t.status}</span>,
+          })),
+      }
+    : null;
+
   const submit = () => {
     setSubmitted(true);
     if (subject.trim().length < 5 || !mapped) return;
@@ -91,11 +118,12 @@ export const SupportTicketPage: React.FC<{ candidates: Candidate[] }> = ({ candi
 
       <div className="cc-container cc-stack py-5">
         <div className="cc-grid grid-cols-2 xl:grid-cols-4">
-          <KpiCard label="Open" value={count('Open')} detail="Waiting for an agent" icon={CircleDot} tone="info" />
-          <KpiCard label="In progress" value={count('In progress')} detail="Being worked on" icon={LifeBuoy} tone="warn" />
-          <KpiCard label="Escalated" value={count('Escalated')} detail="Sent to the ticketing portal" icon={TriangleAlert} tone="bad" />
-          <KpiCard label="Resolved" value={count('Resolved')} detail="Closed tickets" icon={CheckCircle2} tone="good" />
+          <KpiCard label="Open" value={count('Open')} detail="Waiting for an agent" icon={CircleDot} tone="info" onClick={() => toggle('Open')} active={isActive('Open')} />
+          <KpiCard label="In progress" value={count('In progress')} detail="Being worked on" icon={LifeBuoy} tone="warn" onClick={() => toggle('In progress')} active={isActive('In progress')} />
+          <KpiCard label="Escalated" value={count('Escalated')} detail="Sent to the ticketing portal" icon={TriangleAlert} tone="bad" onClick={() => toggle('Escalated')} active={isActive('Escalated')} />
+          <KpiCard label="Resolved" value={count('Resolved')} detail="Closed tickets" icon={CheckCircle2} tone="good" onClick={() => toggle('Resolved')} active={isActive('Resolved')} />
         </div>
+        <KpiDetailPanel detail={detail} onClose={close} />
 
         <CategoryTabs
           value={tab}

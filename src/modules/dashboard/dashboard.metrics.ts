@@ -23,6 +23,21 @@ const hasKycIssue = (c: Candidate) => KYC_OPEN.includes(c.overallKycStatus);
 const hasBankFailure = (c: Candidate) => c.pennyTestStatus === 'Failed';
 const hasMissingDocs = (c: Candidate) => c.missingFields.length > 0;
 const hasUnsignedLetter = (c: Candidate) => c.letters.some((l) => l.status === 'Pending Acceptance');
+/** Why a candidate counts as a blocker (empty = no blocker). */
+export const blockerReasons = (c: Candidate): string[] =>
+  [
+    hasKycIssue(c) && 'KYC issue',
+    hasBankFailure(c) && 'Bank test failed',
+    hasMissingDocs(c) && 'Missing documents',
+    hasUnsignedLetter(c) && 'Unsigned offer letter',
+  ].filter((r): r is string => Boolean(r));
+
+/** Active candidates still waiting for an accepted offer letter (the Pending Offers figure). */
+export const isAwaitingOffer = (c: Candidate) => isActive(c) && !c.letters.some((l) => l.status === 'Accepted');
+
+/** Whether a candidate joins inside the KPI "upcoming" window starting at refDate. */
+export const joinsInUpcomingWindow = (c: Candidate, refDate: string = DASHBOARD_REFERENCE_DATE) => isActive(c) && isInUpcomingWindow(c, refDate);
+
 const hasAnyBlocker = (c: Candidate) =>
   hasKycIssue(c) || hasBankFailure(c) || hasMissingDocs(c) || hasUnsignedLetter(c);
 

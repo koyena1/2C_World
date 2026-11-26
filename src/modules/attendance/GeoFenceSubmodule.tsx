@@ -23,6 +23,8 @@ import {
   KOLKATA_PERMITTED_OFFICES 
 } from '../../data/mockAttendanceData';
 import { useTheme } from '../../hooks/useTheme';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
 interface GeoFenceSubmoduleProps {
@@ -34,6 +36,7 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
   const [locations, setLocations] = useState<GeoFenceLocation[]>(INITIAL_GEO_FENCES);
   const [selectedLocation, setSelectedLocation] = useState<GeoFenceLocation>(INITIAL_GEO_FENCES[0]);
   const [searchQuery, setSearchQuery] = useState('');
+  const { activeId, toggle, close, isActive } = useKpiDetail<'sites' | 'users' | 'strict' | 'wifi'>();
 
   // Add / Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,13 +150,39 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
     }, 1200);
   };
 
+  const kpiDetail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const siteCols = [
+      { key: 'name', label: 'Site' },
+      { key: 'city', label: 'City' },
+      { key: 'radius', label: 'Radius', align: 'right' as const },
+      { key: 'mode', label: 'Enforcement' },
+      { key: 'wifi', label: 'Wi-Fi SSID' },
+      { key: 'staff', label: 'Enrolled staff', align: 'right' as const },
+      { key: 'status', label: 'Status' },
+    ];
+    const siteRows = (list: GeoFenceLocation[]) => list.map(l => ({
+      name: l.name, city: `${l.city}, ${l.state}`, radius: `${l.radiusMeters} m`, mode: l.enforcementMode,
+      wifi: l.allowedWifiSSID, staff: l.enrolledStaff, status: l.status,
+    }));
+    if (activeId === 'sites') return { title: 'Total Defined Sites', columns: siteCols, rows: siteRows(locations) };
+    if (activeId === 'users') return { title: 'Enrolled Mobile Users', subtitle: 'Enrolment by geofence site', columns: siteCols, rows: siteRows(locations) };
+    if (activeId === 'strict') return { title: 'Strict Enforcement', subtitle: 'Sites that block punches outside the radius', columns: siteCols, rows: siteRows(locations.filter(l => l.enforcementMode.startsWith('Strict'))), emptyText: 'No site uses strict enforcement.' };
+    const ssids = Array.from(new Set(locations.map(l => l.allowedWifiSSID)));
+    return {
+      title: 'Wi-Fi Beacons', subtitle: `${ssids.length} SSID${ssids.length === 1 ? '' : 's'} configured`,
+      columns: [{ key: 'ssid', label: 'Wi-Fi SSID' }, { key: 'sites', label: 'Sites using it' }, { key: 'count', label: 'Site count', align: 'right' as const }],
+      rows: ssids.map(ss => { const ls = locations.filter(l => l.allowedWifiSSID === ss); return { ssid: ss, sites: ls.map(l => l.name).join(', '), count: ls.length }; }),
+    };
+  })();
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Geo Fence & Mobile Boundaries</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Geo Fence & Mobile Boundaries</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Configure biometric GPS punch radiuses, authorized corporate Wi-Fi SSIDs, and location enforcement policies.
           </p>
         </div>
@@ -170,27 +199,28 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="cc-card-hover bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <button type="button" onClick={() => toggle('sites')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('sites') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Defined Sites</span>
-          <span className="text-2xl font-bold text-slate-900 block font-mono mt-0.5">{locations.length}</span>
-          <span className="text-[11px] text-slate-500">Across 3 metropolitan hubs</span>
-        </div>
-        <div className="cc-card-hover bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+          <span className="text-2xl font-bold text-slate-900 dark:text-white block font-mono mt-0.5">{locations.length}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">Across 3 metropolitan hubs</span>
+        </button>
+        <button type="button" onClick={() => toggle('users')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('users') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Enrolled Mobile Users</span>
-          <span className="text-2xl font-bold text-sky-700 block font-mono mt-0.5">218</span>
+          <span className="text-2xl font-bold text-sky-700 dark:text-sky-300 block font-mono mt-0.5">218</span>
           <span className="text-[11px] text-sky-600 font-medium">GPS Geofence App enabled</span>
-        </div>
-        <div className="cc-card-hover bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        </button>
+        <button type="button" onClick={() => toggle('strict')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('strict') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Strict Enforcement</span>
-          <span className="text-2xl font-bold text-emerald-700 block font-mono mt-0.5">Active</span>
+          <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 block font-mono mt-0.5">Active</span>
           <span className="text-[11px] text-emerald-600 font-medium">Blocks punches outside radius</span>
-        </div>
-        <div className="cc-card-hover bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        </button>
+        <button type="button" onClick={() => toggle('wifi')} className={`cc-card-hover bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('wifi') ? 'cc-card-selected' : ''}`}>
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Wi-Fi Beacons</span>
-          <span className="text-2xl font-bold text-slate-800 block font-mono mt-0.5">3 SSIDs</span>
-          <span className="text-[11px] text-slate-500">Secondary verification layer</span>
-        </div>
+          <span className="text-2xl font-bold text-slate-800 dark:text-slate-100 block font-mono mt-0.5">3 SSIDs</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">Secondary verification layer</span>
+        </button>
       </div>
+      <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
       {/* ========================================================================= */}
       {/* KOLKATA PERMITTED WORK LOCATIONS SECTION (MANDATED REQUIREMENT)           */}
@@ -207,7 +237,7 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
               <h2 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 Kolkata Permitted Offices
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
                 Work Zone: Kolkata
               </span>
             </div>
@@ -233,7 +263,7 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
 
         {/* Table of Kolkata Permitted Offices */}
         <div className="overflow-x-auto">
-          <table className={`w-full text-left text-xs ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+          <table className={`cc-table-stack w-full text-left text-xs ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
             <thead className={`text-[11px] uppercase tracking-wider font-semibold border-b ${
               isDark ? 'bg-slate-800/90 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-500 border-slate-200'
             }`}>
@@ -258,11 +288,11 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
                   <td className="px-4 py-3.5">
                     <span className="font-semibold text-sky-600 dark:text-sky-400">{office.city} / {office.workZone}</span>
                   </td>
-                  <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500 max-w-xs truncate" title={office.pincodeAddressPlaceholder}>
+                  <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500 dark:text-slate-400 max-w-xs truncate" title={office.pincodeAddressPlaceholder}>
                     {office.pincodeAddressPlaceholder}
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                       <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                       {office.geoFenceStatus}
                     </span>
@@ -278,14 +308,14 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
                       <button
                         type="button"
                         onClick={() => onShowToast(`Simulating GPS test punch at Kolkata ${office.name} office.`)}
-                        className="px-2.5 py-1 text-xs font-semibold rounded bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-colors"
+                        className="px-2.5 py-1 text-xs font-semibold rounded bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 hover:bg-sky-100 border border-sky-200 dark:border-sky-800 transition-colors"
                       >
                         Test Punch
                       </button>
                       <button
                         type="button"
                         onClick={() => onShowToast(`Geo-fence radius for ${office.name} set to ${office.geofenceRadiusMeters}m.`)}
-                        className="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition-colors"
+                        className="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-slate-800 transition-colors"
                       >
                         Configure
                       </button>
@@ -302,16 +332,16 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Active Geofence Boundaries ({filteredLocations.length})
             </h2>
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search locations..."
-                className="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs"
+                className="w-full pl-8 pr-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
             </div>
@@ -332,8 +362,8 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-slate-900">{loc.name}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm text-slate-900 dark:text-white">{loc.name}</span>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                           loc.status === 'Active' 
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
@@ -342,7 +372,7 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
                           {loc.status}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-600 flex items-center gap-1.5">
+                      <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>{loc.address}, {loc.city}, {loc.state}</span>
                       </p>
@@ -375,22 +405,22 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
                   </div>
 
                   {/* Badges Bar */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">Radius</span>
-                      <strong className="font-mono text-sky-800">{loc.radiusMeters} Meters</strong>
+                      <strong className="font-mono text-sky-800 dark:text-sky-300">{loc.radiusMeters} Meters</strong>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">GPS Coordinates</span>
-                      <strong className="font-mono text-slate-700 text-[11px]">{loc.latitude}° N, {loc.longitude}° E</strong>
+                      <strong className="font-mono text-slate-700 dark:text-slate-200 text-[11px]">{loc.latitude}° N, {loc.longitude}° E</strong>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">Enforcement</span>
-                      <strong className="text-slate-800 text-[11px]">{loc.enforcementMode}</strong>
+                      <strong className="text-slate-800 dark:text-slate-100 text-[11px]">{loc.enforcementMode}</strong>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">Enrolled Staff</span>
-                      <strong className="font-mono text-slate-900">{loc.enrolledStaff} Staff</strong>
+                      <strong className="font-mono text-slate-900 dark:text-white">{loc.enrolledStaff} Staff</strong>
                     </div>
                   </div>
                 </div>
@@ -403,16 +433,16 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
         <div className="space-y-4">
           <div className="flex items-center gap-1.5">
             <Compass className="w-4 h-4 text-sky-600" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Interactive Radius Simulation
             </h2>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-            <div className="border-b border-slate-100 pb-3">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-2xs space-y-4">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
               <span className="text-[10px] uppercase font-bold text-slate-400 block">Inspecting Target Site</span>
-              <h3 className="text-sm font-bold text-slate-900 mt-0.5">{selectedLocation.name}</h3>
-              <p className="text-[11px] text-slate-500">{selectedLocation.city} Campus · {selectedLocation.radiusMeters}m Geofence</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">{selectedLocation.name}</h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{selectedLocation.city} Campus · {selectedLocation.radiusMeters}m Geofence</p>
             </div>
 
             {/* Visual Simulated Radar Canvas */}
@@ -440,16 +470,16 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
             </div>
 
             {/* Wi-Fi & Secondary Verification Info */}
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-1.5 text-slate-500">
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
+              <div className="flex items-center justify-between text-slate-700 dark:text-slate-200">
+                <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <Wifi className="w-3.5 h-3.5 text-sky-600" />
                   <span>Wi-Fi SSID Whitelist:</span>
                 </span>
                 <strong className="font-mono">{selectedLocation.allowedWifiSSID}</strong>
               </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-1.5 text-slate-500">
+              <div className="flex items-center justify-between text-slate-700 dark:text-slate-200">
+                <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                   <Shield className="w-3.5 h-3.5 text-sky-600" />
                   <span>Subnet Whitelist:</span>
                 </span>
@@ -461,14 +491,14 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
             <button
               type="button"
               onClick={runTestPunch}
-              className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+              className="w-full py-2 bg-slate-900 hover:bg-slate-800 dark:bg-sky-600 dark:hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
             >
               <Navigation className="w-3.5 h-3.5 text-sky-400" />
               <span>Simulate Employee Test Punch</span>
             </button>
 
             {testResult && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-xs leading-relaxed animate-in fade-in">
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-900 dark:text-emerald-200 text-xs leading-relaxed animate-in fade-in">
                 {testResult}
               </div>
             )}
@@ -479,11 +509,11 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
       {/* MODAL: ADD / EDIT GEOFENCE */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-sky-600" />
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                   {editingLocation ? 'Edit Geofence Boundary' : 'Create New Geofence Perimeter'}
                 </h3>
               </div>
@@ -498,7 +528,7 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
 
             <form onSubmit={handleSave} className="p-5 space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-slate-900 mb-1">
+                <label className="block font-semibold text-slate-900 dark:text-white mb-1">
                   Location / Facility Name <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -507,12 +537,12 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Hyderabad Home Branch / Tech Campus"
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs"
+                  className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-900 mb-1">
+                <label className="block font-semibold text-slate-900 dark:text-white mb-1">
                   Street Address <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -521,70 +551,70 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="e.g. Plot 42, Hitec City Phase 2, Madhapur"
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs"
+                  className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-900 mb-1">City</label>
+                  <label className="block font-semibold text-slate-900 dark:text-white mb-1">City</label>
                   <input
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs"
+                    className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-900 mb-1">State</label>
+                  <label className="block font-semibold text-slate-900 dark:text-white mb-1">State</label>
                   <input
                     type="text"
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs"
+                    className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-900 mb-1">Latitude</label>
+                  <label className="block font-semibold text-slate-900 dark:text-white mb-1">Latitude</label>
                   <input
                     type="number"
                     step="0.0001"
                     value={formData.latitude}
                     onChange={(e) => setFormData({ ...formData, latitude: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono"
+                    className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-900 mb-1">Longitude</label>
+                  <label className="block font-semibold text-slate-900 dark:text-white mb-1">Longitude</label>
                   <input
                     type="number"
                     step="0.0001"
                     value={formData.longitude}
                     onChange={(e) => setFormData({ ...formData, longitude: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono"
+                    className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-900 mb-1">Radius (Meters)</label>
+                  <label className="block font-semibold text-slate-900 dark:text-white mb-1">Radius (Meters)</label>
                   <input
                     type="number"
                     value={formData.radiusMeters}
                     onChange={(e) => setFormData({ ...formData, radiusMeters: Number(e.target.value) })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono"
+                    className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-900 mb-1">Enforcement Mode</label>
+                  <label className="block font-semibold text-slate-900 dark:text-white mb-1">Enforcement Mode</label>
                   <SelectMenu
                     value={formData.enforcementMode}
                     onChange={(e) => setFormData({ ...formData, enforcementMode: e.target.value as any })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-xs"
+                    className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-900 text-xs"
                   >
                     <option value="Strict (Block Outside)">Strict (Block Outside)</option>
                     <option value="Warning (Allow with Flag)">Warning (Allow with Flag)</option>
@@ -592,21 +622,21 @@ export const GeoFenceSubmodule: React.FC<GeoFenceSubmoduleProps> = ({ onShowToas
                   </SelectMenu>
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-900 mb-1">Wi-Fi SSID Beacon</label>
+                  <label className="block font-semibold text-slate-900 dark:text-white mb-1">Wi-Fi SSID Beacon</label>
                   <input
                     type="text"
                     value={formData.allowedWifiSSID}
                     onChange={(e) => setFormData({ ...formData, allowedWifiSSID: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono"
+                    className="w-full border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50"
                 >
                   Cancel
                 </button>

@@ -1164,7 +1164,7 @@ export const RosterSubmodule: React.FC<RosterSubmoduleProps> = ({
 
                 {/* Employees Selection Table (Screenshot 301) */}
                 <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-x-auto bg-white dark:bg-slate-900">
-                  <table className="w-full text-left text-xs">
+                  <table className="cc-table-stack w-full text-left text-xs">
                     <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold">
                       <tr>
                         <th className="p-3 w-10 text-center">

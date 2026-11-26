@@ -47,6 +47,9 @@ import {
 } from '../../data/mockSuperAdminData';
 
 import { SelectMenu } from '../../components/ui/SelectMenu';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
+import { INITIAL_IMPORT_LOGS } from '../../data/mockBulkImportData';
 interface SuperAdminOverviewProps {
   onNavigate: (view: string) => void;
   onOpenInviteModal?: () => void;
@@ -96,6 +99,49 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
     const sum = filteredTenants.reduce((acc, t) => acc + t.kycCompliancePct, 0);
     return Math.round((sum / filteredTenants.length) * 10) / 10;
   }, [filteredTenants]);
+
+  const kd = useKpiDetail<'workforce' | 'pipeline' | 'kyc' | 'attendance' | 'bulk'>();
+  const tenantDetail = (title: string, extra: { key: string; label: string; get: (t: TenantSummary) => React.ReactNode; align?: 'right' }[]): KpiDetailData => ({
+    title,
+    columns: [{ key: 'name', label: 'Tenant' }, { key: 'code', label: 'Code', className: 'font-mono' }, ...extra.map((e) => ({ key: e.key, label: e.label, align: e.align }))],
+    rows: filteredTenants.map((t) => ({ name: t.name, code: t.code, ...Object.fromEntries(extra.map((e) => [e.key, e.get(t)])) })),
+  });
+  const kdDetail: KpiDetailData | null = !kd.activeId
+    ? null
+    : kd.activeId === 'workforce'
+      ? tenantDetail('Active Workforce by tenant', [
+          { key: 'hc', label: 'Active headcount', get: (t) => t.activeHeadcount.toLocaleString(), align: 'right' },
+          { key: 'tier', label: 'Tier', get: (t) => t.tier },
+          { key: 'lead', label: 'Account lead', get: (t) => t.accountLead },
+        ])
+      : kd.activeId === 'pipeline'
+        ? tenantDetail('Active Pipeline by tenant', [
+            { key: 'n', label: 'Candidates in pipeline', get: (t) => t.activeCandidatesInPipeline, align: 'right' },
+            { key: 'hc', label: 'Active headcount', get: (t) => t.activeHeadcount.toLocaleString(), align: 'right' },
+          ])
+        : kd.activeId === 'kyc'
+          ? tenantDetail('KYC Compliance by tenant', [
+              { key: 'pct', label: 'Compliance', get: (t) => `${t.kycCompliancePct}%`, align: 'right' },
+              { key: 'rev', label: 'Pending reviews', get: (t) => t.pendingKycCount, align: 'right' },
+              { key: 'stat', label: 'Statutory status', get: (t) => t.statutoryHealth },
+            ])
+          : kd.activeId === 'attendance'
+            ? tenantDetail('Attendance Muster by tenant', [
+                { key: 'cycle', label: 'Active cycle', get: (t) => t.activeCycleName },
+                { key: 'st', label: 'Cycle status', get: (t) => t.activeCycleStatus },
+                { key: 'hc', label: 'Active headcount', get: (t) => t.activeHeadcount.toLocaleString(), align: 'right' },
+              ])
+            : {
+                title: 'Bulk Operations: recent batches',
+                columns: [
+                  { key: 'id', label: 'Batch ID', className: 'font-mono' },
+                  { key: 'type', label: 'Import type' },
+                  { key: 'client', label: 'Client / scope' },
+                  { key: 'rows', label: 'Rows (passed / total)', align: 'right' },
+                  { key: 'status', label: 'Status' },
+                ],
+                rows: INITIAL_IMPORT_LOGS.map((l) => ({ id: l.id, type: l.importTypeName, client: l.clientOrEntity, rows: `${l.insertedRows} / ${l.totalRows}`, status: l.status })),
+              };
 
   // Filtered audit events
   const filteredAuditLogs = useMemo(() => {
@@ -440,7 +486,14 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
             {/* Top 5 KPI Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
               {/* Stat 1: Total Workforce */}
-              <div className="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-pressed={kd.isActive('workforce')}
+                onClick={() => kd.toggle('workforce')}
+                onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); kd.toggle('workforce'); } }}
+                className={`bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors cc-card-hover cc-card-link cursor-pointer ${kd.isActive('workforce') ? 'cc-card-selected' : ''}`}
+              >
                 <div>
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                     <span>Active Workforce</span>
@@ -458,7 +511,7 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
                 <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
                   <span>Across {filteredTenants.length} tenants</span>
                   <button
-                    onClick={() => setActiveTab('tenants')}
+                    onClick={(e) => { e.stopPropagation(); setActiveTab('tenants'); }}
                     className="text-sky-400 hover:underline flex items-center gap-0.5"
                   >
                     <span>View</span>
@@ -468,7 +521,14 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
               </div>
 
               {/* Stat 2: Candidates in Pipeline */}
-              <div className="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-pressed={kd.isActive('pipeline')}
+                onClick={() => kd.toggle('pipeline')}
+                onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); kd.toggle('pipeline'); } }}
+                className={`bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors cc-card-hover cc-card-link cursor-pointer ${kd.isActive('pipeline') ? 'cc-card-selected' : ''}`}
+              >
                 <div>
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                     <span>Active Pipeline</span>
@@ -486,7 +546,7 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
                 <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
                   <span>89.4% SLA adherence</span>
                   <button
-                    onClick={() => onNavigate('directory')}
+                    onClick={(e) => { e.stopPropagation(); onNavigate('directory'); }}
                     className="text-sky-400 hover:underline flex items-center gap-0.5"
                   >
                     <span>Directory</span>
@@ -496,7 +556,14 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
               </div>
 
               {/* Stat 3: KYC Pass Rate */}
-              <div className="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-pressed={kd.isActive('kyc')}
+                onClick={() => kd.toggle('kyc')}
+                onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); kd.toggle('kyc'); } }}
+                className={`bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors cc-card-hover cc-card-link cursor-pointer ${kd.isActive('kyc') ? 'cc-card-selected' : ''}`}
+              >
                 <div>
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                     <span>KYC Compliance</span>
@@ -514,7 +581,7 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
                 <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
                   <span>1,280 verified via ₹1</span>
                   <button
-                    onClick={() => onNavigate('kyc')}
+                    onClick={(e) => { e.stopPropagation(); onNavigate('kyc'); }}
                     className="text-amber-400 hover:underline flex items-center gap-0.5"
                   >
                     <span>KYC Desk</span>
@@ -524,7 +591,14 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
               </div>
 
               {/* Stat 4: Attendance Capture */}
-              <div className="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-pressed={kd.isActive('attendance')}
+                onClick={() => kd.toggle('attendance')}
+                onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); kd.toggle('attendance'); } }}
+                className={`bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors cc-card-hover cc-card-link cursor-pointer ${kd.isActive('attendance') ? 'cc-card-selected' : ''}`}
+              >
                 <div>
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                     <span>Attendance Muster</span>
@@ -542,7 +616,7 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
                 <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
                   <span>0.2% muster variance</span>
                   <button
-                    onClick={() => onNavigate('attendance')}
+                    onClick={(e) => { e.stopPropagation(); onNavigate('attendance'); }}
                     className="text-sky-400 hover:underline flex items-center gap-0.5"
                   >
                     <span>Muster</span>
@@ -552,7 +626,14 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
               </div>
 
               {/* Stat 5: Bulk Ingestion */}
-              <div className="bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-pressed={kd.isActive('bulk')}
+                onClick={() => kd.toggle('bulk')}
+                onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); kd.toggle('bulk'); } }}
+                className={`bg-slate-800/70 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-slate-600 transition-colors cc-card-hover cc-card-link cursor-pointer ${kd.isActive('bulk') ? 'cc-card-selected' : ''}`}
+              >
                 <div>
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
                     <span>Bulk Operations</span>
@@ -570,7 +651,7 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
                 <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
                   <span>99.4% row pass rate</span>
                   <button
-                    onClick={() => onNavigate('import')}
+                    onClick={(e) => { e.stopPropagation(); onNavigate('import'); }}
                     className="text-purple-400 hover:underline flex items-center gap-0.5"
                   >
                     <span>Import Hub</span>
@@ -579,6 +660,7 @@ export const SuperAdminOverview: React.FC<SuperAdminOverviewProps> = ({
                 </div>
               </div>
             </div>
+            <KpiDetailPanel detail={kdDetail} onClose={kd.close} />
 
             {/* Middle Section: Tenant Ecosystem Card & Quick Launchpad */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

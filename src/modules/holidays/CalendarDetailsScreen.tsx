@@ -24,6 +24,8 @@ import {
 } from '../../data/mockHolidayMasterData';
 import { HolidayYearView } from './HolidayYearView';
 import { SelectionReportsView } from './SelectionReportsView';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
 
 interface CalendarDetailsScreenProps {
   calendar: HolidayCalendar;
@@ -56,6 +58,7 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
   const [subView, setSubView] = useState<'list' | 'year' | 'reports'>('list');
   const [searchHolidayQuery, setSearchHolidayQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'All' | 'Mandatory' | 'Optional'>('All');
+  const { activeId, toggle, close, isActive } = useKpiDetail<'pooled' | 'mandatory' | 'choice' | 'intake'>();
 
   // Holidays belonging to this calendar
   const calendarHolidays = holidays.filter(h => h.calendarId === calendar.id);
@@ -73,6 +76,42 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
   const optionalHolidays = calendarHolidays.filter(h => h.type === 'Optional');
 
   const isPublished = calendar.status === 'Published';
+
+  const kpiDetail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    if (activeId === 'intake') {
+      const emps = employees.filter(x => x.calendarId === calendar.id);
+      return {
+        title: 'Intake Progress',
+        subtitle: `${calendar.intakeAnalytics.selected} of ${calendar.assignedEmployeesCount} employees have submitted choices`,
+        columns: [
+          { key: 'id', label: 'Employee ID', className: 'font-mono whitespace-nowrap' },
+          { key: 'name', label: 'Name' },
+          { key: 'dept', label: 'Department' },
+          { key: 'sel', label: 'Selection' },
+          { key: 'hol', label: 'Optional holidays' },
+        ],
+        rows: emps.map(x => ({ id: x.employeeId, name: x.name, dept: x.department, sel: x.selectionStatus, hol: x.selectedHolidays.join('; ') || 'None' })),
+        emptyText: 'No employees are assigned to this calendar yet.',
+      };
+    }
+    const cfg = {
+      pooled: { title: 'Total Pooled', list: calendarHolidays },
+      mandatory: { title: 'Mandatory Holidays', list: mandatoryHolidays },
+      choice: { title: 'Choice Pool', list: optionalHolidays },
+    }[activeId];
+    return {
+      title: cfg.title,
+      columns: [
+        { key: 'date', label: 'Date', className: 'whitespace-nowrap' },
+        { key: 'day', label: 'Day' },
+        { key: 'name', label: 'Holiday' },
+        { key: 'type', label: 'Type' },
+        { key: 'status', label: 'Status' },
+      ],
+      rows: cfg.list.map(h => ({ date: h.date, day: h.dayOfWeek, name: h.name, type: h.type, status: h.status })),
+    };
+  })();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -139,7 +178,7 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
       {/* Summary Metrics & Entitlement Policy Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Pooled (Mandatory + Choice Pool) */}
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 shadow-2xs relative overflow-hidden">
+        <button type="button" onClick={() => toggle('pooled')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-4 shadow-2xs relative overflow-hidden cc-card-link cursor-pointer text-left ${isActive('pooled') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-sky-800 dark:text-sky-300">Total Pooled</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
@@ -155,10 +194,10 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Total holiday days an employee is guaranteed
           </p>
-        </div>
+        </button>
 
         {/* Mandatory Count */}
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 shadow-2xs">
+        <button type="button" onClick={() => toggle('mandatory')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('mandatory') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">Mandatory Holidays</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -174,10 +213,10 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Fixed observed holidays for all assigned employees
           </p>
-        </div>
+        </button>
 
         {/* Choice Pool */}
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xs">
+        <button type="button" onClick={() => toggle('choice')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('choice') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-800 dark:text-amber-300">Choice Pool</span>
             <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
@@ -193,10 +232,10 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             Number of optional choices each employee picks
           </p>
-        </div>
+        </button>
 
         {/* Choice Selections & Visibility */}
-        <div className="cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs">
+        <button type="button" onClick={() => toggle('intake')} className={`cc-card-hover bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs cc-card-link cursor-pointer text-left ${isActive('intake') ? 'cc-card-selected' : ''}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Intake Progress</span>
             <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -220,8 +259,10 @@ export const CalendarDetailsScreen: React.FC<CalendarDetailsScreenProps> = ({
               style={{ width: `${calendar.intakeAnalytics.rate}%` }}
             />
           </div>
-        </div>
+        </button>
       </div>
+
+      <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
       {/* Main Section: "Holidays in this Calendar" with View Toggles */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs overflow-hidden">

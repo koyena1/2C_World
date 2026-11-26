@@ -3,6 +3,8 @@ import { BadgeCheck, ClipboardList, Eye, FileEdit, FileText, Hourglass, Search, 
 import type { Candidate } from '../../types/onboarding';
 import { SectionCard } from '../../components/page/SectionCard';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Toast } from '../../components/ui/Toast';
 import { useToast } from '../../hooks/useToast';
@@ -74,6 +76,35 @@ export const ComplianceFormsTab: React.FC<{ candidates: Candidate[] }> = ({ cand
       (!query.trim() || candidateName(r.candidate).toLowerCase().includes(query.trim().toLowerCase()))
   );
 
+  const { activeId, toggle, close, isActive } = useKpiDetail<'due' | 'notStarted' | 'awaiting' | 'verified' | 'returned'>();
+  const detail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      due: { title: 'Forms due', f: () => true },
+      notStarted: { title: 'Not started', f: (r: Row) => r.status === 'Not started' },
+      awaiting: { title: 'Awaiting verification', f: (r: Row) => r.status === 'Submitted' },
+      verified: { title: 'Verified forms', f: (r: Row) => r.status === 'Verified' },
+      returned: { title: 'Returned forms', f: (r: Row) => r.status === 'Returned' },
+    }[activeId];
+    return {
+      title: cfg.title,
+      columns: [
+        { key: 'cand', label: 'Candidate' },
+        { key: 'client', label: 'Client' },
+        { key: 'form', label: 'Form' },
+        { key: 'status', label: 'Status' },
+        { key: 'updated', label: 'Last updated', className: 'whitespace-nowrap' },
+      ],
+      rows: allRows.filter(cfg.f).map((r) => ({
+        cand: <span className="cc-title font-semibold">{candidateName(r.candidate)}</span>,
+        client: r.candidate.clientName,
+        form: formById(r.formId).name,
+        status: <Chip tone={STATUS_TONE[r.status]}>{r.status}</Chip>,
+        updated: r.submission?.updatedAt ? fmtDate(r.submission.updatedAt) : '—',
+      })),
+    };
+  })();
+
   const log = (action: string, subjectId: string) => logAudit({ area: 'compliance-forms', action, subjectId, actorId: actor.id, actorName: actor.name });
 
   const write = (row: Row, patch: Partial<FormSubmission>, action: string, toast: string) => {
@@ -90,12 +121,13 @@ export const ComplianceFormsTab: React.FC<{ candidates: Candidate[] }> = ({ cand
   return (
     <div className="cc-stack">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <KpiCard label="Forms due" value={allRows.length} detail={`${candidates.length} candidates`} icon={ClipboardList} tone="info" />
-        <KpiCard label="Not started" value={countBy('Not started')} detail="No entry yet" icon={FileText} tone="muted" />
-        <KpiCard label="Awaiting verification" value={countBy('Submitted')} detail="HR to verify or return" icon={Hourglass} tone="violet" />
-        <KpiCard label="Verified" value={`${verifiedPct}%`} detail={`${countBy('Verified')} of ${allRows.length} forms`} icon={BadgeCheck} tone="good" />
-        <KpiCard label="Returned" value={countBy('Returned')} detail="Waiting for correction" icon={Undo2} tone="bad" className="col-span-2 lg:col-span-1" />
+        <KpiCard label="Forms due" value={allRows.length} detail={`${candidates.length} candidates`} icon={ClipboardList} tone="info" onClick={() => toggle('due')} active={isActive('due')} />
+        <KpiCard label="Not started" value={countBy('Not started')} detail="No entry yet" icon={FileText} tone="muted" onClick={() => toggle('notStarted')} active={isActive('notStarted')} />
+        <KpiCard label="Awaiting verification" value={countBy('Submitted')} detail="HR to verify or return" icon={Hourglass} tone="violet" onClick={() => toggle('awaiting')} active={isActive('awaiting')} />
+        <KpiCard label="Verified" value={`${verifiedPct}%`} detail={`${countBy('Verified')} of ${allRows.length} forms`} icon={BadgeCheck} tone="good" onClick={() => toggle('verified')} active={isActive('verified')} />
+        <KpiCard label="Returned" value={countBy('Returned')} detail="Waiting for correction" icon={Undo2} tone="bad" className="col-span-2 lg:col-span-1" onClick={() => toggle('returned')} active={isActive('returned')} />
       </div>
+      <KpiDetailPanel detail={detail} onClose={close} />
 
       <SectionCard title="Form catalogue" subtitle="Statutory forms filled online instead of on paper. Click a form to filter the list.">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">

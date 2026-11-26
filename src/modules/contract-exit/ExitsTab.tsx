@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { CalendarClock, DoorOpen, FileX2, Hourglass, Link2, Plus, Search, Upload, UserMinus } from 'lucide-react';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { SectionCard, Chip } from '../dashboard/command-center/shared';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Toast } from '../../components/ui/Toast';
@@ -53,6 +55,36 @@ export const ExitsTab: React.FC<{ candidates: Candidate[] }> = ({ candidates }) 
   const awaitingTransfer = open.filter((c) => c.transfer === 'Pending transfer closure').length;
   const onro = cases.filter((c) => c.exitType === 'Offer Not Rolled Out').length;
 
+  const kd = useKpiDetail<'open' | 'notice' | 'transfer' | 'lwd' | 'onro'>();
+  const kdTitles = { open: 'Open exit cases', notice: 'In notice period', transfer: 'Awaiting transfer clearance', lwd: 'LWD in next 30 days', onro: 'Offer Not Rolled Out' } as const;
+  const kdCases = (id: keyof typeof kdTitles) =>
+    id === 'open' ? open
+    : id === 'notice' ? cases.filter((c) => c.status === 'Notice period')
+    : id === 'transfer' ? open.filter((c) => c.transfer === 'Pending transfer closure')
+    : id === 'lwd' ? open.filter((c) => c.lwd && c.lwd >= EXIT_TODAY && c.lwd <= addDays(EXIT_TODAY, 30))
+    : cases.filter((c) => c.exitType === 'Offer Not Rolled Out');
+  const detail: KpiDetailData | null = kd.activeId
+    ? {
+        title: kdTitles[kd.activeId],
+        columns: [
+          { key: 'emp', label: 'Employee' },
+          { key: 'code', label: 'Code', className: 'font-mono whitespace-nowrap' },
+          { key: 'client', label: 'Client' },
+          { key: 'type', label: 'Exit type' },
+          { key: 'status', label: 'Status' },
+          { key: 'lwd', label: 'LWD', className: 'whitespace-nowrap' },
+        ],
+        rows: kdCases(kd.activeId).map((c) => ({
+          emp: c.employee,
+          code: c.empCode,
+          client: c.client,
+          type: c.exitType,
+          status: <Chip tone={STATUS_TONE[c.status]}>{c.status}</Chip>,
+          lwd: c.lwd ? formatExitDate(c.lwd) : '—',
+        })),
+      }
+    : null;
+
   const toggle = (id: string, label: string, enabled: boolean) => {
     toggleRule(id);
     logAudit({ area: 'exit-eligibility', action: `Rule "${label}" switched ${enabled ? 'off' : 'on'}`, subjectId: id, actorId: actor.id, actorName: actor.name });
@@ -64,12 +96,13 @@ export const ExitsTab: React.FC<{ candidates: Candidate[] }> = ({ candidates }) 
       {showExit && (
         <>
           <div className="cc-grid grid-cols-2 lg:grid-cols-5 gap-3">
-            <KpiCard label="Open exit cases" value={open.length} detail="Not yet closed" icon={DoorOpen} tone="info" onClick={() => setStatus('all')} />
-            <KpiCard label="In notice period" value={cases.filter((c) => c.status === 'Notice period').length} detail="Serving notice" icon={Hourglass} tone="violet" onClick={() => setStatus('Notice period')} />
-            <KpiCard label="Awaiting transfer clearance" value={awaitingTransfer} detail="Blocks F&F" icon={Link2} tone="warn" />
-            <KpiCard label="LWD in next 30 days" value={in30} detail="Open cases" icon={CalendarClock} tone="teal" />
-            <KpiCard label="Offer Not Rolled Out" value={onro} detail="All time" icon={FileX2} tone="muted" onClick={() => setType('Offer Not Rolled Out')} />
+            <KpiCard label="Open exit cases" value={open.length} detail="Not yet closed" icon={DoorOpen} tone="info" onClick={() => { setStatus('all'); kd.toggle('open'); }} active={kd.isActive('open')} />
+            <KpiCard label="In notice period" value={cases.filter((c) => c.status === 'Notice period').length} detail="Serving notice" icon={Hourglass} tone="violet" onClick={() => { setStatus('Notice period'); kd.toggle('notice'); }} active={kd.isActive('notice')} />
+            <KpiCard label="Awaiting transfer clearance" value={awaitingTransfer} detail="Blocks F&F" icon={Link2} tone="warn" onClick={() => kd.toggle('transfer')} active={kd.isActive('transfer')} />
+            <KpiCard label="LWD in next 30 days" value={in30} detail="Open cases" icon={CalendarClock} tone="teal" onClick={() => kd.toggle('lwd')} active={kd.isActive('lwd')} />
+            <KpiCard label="Offer Not Rolled Out" value={onro} detail="All time" icon={FileX2} tone="muted" onClick={() => { setType('Offer Not Rolled Out'); kd.toggle('onro'); }} active={kd.isActive('onro')} />
           </div>
+          <KpiDetailPanel detail={detail} onClose={kd.close} />
 
           <SectionCard
             title="Exit cases"

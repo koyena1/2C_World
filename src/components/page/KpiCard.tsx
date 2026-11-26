@@ -14,13 +14,15 @@ interface KpiCardProps {
   trend?: TrendInput;
   icon: LucideIcon;
   tone: KpiTone;
-  /** Makes the card a button. */
+  /** Makes the card a button (pointer cursor + light-blue hover). Pair with KpiDetailPanel to show its records. */
   onClick?: () => void;
+  /** This card's detail table is open: keeps the selected highlight. */
+  active?: boolean;
   className?: string;
 }
 
 /** Dashboard-style KPI tile: label + tinted icon, large value, small detail line. */
-export const KpiCard: React.FC<KpiCardProps> = ({ label, value, detail, trend, icon: Icon, tone, onClick, className }) => {
+export const KpiCard: React.FC<KpiCardProps> = ({ label, value, detail, trend, icon: Icon, tone, onClick, active, className }) => {
   const content = (
     <>
       <div className="flex items-center justify-between gap-2">
@@ -39,7 +41,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({ label, value, detail, trend, i
   const base = cn('cc-card cc-card-hover text-left p-3 sm:p-4 flex flex-col gap-2 sm:gap-3 min-w-0', `tone-${tone}`, className);
 
   return onClick ? (
-    <button type="button" onClick={onClick} className={cn(base, 'cc-card-link')}>
+    <button type="button" onClick={onClick} aria-pressed={active} className={cn(base, 'cc-card-link cursor-pointer', active && 'cc-card-selected')}>
       {content}
     </button>
   ) : (

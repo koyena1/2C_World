@@ -27,6 +27,8 @@ import {
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { CategoryTabs } from '../../components/page/CategoryTabs';
 import { StepProgress, type Step } from '../../components/page/StepProgress';
 import { SectionCard, Chip, ProgressBar } from '../dashboard/command-center/shared';
@@ -107,6 +109,37 @@ export const ImportTypeWorkspace: React.FC<ImportTypeWorkspaceProps> = ({
   const criticalCount = importType.defaultErrorCount;
   const warningCount = importType.defaultWarningCount;
   const validRowsCount = totalRowsCount - criticalCount;
+  const kd = useKpiDetail<'total' | 'valid' | 'critical' | 'warning'>();
+  const issueCols = [
+    { key: 'row', label: 'Row', className: 'font-mono' },
+    { key: 'id', label: 'Identifier' },
+    { key: 'field', label: 'Field' },
+    { key: 'value', label: 'Value' },
+    { key: 'reason', label: 'Reason' },
+    { key: 'sev', label: 'Severity' },
+  ];
+  const issueRows = (sev: 'Critical' | 'Warning') =>
+    errorsList.filter((e) => e.severity === sev).map((e) => ({ row: e.row, id: e.identifier, field: e.field, value: e.value || '—', reason: e.reason, sev: <Chip tone={sev === 'Critical' ? 'bad' : 'warn'}>{sev}</Chip> }));
+  const kdDetail: KpiDetailData | null = !kd.activeId
+    ? null
+    : kd.activeId === 'critical'
+      ? { title: 'Critical Errors', subtitle: `${criticalCount} row(s) violate mandatory constraints`, columns: issueCols, rows: issueRows('Critical'), emptyText: 'No row-level critical errors.' }
+      : kd.activeId === 'warning'
+        ? { title: 'Warnings', subtitle: `${warningCount} row(s) with non-fatal advisories`, columns: issueCols, rows: issueRows('Warning'), emptyText: 'No warnings.' }
+        : {
+            title: kd.activeId === 'total' ? 'Total Scanned: breakdown' : 'Valid Rows: breakdown',
+            columns: [
+              { key: 'k', label: 'Category' },
+              { key: 'n', label: 'Rows', align: 'right' },
+              { key: 'note', label: 'Meaning' },
+            ],
+            rows: [
+              { k: 'Total scanned', n: totalRowsCount, note: 'Rows in the uploaded sheet' },
+              { k: 'Valid', n: validRowsCount, note: 'Total scanned minus critical errors; ready for ingestion' },
+              { k: 'Critical errors', n: criticalCount, note: 'Violate mandatory constraints' },
+              { k: 'Warnings', n: warningCount, note: 'Non-fatal advisories' },
+            ],
+          };
 
   // Handle Context Field change
   const handleContextChange = (key: string, val: string) => {
@@ -538,11 +571,12 @@ export const ImportTypeWorkspace: React.FC<ImportTypeWorkspaceProps> = ({
           >
             <div className="space-y-5">
               <div className="cc-grid grid-cols-2 xl:grid-cols-4">
-                <KpiCard label="Total Scanned" value={`${totalRowsCount} Rows`} detail="In uploaded sheet" icon={Layers} tone="info" />
-                <KpiCard label="Valid Rows" value={`${validRowsCount} Rows`} detail="Ready for instant ingestion" icon={CheckCircle2} tone="good" />
-                <KpiCard label="Critical Errors" value={`${criticalCount} Rows`} detail="Violates mandatory constraints" icon={XCircle} tone="bad" />
-                <KpiCard label="Warnings" value={`${warningCount} Rows`} detail="Non-fatal advisories" icon={AlertTriangle} tone="warn" />
+                <KpiCard onClick={() => kd.toggle('total')} active={kd.isActive('total')} label="Total Scanned" value={`${totalRowsCount} Rows`} detail="In uploaded sheet" icon={Layers} tone="info" />
+                <KpiCard onClick={() => kd.toggle('valid')} active={kd.isActive('valid')} label="Valid Rows" value={`${validRowsCount} Rows`} detail="Ready for instant ingestion" icon={CheckCircle2} tone="good" />
+                <KpiCard onClick={() => kd.toggle('critical')} active={kd.isActive('critical')} label="Critical Errors" value={`${criticalCount} Rows`} detail="Violates mandatory constraints" icon={XCircle} tone="bad" />
+                <KpiCard onClick={() => kd.toggle('warning')} active={kd.isActive('warning')} label="Warnings" value={`${warningCount} Rows`} detail="Non-fatal advisories" icon={AlertTriangle} tone="warn" />
               </div>
+              <KpiDetailPanel detail={kdDetail} onClose={kd.close} />
 
               {errorsList.length > 0 ? (
                 <div className="space-y-3">

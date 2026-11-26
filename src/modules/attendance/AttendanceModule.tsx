@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useStackedTables } from '../../hooks/useStackedTables';
 import { CalendarClock } from 'lucide-react';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
@@ -25,6 +26,8 @@ import {
 
 export const AttendanceModule: React.FC = () => {
   // Navigation tabs: Settings | Shifts | Weekoff Patterns | Roster | Cycles | Geo Fence | Overtime Config
+  const rootRef = useRef<HTMLDivElement>(null);
+  useStackedTables(rootRef);
   const [activeTab, setActiveTab] = useState<string>('Cycles');
   const [selectedClientId, setSelectedClientId] = useState<string>('client-2coms');
   const [selectedLocationId, setSelectedLocationId] = useState<string>('loc-kol');
@@ -93,7 +96,7 @@ export const AttendanceModule: React.FC = () => {
   ];
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div ref={rootRef} className="flex-1 flex flex-col min-w-0">
       {/* Toast Notification */}
       <Toast message={toastMessage} variant="solid" />
 
@@ -128,6 +131,7 @@ export const AttendanceModule: React.FC = () => {
           tabs={tabs.map((t) => ({ value: t.id, label: t.label }))}
           value={activeTab}
           onChange={setActiveTab}
+          selectBelow="lg"
         />
 
         {/* Tab content: each submodule keeps its own workflow */}

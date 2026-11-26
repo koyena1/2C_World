@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { BadgeCheck, Building2, Link2Off, Pencil, Search, Sparkles, UserX } from 'lucide-react';
 import type { Candidate } from '../../types/onboarding';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { SectionCard, Chip } from '../dashboard/command-center/shared';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Toast } from '../../components/ui/Toast';
@@ -126,14 +128,43 @@ export const PfConfigTab: React.FC<{ candidates: Candidate[] }> = ({ candidates 
     { rule: 'Higher-wage contribution opted in (new flag)', value: 'Per client default + per-candidate override', detail: 'When on, an above-ceiling candidate contributes on the actual basic wage, overriding the exemption and the cap.' },
   ];
 
+  const { activeId, toggle, close, isActive } = useKpiDetail<'applicable' | 'higher' | 'notLinked' | 'notRegistered'>();
+  const detail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      applicable: { title: 'PF applicable', f: (x: (typeof rows)[number]) => ['Mandatory', 'Higher-wage opted in', 'Voluntary (capped)'].includes(x.app.result) },
+      higher: { title: 'Higher-wage opted in', f: (x: (typeof rows)[number]) => x.app.result === 'Higher-wage opted in' },
+      notLinked: { title: 'Registered, PF not linked', f: (x: (typeof rows)[number]) => x.r.uanRegistered && !x.r.pfLinked },
+      notRegistered: { title: 'UAN not registered', f: (x: (typeof rows)[number]) => !x.r.uanRegistered },
+    }[activeId];
+    return {
+      title: cfg.title,
+      columns: [
+        { key: 'cand', label: 'Candidate' },
+        { key: 'client', label: 'Client' },
+        { key: 'app', label: 'PF applicability' },
+        { key: 'uan', label: 'UAN / PF status' },
+        { key: 'basic', label: 'Basic wage', align: 'right', className: 'whitespace-nowrap' },
+      ],
+      rows: rows.filter(cfg.f).map(({ c, r, app }) => ({
+        cand: <span className="cc-title font-semibold">{`${c.firstName} ${c.lastName}`}</span>,
+        client: c.clientName,
+        app: <Chip tone={APPLICABILITY_TONE[app.result]}>{app.result}</Chip>,
+        uan: <PfStatusChip registered={r.uanRegistered} linked={r.pfLinked} />,
+        basic: inr(basicOf(c)),
+      })),
+    };
+  })();
+
   return (
     <div className="cc-stack">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="PF applicable" value={kpis.applicable} detail="Mandatory, opted in or voluntary" icon={BadgeCheck} tone="info" />
-        <KpiCard label="Higher-wage opted in" value={kpis.higher} detail="Contributing on actual wage" icon={Sparkles} tone="violet" onClick={() => { setAppFilter('Higher-wage opted in'); resetPage(); }} />
-        <KpiCard label="Registered, PF not linked" value={kpis.notLinked} detail="UAN active, PF link pending" icon={Link2Off} tone="warn" onClick={() => { setPfFilter('not-linked'); resetPage(); }} />
-        <KpiCard label="UAN not registered" value={kpis.notRegistered} detail="No new UAN on record" icon={UserX} tone="bad" onClick={() => { setPfFilter('not-registered'); resetPage(); }} />
+        <KpiCard label="PF applicable" value={kpis.applicable} detail="Mandatory, opted in or voluntary" icon={BadgeCheck} tone="info" onClick={() => toggle('applicable')} active={isActive('applicable')} />
+        <KpiCard label="Higher-wage opted in" value={kpis.higher} detail="Contributing on actual wage" icon={Sparkles} tone="violet" onClick={() => { setAppFilter('Higher-wage opted in'); resetPage(); toggle('higher'); }} active={isActive('higher')} />
+        <KpiCard label="Registered, PF not linked" value={kpis.notLinked} detail="UAN active, PF link pending" icon={Link2Off} tone="warn" onClick={() => { setPfFilter('not-linked'); resetPage(); toggle('notLinked'); }} active={isActive('notLinked')} />
+        <KpiCard label="UAN not registered" value={kpis.notRegistered} detail="No new UAN on record" icon={UserX} tone="bad" onClick={() => { setPfFilter('not-registered'); resetPage(); toggle('notRegistered'); }} active={isActive('notRegistered')} />
       </div>
+      <KpiDetailPanel detail={detail} onClose={close} />
 
       <SectionCard
         title="PF applicability rules"

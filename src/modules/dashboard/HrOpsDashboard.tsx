@@ -124,6 +124,9 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
         {/* 1. Overview: the three primary KPIs first, then the operational figures */}
         <OperationalOverview
           kpis={kpis}
+          candidates={scoped}
+          refDate={range.to}
+          actions={pendingActions}
           trends={overviewTrends}
           role={role}
           pendingActions={{ total: pendingActions.reduce((n, a) => n + a.count, 0), categories: pendingActions.filter((a) => a.count > 0).length }}

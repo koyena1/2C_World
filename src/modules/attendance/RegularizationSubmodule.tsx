@@ -15,6 +15,8 @@ import {
   Zap,
 } from 'lucide-react';
 import { KpiCard } from '../../components/page/KpiCard';
+import { KpiDetailPanel, type KpiDetailData } from '../../components/page/KpiDetailPanel';
+import { useKpiDetail } from '../../hooks/useKpiDetail';
 import { SectionCard } from '../../components/page/SectionCard';
 import { SelectMenu } from '../../components/ui/SelectMenu';
 import { Chip, ProgressBar } from '../dashboard/command-center/shared';
@@ -77,6 +79,7 @@ export const RegularizationSubmodule: React.FC<RegularizationSubmoduleProps> = (
   const [rejectReason, setRejectReason] = useState('');
   const [rejectError, setRejectError] = useState('');
   const [detailId, setDetailId] = useState<string | null>(null);
+  const { activeId, toggle, close, isActive } = useKpiDetail<'today' | 'pending' | 'approved' | 'rejected' | 'turnaround' | 'breached'>();
 
   // Sync
   const [syncing, setSyncing] = useState(false);
@@ -124,6 +127,38 @@ export const RegularizationSubmodule: React.FC<RegularizationSubmoduleProps> = (
       avgTurnaround: decided.length ? decided.reduce((s, r) => s + r.ageHours, 0) / decided.length : 0,
     };
   }, [requests]);
+
+  const kpiDetail: KpiDetailData | null = (() => {
+    if (!activeId) return null;
+    const cfg = {
+      today: { title: 'Requests today', subtitle: 'Raised in last 24 hours', f: (r: RegularizationRequest) => r.raisedToday },
+      pending: { title: 'Pending requests', subtitle: undefined, f: (r: RegularizationRequest) => r.status === 'Pending' },
+      approved: { title: 'Approved requests', subtitle: undefined, f: (r: RegularizationRequest) => r.status === 'Approved' },
+      rejected: { title: 'Rejected requests', subtitle: undefined, f: (r: RegularizationRequest) => r.status === 'Rejected' },
+      turnaround: { title: 'Avg turnaround', subtitle: 'Decided requests making up the average', f: (r: RegularizationRequest) => r.status !== 'Pending' },
+      breached: { title: 'SLA breached', subtitle: `Pending over ${REGULARIZATION_SLA_HOURS}h`, f: isBreached },
+    }[activeId];
+    const list = requests.filter(cfg.f);
+    return {
+      title: cfg.title,
+      subtitle: cfg.subtitle ? `${list.length} record${list.length === 1 ? '' : 's'} · ${cfg.subtitle}` : undefined,
+      columns: [
+        { key: 'emp', label: 'Employee' },
+        { key: 'client', label: 'Client' },
+        { key: 'date', label: 'Date', className: 'whitespace-nowrap' },
+        { key: 'issue', label: 'Issue' },
+        { key: 'age', label: activeId === 'turnaround' ? 'Turnaround' : 'Age', align: 'right' as const },
+        { key: 'status', label: 'Status' },
+      ],
+      rows: list.map((r) => ({
+        emp: `${r.employee} (${r.empCode})`, client: r.client, date: formatDate(r.date), issue: r.issueType, age: formatAge(r.ageHours),
+        status: <Chip tone={STATUS_TONE[r.status]}>{r.status}</Chip>,
+      })),
+      action: activeId === 'breached' && kpi.breached > 0 ? (
+        <button type="button" className="cc-btn cc-btn-secondary !h-8 !px-2.5" onClick={() => { setSlaOnly(true); setStatusFilter('Pending'); setPage(1); }}>Filter queue</button>
+      ) : undefined,
+    };
+  })();
 
   const readiness = useMemo(() => {
     const score = FEASIBILITY_ITEMS.reduce((s, i) => s + (i.status === 'Confirmed' ? 1 : i.status === 'Pending client' ? 0.5 : 0), 0);
@@ -248,26 +283,26 @@ export const RegularizationSubmodule: React.FC<RegularizationSubmoduleProps> = (
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <KpiCard label="Requests today" value={kpi.today} detail="Raised in last 24 hours" icon={ClipboardList} tone="info" />
-        <KpiCard label="Pending" value={kpi.pending} detail="Awaiting decision" icon={Hourglass} tone="warn" />
-        <KpiCard label="Approved" value={kpi.approved} detail="Sent back to E-Sampark" icon={CheckCircle2} tone="good" />
-        <KpiCard label="Rejected" value={kpi.rejected} detail="With reason shared" icon={XCircle} tone="muted" />
-        <KpiCard
+        <KpiCard onClick={() => toggle('today')} active={isActive('today')} label="Requests today" value={kpi.today} detail="Raised in last 24 hours" icon={ClipboardList} tone="info" />
+        <KpiCard onClick={() => toggle('pending')} active={isActive('pending')} label="Pending" value={kpi.pending} detail="Awaiting decision" icon={Hourglass} tone="warn" />
+        <KpiCard onClick={() => toggle('approved')} active={isActive('approved')} label="Approved" value={kpi.approved} detail="Sent back to E-Sampark" icon={CheckCircle2} tone="good" />
+        <KpiCard onClick={() => toggle('rejected')} active={isActive('rejected')} label="Rejected" value={kpi.rejected} detail="With reason shared" icon={XCircle} tone="muted" />
+        <KpiCard onClick={() => toggle('turnaround')} active={isActive('turnaround')}
           label="Avg turnaround"
           value={`${kpi.avgTurnaround.toFixed(1)}h`}
           detail={`Target ${REGULARIZATION_SLA_HOURS}h · ${kpi.avgTurnaround <= REGULARIZATION_SLA_HOURS ? 'within target' : 'over target'}`}
           icon={Timer}
           tone={kpi.avgTurnaround <= REGULARIZATION_SLA_HOURS ? 'good' : 'bad'}
         />
-        <KpiCard
+        <KpiCard onClick={() => toggle('breached')} active={isActive('breached')}
           label="SLA breached"
           value={kpi.breached}
           detail={`Pending over ${REGULARIZATION_SLA_HOURS}h`}
           icon={AlertTriangle}
           tone={kpi.breached > 0 ? 'bad' : 'good'}
-          onClick={kpi.breached > 0 ? () => { setSlaOnly(true); setStatusFilter('Pending'); setPage(1); } : undefined}
         />
       </div>
+      <KpiDetailPanel detail={kpiDetail} onClose={close} />
 
       {/* Manual work saved */}
       <SectionCard title="Manual work saved" subtitle="Bulk decisions replace one-by-one handling of the daily E-Sampark queue">
@@ -316,7 +351,7 @@ export const RegularizationSubmodule: React.FC<RegularizationSubmoduleProps> = (
         </div>
         {feasibilityOpen && (
           <div className="cc-table-wrap">
-            <table className="cc-table">
+            <table className="cc-table-stack cc-table">
               <thead>
                 <tr>
                   <th>Area</th>
@@ -399,7 +434,7 @@ export const RegularizationSubmodule: React.FC<RegularizationSubmoduleProps> = (
         </div>
 
         <div className="cc-table-wrap">
-          <table className="cc-table">
+          <table className="cc-table-stack cc-table">
             <thead>
               <tr>
                 <th className="w-8"></th>

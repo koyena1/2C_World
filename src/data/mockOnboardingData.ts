@@ -1,6 +1,9 @@
 import { Candidate, BulkImportLog } from '../types/onboarding';
+import { shiftIso } from '../utils/today';
+import { DEMO_CANDIDATES } from './mockDemoCandidates';
 
-export const MOCK_CANDIDATES: Candidate[] = [
+/** Hand-authored sample records (written around 5 Oct 2026). */
+const BASE_CANDIDATES: Candidate[] = [
   {
     id: 'cand-001',
     userId: '2C-2026-8941',
@@ -2090,6 +2093,19 @@ export const MOCK_CANDIDATES: Candidate[] = [
     missingFields: []
   }
 ];
+
+/** Moves every authored date (except dates of birth) onto the current timeline, so the sample data is always "recent". */
+const shiftDates = <T,>(value: T, key = ''): T => {
+  if (typeof value === 'string') return (key === 'dob' ? value : shiftIso(value)) as unknown as T;
+  if (Array.isArray(value)) return value.map((v) => shiftDates(v)) as unknown as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, shiftDates(v, k)])) as T;
+  }
+  return value;
+};
+
+/** The sample cohort (hand-authored records + a generated demo cohort), all dated relative to today. */
+export const MOCK_CANDIDATES: Candidate[] = [...BASE_CANDIDATES.map((c) => shiftDates(c)), ...DEMO_CANDIDATES];
 
 export const MOCK_BULK_IMPORT_LOGS: BulkImportLog[] = [
   {

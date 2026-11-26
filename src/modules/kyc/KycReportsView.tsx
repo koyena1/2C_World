@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FileBarChart, Download, Save, Trash2, FolderOpen, Lock, RotateCcw } from 'lucide-react';
+import { FileBarChart, Download, Save, Trash2, FolderOpen, Lock, RotateCcw, Search, X } from 'lucide-react';
 import type { Candidate } from '../../types/onboarding';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
@@ -36,6 +36,8 @@ type Cell = string | number;
 interface BuiltReport {
   headers: string[];
   data: Cell[][];
+  /** Detail reports only: the full source row behind each data row (same order), so search can match fields that are not shown as columns. */
+  source?: KycFlatRow[];
 }
 
 const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
@@ -83,7 +85,7 @@ const buildReport = (config: ReportConfig, rows: KycFlatRow[]): BuiltReport => {
   if (config.format === 'exceptions') list = rows.filter((r) => r.bucket === 'Failed');
   if (config.format === 'aging') list = rows.filter((r) => r.bucket === 'Pending').sort((a, b) => b.ageDays - a.ageDays);
   const cols = DETAIL_FIELDS.filter((f) => config.fields.includes(f.id));
-  return { headers: cols.map((c) => c.label), data: list.map((r) => cols.map((c) => detailValue(r, c.id))) };
+  return { headers: cols.map((c) => c.label), data: list.map((r) => cols.map((c) => detailValue(r, c.id))), source: list };
 };
 
 const csvEscape = (v: Cell): string => {
@@ -122,6 +124,19 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
   const fieldDefs = fmt.kind === 'aggregate' ? AGGREGATE_FIELDS : DETAIL_FIELDS;
   const report = useMemo(() => buildReport(config, filtered), [config, filtered]);
   const PREVIEW_LIMIT = 12;
+
+  // Live-preview search: matches every shown value plus every other field of the candidate / KYC record behind the row.
+  const [query, setQuery] = useState('');
+  const previewData = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return report.data;
+    const terms = q.split(/\s+/);
+    return report.data.filter((row, i) => {
+      const hay = [...row, ...(report.source ? Object.values(report.source[i]) : [])].join(' ').toLowerCase();
+      return terms.every((t) => hay.includes(t));
+    });
+  }, [query, report]);
+  const searching = query.trim() !== '';
 
   const update = (patch: Partial<ReportConfig>) => setConfig((c) => ({ ...c, ...patch }));
 
@@ -322,22 +337,47 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
           </div>
         </div>
 
-        <SectionCard title="Live preview" subtitle={`${fmt.label} · showing ${Math.min(PREVIEW_LIMIT, report.data.length)} of ${report.data.length} rows`}>
+        <SectionCard title="Live preview" subtitle={`${fmt.label} · showing ${Math.min(PREVIEW_LIMIT, previewData.length)} of ${previewData.length} rows${searching ? ` (filtered from ${report.data.length})` : ''}`}
+          action={
+              <div className="relative w-[9.5rem] min-[480px]:w-56 sm:w-64 shrink-0">
+                <Search className="cc-muted w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden />
+                <input
+                  id="kyc-report-search"
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search ID, name, client, document, status..."
+                  aria-label="Search the live preview"
+                  className="cc-input !pl-9 !pr-8"
+                />
+                {searching && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search"
+                    className="cc-muted hover:text-[color:var(--cc-title)] absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+          }
+        >
           <div className="cc-table-wrap">
             <table className="cc-table">
               <thead>
                 <tr>{report.headers.map((h, j) => <th key={h} className={typeof report.data[0]?.[j] === 'number' ? 'text-right' : ''}>{h}</th>)}</tr>
               </thead>
               <tbody>
-                {report.data.slice(0, PREVIEW_LIMIT).map((row, i) => (
+                {previewData.slice(0, PREVIEW_LIMIT).map((row, i) => (
                   <tr key={i}>
                     {row.map((v, j) => (
                       <td key={j} className={`whitespace-nowrap ${typeof v === 'number' ? 'tabular-nums text-right' : ''}`}>{v === '' ? '-' : v}</td>
                     ))}
                   </tr>
                 ))}
-                {report.data.length === 0 && (
-                  <tr><td colSpan={Math.max(1, report.headers.length)} className="cc-muted text-center py-6">No rows match the selected parameters.</td></tr>
+                {previewData.length === 0 && (
+                  <tr><td colSpan={Math.max(1, report.headers.length)} className="cc-muted text-center py-6">{searching ? 'No rows match your search.' : 'No rows match the selected parameters.'}</td></tr>
                 )}
               </tbody>
             </table>

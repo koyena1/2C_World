@@ -1,4 +1,5 @@
 import { MOCK_CANDIDATES } from './mockOnboardingData';
+import { addDaysIso, shiftIso } from '../utils/today';
 
 /** Mock UAN / ESIC update records and PF applicability data (frontend simulation). */
 
@@ -44,11 +45,11 @@ const digits = (seed: number, len: number) => {
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');
-/** Fixed timestamp between 2026-08-12 and 2026-10-04. */
+/** Timestamp over the ~8 weeks up to today (rolls with the current date). */
 const stamp = (i: number, hourSeed: number) => {
   const dayOffset = (i * 5) % 54;
-  const d = new Date(Date.UTC(2026, 7, 12 + dayOffset));
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(9 + (hourSeed % 9))}:${pad((hourSeed * 7) % 60)}:00+05:30`;
+  const day = addDaysIso(shiftIso('2026-08-12'), dayOffset);
+  return `${day}T${pad(9 + (hourSeed % 9))}:${pad((hourSeed * 7) % 60)}:00+05:30`;
 };
 
 const buildRecords = (): UanEsicRecord[] =>

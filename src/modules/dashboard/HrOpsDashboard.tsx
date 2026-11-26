@@ -13,13 +13,13 @@ import {
 } from './dashboard.metrics';
 import { PageHeader } from '../../components/page/PageHeader';
 import { SelectMenu } from '../../components/ui/SelectMenu';
-import { atRangeEnd, rangeKpiTrends } from '../../utils/candidateTrends';
+import { atRangeEnd, cohortForRange, computeRangeKpis, rangeKpiTrends } from '../../utils/candidateTrends';
 import { rangeLabel, formatShort } from './dateRange';
 import { useDashboardDate } from './DashboardDateContext';
 import { CandidatePipeline } from './command-center/CandidatePipeline';
 import { ClientAnalytics } from './command-center/ClientAnalytics';
 import { JoiningOverview } from './command-center/JoiningOverview';
-import { hrOpsActions } from './command-center/HrOpsExtras';
+import { hrOpsActions, type OpsScope } from './command-center/HrOpsExtras';
 import { OperationalOverview } from './command-center/OperationalOverview';
 import { PendingActions } from './command-center/PendingActions';
 import { RecentActivity } from './command-center/RecentActivity';
@@ -67,16 +67,19 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
 
   // The one date filter for the whole dashboard (set from the header picker). Defaults to today.
   const { preset: rangePreset, range } = useDashboardDate();
-  // Everything below is derived from the candidate list as it stood on the last day of the range.
-  const scoped = useMemo(() => atRangeEnd(candidates, range.to), [candidates, range.to]);
-  const kpis = useMemo(() => computeKpis(scoped, range.to), [scoped, range.to]);
+  // Everything below is derived from the period: the candidates who registered or were due to join inside the range
+  // (status as of its last day), plus open HR-operations items dated inside it.
+  const scoped = useMemo(() => cohortForRange(candidates, range), [candidates, range]);
+  const asOfEnd = useMemo(() => atRangeEnd(candidates, range.to), [candidates, range.to]);
+  const kpis = useMemo(() => computeRangeKpis(candidates, range), [candidates, range]);
+  const opsScope = useMemo<OpsScope>(() => ({ from: range.from, to: range.to, candidateIds: new Set(scoped.map((c) => c.id)) }), [range, scoped]);
   const overviewTrends = useMemo(() => rangeKpiTrends(candidates, range), [candidates, range]);
   const pipeline = useMemo(() => computePipeline(scoped), [scoped]);
   const statusMix = useMemo(() => computeStatusMix(scoped), [scoped]);
-  const pendingActions = useMemo(() => [...computePendingActions(scoped, range.to), ...hrOpsActions(role)], [scoped, range.to, role]);
+  const pendingActions = useMemo(() => [...computePendingActions(scoped, range.to, asOfEnd), ...hrOpsActions(role, opsScope)], [scoped, asOfEnd, range.to, role, opsScope]);
   const clients = useMemo(() => computeClientMetrics(scoped), [scoped]);
   const recruiters = useMemo(() => computeRecruiterMetrics(scoped), [scoped]);
-  const joining = useMemo(() => computeJoiningOverview(candidates, range), [candidates, range]);
+  const joining = useMemo(() => computeJoiningOverview(asOfEnd, range), [asOfEnd, range]);
   const activity = useMemo(() => computeRecentActivity(candidates, 5, range), [candidates, range]);
 
   return (
@@ -125,6 +128,8 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
         <OperationalOverview
           kpis={kpis}
           candidates={scoped}
+          allCandidates={asOfEnd}
+          opsScope={opsScope}
           refDate={range.to}
           actions={pendingActions}
           trends={overviewTrends}

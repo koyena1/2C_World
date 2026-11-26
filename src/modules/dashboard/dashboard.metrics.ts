@@ -1,5 +1,6 @@
 import type { Candidate, JoiningStatus, KycDocumentStatus } from '../../types/onboarding';
 import type { Tone } from './command-center/types';
+import { todayIso } from '../../utils/today';
 
 /**
  * Command-center metrics, derived ONLY from the live `Candidate[]` list
@@ -7,8 +8,8 @@ import type { Tone } from './command-center/types';
  * every figure is a count / ratio over fields that exist on `Candidate`.
  */
 
-/** The prototype's "today" (the demo data spans Sep-Oct 2026). */
-export const DASHBOARD_REFERENCE_DATE = '2026-10-05';
+/** Today: the actual current date. The sample data rolls with it (see utils/today.ts). */
+export const DASHBOARD_REFERENCE_DATE = todayIso();
 const UPCOMING_WINDOW_DAYS = 7;
 export const UPCOMING_WINDOW_LABEL = `next ${UPCOMING_WINDOW_DAYS} days`;
 
@@ -152,7 +153,12 @@ export interface PendingActionMetric {
   target: string;
 }
 
-export const computePendingActions = (candidates: Candidate[], refDate: string = DASHBOARD_REFERENCE_DATE): PendingActionMetric[] => {
+/** `joiningPool`: everyone who could join in the window after refDate (defaults to the same list). */
+export const computePendingActions = (
+  candidates: Candidate[],
+  refDate: string = DASHBOARD_REFERENCE_DATE,
+  joiningPool: Candidate[] = candidates
+): PendingActionMetric[] => {
   const active = candidates.filter(isActive);
 
   return [
@@ -164,7 +170,7 @@ export const computePendingActions = (candidates: Candidate[], refDate: string =
       id: 'joining',
       label: 'Joining blockers',
       hint: `Joining in the ${UPCOMING_WINDOW_LABEL} with an open issue`,
-      count: active.filter((c) => isInUpcomingWindow(c, refDate) && hasAnyBlocker(c)).length,
+      count: joiningPool.filter((c) => isActive(c) && isInUpcomingWindow(c, refDate) && hasAnyBlocker(c)).length,
       tone: 'bad',
       target: 'directory',
     },

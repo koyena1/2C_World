@@ -1,5 +1,5 @@
 import { addDays } from '../../utils/trends';
-import { DASHBOARD_REFERENCE_DATE } from './dashboard.metrics';
+import { todayIso } from '../../utils/today';
 
 export type RangePreset = 'today' | 'last7' | 'last30' | 'custom';
 
@@ -18,10 +18,9 @@ export const RANGE_PRESETS: Array<{ id: Exclude<RangePreset, 'today'>; label: st
 
 /** Earliest date the picker accepts. */
 export const RANGE_MIN_DATE = '2020-01-01';
-/** Latest date the picker accepts: the prototype's "today". */
-export const RANGE_MAX_DATE = DASHBOARD_REFERENCE_DATE;
+export { todayIso };
 
-export const presetRange = (preset: Exclude<RangePreset, 'custom'>, today: string = DASHBOARD_REFERENCE_DATE): DateRange => {
+export const presetRange = (preset: Exclude<RangePreset, 'custom'>, today: string = todayIso()): DateRange => {
   if (preset === 'today') return { from: today, to: today };
   return preset === 'last7' ? { from: addDays(today, -6), to: today } : { from: addDays(today, -29), to: today };
 };
@@ -39,7 +38,8 @@ export const validateRange = ({ from, to }: DateRange): string | null => {
   if (!from || !to) return 'Select both a From and a To date.';
   if (!isRealDate(from) || !isRealDate(to)) return 'Enter valid dates.';
   if (from < RANGE_MIN_DATE || to < RANGE_MIN_DATE) return 'Dates cannot be before 1 Jan 2020.';
-  if (from > RANGE_MAX_DATE || to > RANGE_MAX_DATE) return 'Dates cannot be in the future.';
+  const max = todayIso();
+  if (from > max || to > max) return 'Dates cannot be in the future.';
   if (from > to) return 'From Date must be on or before To Date.';
   return null;
 };

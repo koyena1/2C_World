@@ -100,22 +100,46 @@ export const upcomingJoiningTrend = (candidates: Candidate[]): TrendInput => kpi
 const RANGE_CAPTION = 'vs previous period';
 
 /** The candidate list as it stood at the end of the range (the live list when the range ends today). */
-export const atRangeEnd = (candidates: Candidate[], to: string) =>
-  to >= DASHBOARD_REFERENCE_DATE ? candidates : candidatesAsOf(candidates, to, false);
+export const atRangeEnd = (candidates: Candidate[], to: string, droppedStillActive = false) =>
+  to >= DASHBOARD_REFERENCE_DATE ? candidates : candidatesAsOf(candidates, to, droppedStillActive);
 
-/** Overview KPI values for the selected period: every figure is as it stood on the period's last day. */
-export const computeRangeKpis = (candidates: Candidate[], range: DateRange): CommandCenterKpis =>
-  computeKpis(atRangeEnd(candidates, range.to), range.to);
+const inRange = (iso: string | undefined, range: DateRange) => {
+  const d = day(iso);
+  return d >= range.from && d <= range.to;
+};
 
 /**
- * Overview trends for a period: each KPI at the end of the period against the day before the period
- * started (an equally long, earlier window), rebuilt from dated records exactly as the monthly trends are.
+ * The candidates a dashboard period is about: everyone who registered or was due to join inside the range,
+ * with their status as it stood on the range's last day. A different date range therefore gives a different cohort.
+ */
+export const cohortForRange = (candidates: Candidate[], range: DateRange, droppedStillActive = false): Candidate[] =>
+  atRangeEnd(candidates, range.to, droppedStillActive).filter((c) => inRange(c.registrationDate, range) || inRange(c.dateOfJoining, range));
+
+/** Overview KPIs for the period: the cohort's figures, with "upcoming joining" looking ahead from the range's last day. */
+export const computeRangeKpis = (candidates: Candidate[], range: DateRange): CommandCenterKpis => {
+  const cohort = computeKpis(cohortForRange(candidates, range), range.to);
+  const ahead = computeKpis(atRangeEnd(candidates, range.to), range.to);
+  return { ...cohort, upcomingJoining: ahead.upcomingJoining, joiningToday: ahead.joiningToday };
+};
+
+/** The same-length period immediately before the range. */
+const previousRange = (range: DateRange): DateRange => {
+  const len = Math.round((Date.parse(`${range.to}T00:00:00Z`) - Date.parse(`${range.from}T00:00:00Z`)) / 86_400_000) + 1;
+  return { from: addDays(range.from, -len), to: addDays(range.from, -1) };
+};
+
+/**
+ * Overview trends: each KPI for this period against the same figure for the equally long period before it, rebuilt from
+ * dated records exactly as the monthly trends are (undated drop-outs give a low / high bound).
  */
 export const rangeKpiTrends = (candidates: Candidate[], range: DateRange) => {
-  const before = addDays(range.from, -1);
-  const atEnd = atRangeEnd(candidates, range.to);
-  const kpis = computeKpis(atEnd, range.to);
-  const earlier = (droppedStillActive: boolean) => computeKpis(candidatesAsOf(candidates, before, droppedStillActive), before);
+  const kpis = computeRangeKpis(candidates, range);
+  const prev = previousRange(range);
+  const earlier = (droppedStillActive: boolean): CommandCenterKpis => {
+    const cohort = computeKpis(cohortForRange(candidates, prev, droppedStillActive), prev.to);
+    const ahead = computeKpis(atRangeEnd(candidates, prev.to, droppedStillActive), prev.to);
+    return { ...cohort, upcomingJoining: ahead.upcomingJoining, joiningToday: ahead.joiningToday };
+  };
   const lo = earlier(true);
   const hi = earlier(false);
 
@@ -126,18 +150,11 @@ export const rangeKpiTrends = (candidates: Candidate[], range: DateRange) => {
   };
 
   return {
-    total: { ...stockTrend(candidates, (c) => c.registrationDate, range.to, 'month', true), previous: countAsOf(candidates, (c) => c.registrationDate, before), periodLabel: RANGE_CAPTION },
+    total: bounded('total', true),
     joined: bounded('joined', true),
     kycVerified: bounded('kycVerified', true),
     pendingOffers: bounded('pendingOffers', false),
-    blockers: {
-      current: kpis.blockers,
-      previous: 0,
-      previousHigh: Math.max(lo.activeCandidates, hi.activeCandidates),
-      period: 'month' as const,
-      higherIsBetter: false,
-      periodLabel: RANGE_CAPTION,
-    },
+    blockers: bounded('blockers', false),
     upcoming: bounded('upcomingJoining', true),
   };
 };

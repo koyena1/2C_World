@@ -10,6 +10,8 @@ export interface EsicUploadRow {
   client: string;
   esicNumber: string;
   grossWage: number;
+  /** Days before today this row was uploaded (rolls with the current date); used by the dashboard date filter. */
+  uploadedDaysAgo?: number;
 }
 
 export interface EsicRowResult {
@@ -32,18 +34,18 @@ export const ESIC_REGISTRY: Record<string, { name: string; client: string }> = {
 export const INITIAL_ESIC_FILE_NAME = 'ESIC_Bulk_Upload_Oct2026.xlsx';
 
 export const INITIAL_ESIC_BATCH: EsicUploadRow[] = [
-  { id: 'r2', rowNo: 2, employeeName: 'Aarav Mehta', client: 'Tata Consultancy Services', esicNumber: '1200345671', grossWage: 18500 },
-  { id: 'r3', rowNo: 3, employeeName: 'Priya Iyer', client: 'Infosys Technologies', esicNumber: '2100456789', grossWage: 19200 },
-  { id: 'r4', rowNo: 4, employeeName: 'Rohit Sharma', client: 'Flipkart Internet Pvt Ltd', esicNumber: '1200345672', grossWage: 17800 },
-  { id: 'r5', rowNo: 5, employeeName: 'Neha Kulkarni', client: 'HDFC Bank Ltd', esicNumber: '1200345673', grossWage: 20100 },
-  { id: 'r6', rowNo: 6, employeeName: 'Sandeep Yadav', client: 'Larsen & Toubro Ltd', esicNumber: '1200345674', grossWage: 16400 },
-  { id: 'r7', rowNo: 7, employeeName: 'Meera Pillai', client: 'Wipro Digital', esicNumber: '1200345674', grossWage: 18000 },
-  { id: 'r8', rowNo: 8, employeeName: 'Imran Qureshi', client: 'Reliance Retail Ltd', esicNumber: '12003456', grossWage: 15900 },
-  { id: 'r9', rowNo: 9, employeeName: 'Divya Menon', client: 'Tata Consultancy Services', esicNumber: '5100765432', grossWage: 19800 },
-  { id: 'r10', rowNo: 10, employeeName: 'Arjun Reddy', client: 'Infosys Technologies', esicNumber: '1200345677', grossWage: 17250 },
-  { id: 'r11', rowNo: 11, employeeName: 'Kavita Joshi', client: 'Flipkart Internet Pvt Ltd', esicNumber: '1200345678', grossWage: 18900 },
-  { id: 'r12', rowNo: 12, employeeName: 'Suresh Babu', client: 'HDFC Bank Ltd', esicNumber: '1200345679', grossWage: 20800 },
-  { id: 'r13', rowNo: 13, employeeName: 'Lakshmi Narayanan', client: 'Larsen & Toubro Ltd', esicNumber: '', grossWage: 16800 },
+  { id: 'r2', rowNo: 2, employeeName: 'Aarav Mehta', client: 'Tata Consultancy Services', esicNumber: '1200345671', grossWage: 18500, uploadedDaysAgo: 44 },
+  { id: 'r3', rowNo: 3, employeeName: 'Priya Iyer', client: 'Infosys Technologies', esicNumber: '2100456789', grossWage: 19200, uploadedDaysAgo: 41 },
+  { id: 'r4', rowNo: 4, employeeName: 'Rohit Sharma', client: 'Flipkart Internet Pvt Ltd', esicNumber: '1200345672', grossWage: 17800, uploadedDaysAgo: 38 },
+  { id: 'r5', rowNo: 5, employeeName: 'Neha Kulkarni', client: 'HDFC Bank Ltd', esicNumber: '1200345673', grossWage: 20100, uploadedDaysAgo: 33 },
+  { id: 'r6', rowNo: 6, employeeName: 'Sandeep Yadav', client: 'Larsen & Toubro Ltd', esicNumber: '1200345674', grossWage: 16400, uploadedDaysAgo: 24 },
+  { id: 'r7', rowNo: 7, employeeName: 'Meera Pillai', client: 'Wipro Digital', esicNumber: '1200345674', grossWage: 18000, uploadedDaysAgo: 24 },
+  { id: 'r8', rowNo: 8, employeeName: 'Imran Qureshi', client: 'Reliance Retail Ltd', esicNumber: '12003456', grossWage: 15900, uploadedDaysAgo: 17 },
+  { id: 'r9', rowNo: 9, employeeName: 'Divya Menon', client: 'Tata Consultancy Services', esicNumber: '5100765432', grossWage: 19800, uploadedDaysAgo: 9 },
+  { id: 'r10', rowNo: 10, employeeName: 'Arjun Reddy', client: 'Infosys Technologies', esicNumber: '1200345677', grossWage: 17250, uploadedDaysAgo: 6 },
+  { id: 'r11', rowNo: 11, employeeName: 'Kavita Joshi', client: 'Flipkart Internet Pvt Ltd', esicNumber: '1200345678', grossWage: 18900, uploadedDaysAgo: 3 },
+  { id: 'r12', rowNo: 12, employeeName: 'Suresh Babu', client: 'HDFC Bank Ltd', esicNumber: '1200345679', grossWage: 20800, uploadedDaysAgo: 1 },
+  { id: 'r13', rowNo: 13, employeeName: 'Lakshmi Narayanan', client: 'Larsen & Toubro Ltd', esicNumber: '', grossWage: 16800, uploadedDaysAgo: 0 },
 ];
 
 const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();

@@ -21,7 +21,7 @@ import { buildOverviewDetail, type OverviewTileId } from './overviewDetails';
 import type { TrendInput } from '../../../utils/trends';
 import { accessFor, type FeatureId } from '../../hr-ops/hrOps.config';
 import { UPCOMING_WINDOW_LABEL, type CommandCenterKpis, type PendingActionMetric } from '../dashboard.metrics';
-import { hrOpsCounts } from './HrOpsExtras';
+import { hrOpsCounts, type OpsScope } from './HrOpsExtras';
 import { CompactToggle, SectionCard } from './shared';
 
 interface OperationalOverviewProps {
@@ -33,6 +33,10 @@ interface OperationalOverviewProps {
   pendingActions: { total: number; categories: number };
   /** Candidates for the selected dashboard period, the rows behind the candidate tiles. */
   candidates: Candidate[];
+  /** Everyone as of the period's last day (for "upcoming joining", which looks ahead of the period). */
+  allCandidates: Candidate[];
+  /** Range the HR-operations figures are counted over. */
+  opsScope: OpsScope;
   /** Last day of the selected period. */
   refDate: string;
   /** Every Action Required row (detail of the Pending Actions tile). */
@@ -61,10 +65,10 @@ interface Stat {
  * Operational Overview: the secondary figures (formerly separate KPI cards) with their trends and
  * detail lines, so nothing was lost when the headline row went down to three cards.
  */
-export const OperationalOverview: React.FC<OperationalOverviewProps> = ({ kpis, trends, role, onNavigate, pendingActions, candidates, refDate, actions }) => {
+export const OperationalOverview: React.FC<OperationalOverviewProps> = ({ kpis, trends, role, onNavigate, pendingActions, candidates, allCandidates, opsScope, refDate, actions }) => {
   const [expanded, setExpanded] = useState(false);
   const { activeId, toggle, close } = useKpiDetail<OverviewTileId>();
-  const c = hrOpsCounts();
+  const c = hrOpsCounts(opsScope);
   const offerParts = [
     kpis.offersNotIssued > 0 && `${kpis.offersNotIssued} not issued`,
     kpis.offersUnsigned > 0 && `${kpis.offersUnsigned} unsigned`,
@@ -90,7 +94,7 @@ export const OperationalOverview: React.FC<OperationalOverviewProps> = ({ kpis, 
   const active = stats.find((s) => s.id === activeId);
   const detail = active
     ? {
-        ...buildOverviewDetail(active.id, { candidates, refDate, actions }),
+        ...buildOverviewDetail(active.id, { candidates, allCandidates, scope: opsScope, refDate, actions }),
         action: active.view ? (
           <button type="button" onClick={() => onNavigate(active.view as string)} className="cc-btn cc-btn-secondary !h-8 !px-2.5">
             Open page

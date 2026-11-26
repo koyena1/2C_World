@@ -1,13 +1,13 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Calendar, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import {
-  RANGE_MAX_DATE,
   RANGE_MIN_DATE,
   RANGE_PRESETS,
   formatShort,
   presetRange,
   rangeLabel,
+  todayIso,
   validateRange,
   type DateRange,
   type RangePreset,
@@ -22,16 +22,14 @@ interface DateRangeFilterProps {
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const MIN_YEAR = Number(RANGE_MIN_DATE.slice(0, 4));
-const MAX_YEAR = Number(RANGE_MAX_DATE.slice(0, 4));
-const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
 
 const iso = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 const monthKey = (y: number, m: number) => y * 12 + m;
 
-const selectCls =
-  'h-7 rounded-md border border-[color:var(--cc-card-border)] bg-[color:var(--cc-card-bg)] cc-title text-xs font-semibold px-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--cc-accent)]';
 const navBtnCls =
-  'w-7 h-7 shrink-0 inline-flex items-center justify-center rounded-md border border-[color:var(--cc-card-border)] cc-muted hover:text-[color:var(--cc-title)] hover:border-[color:var(--cc-hover-border)] transition-colors disabled:opacity-40 disabled:pointer-events-none';
+  'w-8 h-8 shrink-0 inline-flex items-center justify-center rounded-md cc-muted hover:text-[color:var(--cc-title)] hover:bg-[color:var(--cc-accent-soft)] transition-colors cursor-pointer disabled:opacity-35 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-[color:var(--cc-accent)]';
+const linkBtnCls =
+  'text-xs font-semibold text-[color:var(--cc-accent)] hover:underline cursor-pointer disabled:opacity-40 disabled:no-underline disabled:cursor-default px-1 py-1 rounded';
 
 interface RangeCalendarProps {
   initial: DateRange;
@@ -39,12 +37,16 @@ interface RangeCalendarProps {
   onCancel: () => void;
 }
 
-/** Month grid where the start and end dates are picked by clicking; Apply / Cancel finish the choice. */
+/** Native-style month grid: pick the start and end dates by clicking; Clear / Today shortcuts; Apply / Cancel finish the choice. */
 const RangeCalendar: React.FC<RangeCalendarProps> = ({ initial, onApply, onCancel }) => {
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
   const [hover, setHover] = useState('');
-  const start = initial.to || RANGE_MAX_DATE;
+  const [monthsView, setMonthsView] = useState(false);
+  // The actual current date, read when the calendar opens (never hardcoded).
+  const [maxDate] = useState(todayIso);
+  const MAX_YEAR = Number(maxDate.slice(0, 4));
+  const start = initial.to || maxDate;
   const [view, setView] = useState({ y: Number(start.slice(0, 4)), m: Number(start.slice(5, 7)) - 1 });
 
   const pickingEnd = Boolean(from) && !to;
@@ -52,16 +54,13 @@ const RangeCalendar: React.FC<RangeCalendarProps> = ({ initial, onApply, onCance
   const hi = pickingEnd ? (hover && hover >= from ? hover : from) : to || from;
 
   const minKey = monthKey(MIN_YEAR, Number(RANGE_MIN_DATE.slice(5, 7)) - 1);
-  const maxKey = monthKey(MAX_YEAR, Number(RANGE_MAX_DATE.slice(5, 7)) - 1);
+  const maxKey = monthKey(MAX_YEAR, Number(maxDate.slice(5, 7)) - 1);
   const cur = monthKey(view.y, view.m);
-  const go = (delta: number) => {
-    const next = Math.min(maxKey, Math.max(minKey, cur + delta));
-    setView({ y: Math.floor(next / 12), m: next % 12 });
-  };
-  const setMonthYear = (y: number, m: number) => {
-    const k = Math.min(maxKey, Math.max(minKey, monthKey(y, m)));
+  const clampView = (key: number) => {
+    const k = Math.min(maxKey, Math.max(minKey, key));
     setView({ y: Math.floor(k / 12), m: k % 12 });
   };
+  const go = (delta: number) => clampView(cur + delta);
 
   const cells = useMemo(() => {
     const first = new Date(view.y, view.m, 1).getDay();
@@ -81,101 +80,153 @@ const RangeCalendar: React.FC<RangeCalendarProps> = ({ initial, onApply, onCance
     }
   };
 
+  const clear = () => {
+    setFrom('');
+    setTo('');
+    setHover('');
+  };
+
   // A single click is a one-day range; a second click makes it a span.
   const complete = Boolean(from) && !validateRange({ from, to: to || from });
 
   return (
-    <div className="flex flex-col gap-2.5 p-1.5" onMouseLeave={() => setHover('')}>
+    <div className="flex flex-col gap-2 p-1" onMouseLeave={() => setHover('')}>
+      {/* selected From / To, always visible */}
       <div className="grid grid-cols-2 gap-2" aria-live="polite">
-        {([['From Date', from, !to && !pickingEnd], ['To Date', to, pickingEnd]] as const).map(([label, value, active]) => (
+        {([['From', from, !pickingEnd], ['To', to, pickingEnd]] as const).map(([label, value, active]) => (
           <div
             key={label}
             className={cn(
-              'rounded-md border px-2 py-1 min-w-0',
+              'rounded-lg border px-2.5 py-1 min-w-0',
               active ? 'border-[color:var(--cc-accent)] bg-[color:var(--cc-accent-soft)]' : 'border-[color:var(--cc-card-border)]'
             )}
           >
-            <span className="cc-muted block text-[10px] font-semibold">{label}</span>
+            <span className="cc-muted block text-[10px] font-semibold uppercase tracking-wide">{label} Date</span>
             <span className={cn('block text-xs font-bold truncate', value ? 'cc-title' : 'cc-muted')}>{value ? formatShort(value) : 'Select date'}</span>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <button type="button" className={navBtnCls} onClick={() => go(-1)} disabled={cur <= minKey} aria-label="Previous month">
-          <ChevronLeft className="w-4 h-4" aria-hidden />
+      {/* month / year header */}
+      <div className="flex items-center justify-between gap-1">
+        <button
+          type="button"
+          onClick={() => setMonthsView((v) => !v)}
+          aria-expanded={monthsView}
+          aria-label="Choose month and year"
+          className="inline-flex items-center gap-1 h-8 px-2 rounded-md cc-title text-sm font-bold hover:bg-[color:var(--cc-accent-soft)] transition-colors cursor-pointer"
+        >
+          {monthsView ? view.y : `${MONTHS[view.m]} ${view.y}`}
+          <ChevronDown className={cn('w-3.5 h-3.5 cc-muted transition-transform', monthsView && 'rotate-180')} aria-hidden />
         </button>
-        <select aria-label="Month" value={view.m} onChange={(e) => setMonthYear(view.y, Number(e.target.value))} className={cn(selectCls, 'flex-1 min-w-0')}>
-          {MONTHS.map((name, i) => (
-            <option key={name} value={i} disabled={monthKey(view.y, i) < minKey || monthKey(view.y, i) > maxKey}>
-              {name}
-            </option>
-          ))}
-        </select>
-        <select aria-label="Year" value={view.y} onChange={(e) => setMonthYear(Number(e.target.value), view.m)} className={selectCls}>
-          {YEARS.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-        <button type="button" className={navBtnCls} onClick={() => go(1)} disabled={cur >= maxKey} aria-label="Next month">
-          <ChevronRight className="w-4 h-4" aria-hidden />
-        </button>
+        <div className="flex items-center">
+          <button
+            type="button"
+            className={navBtnCls}
+            onClick={() => (monthsView ? clampView(monthKey(view.y - 1, view.m)) : go(-1))}
+            disabled={monthsView ? view.y <= MIN_YEAR : cur <= minKey}
+            aria-label={monthsView ? 'Previous year' : 'Previous month'}
+          >
+            <ChevronLeft className="w-4 h-4" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className={navBtnCls}
+            onClick={() => (monthsView ? clampView(monthKey(view.y + 1, view.m)) : go(1))}
+            disabled={monthsView ? view.y >= MAX_YEAR : cur >= maxKey}
+            aria-label={monthsView ? 'Next year' : 'Next month'}
+          >
+            <ChevronRight className="w-4 h-4" aria-hidden />
+          </button>
+        </div>
       </div>
 
-      <div role="grid" aria-label={`${MONTHS[view.m]} ${view.y}`}>
-        <div className="grid grid-cols-7 mb-1">
-          {WEEKDAYS.map((d) => (
-            <span key={d} className="cc-muted text-[10px] font-semibold text-center py-0.5">{d}</span>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-y-0.5">
-          {cells.map((day, i) => {
-            if (day === null) return <span key={`e${i}`} />;
-            const date = iso(view.y, view.m, day);
-            const disabled = date < RANGE_MIN_DATE || date > RANGE_MAX_DATE;
-            const isStart = date === lo && Boolean(lo);
-            const isEnd = date === hi && Boolean(hi);
-            const inRange = Boolean(lo && hi) && date > lo && date < hi;
-            const edge = isStart || isEnd;
+      {monthsView ? (
+        <div className="grid grid-cols-3 gap-1.5 py-1" role="group" aria-label={`Months of ${view.y}`}>
+          {MONTHS.map((name, i) => {
+            const disabled = monthKey(view.y, i) < minKey || monthKey(view.y, i) > maxKey;
+            const selected = i === view.m;
             return (
-              <div
-                key={date}
+              <button
+                key={name}
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  setView({ y: view.y, m: i });
+                  setMonthsView(false);
+                }}
                 className={cn(
-                  'relative flex justify-center',
-                  inRange && 'bg-[color:var(--cc-accent-soft)]',
-                  isStart && hi > lo && 'bg-gradient-to-r from-transparent from-50% to-[color:var(--cc-accent-soft)] to-50%',
-                  isEnd && hi > lo && 'bg-gradient-to-l from-transparent from-50% to-[color:var(--cc-accent-soft)] to-50%'
+                  'h-9 rounded-lg text-xs font-semibold transition-colors cursor-pointer',
+                  selected ? 'bg-[color:var(--cc-accent)] text-[color:var(--cc-card-bg)]' : 'cc-title hover:bg-[color:var(--cc-accent-soft)]',
+                  disabled && 'opacity-30 pointer-events-none'
                 )}
               >
-                <button
-                  type="button"
-                  role="gridcell"
-                  disabled={disabled}
-                  aria-selected={edge || inRange}
-                  aria-label={formatShort(date)}
-                  onClick={() => pick(date)}
-                  onMouseEnter={() => setHover(date)}
-                  className={cn(
-                    'w-8 h-8 rounded-full text-xs font-semibold tabular-nums transition-colors',
-                    edge
-                      ? 'bg-[color:var(--cc-accent)] text-[color:var(--cc-card-bg)]'
-                      : inRange
-                      ? 'cc-title hover:bg-[color:var(--cc-accent-border)]'
-                      : 'cc-title hover:bg-[color:var(--cc-accent-soft)]',
-                    date === RANGE_MAX_DATE && !edge && 'ring-1 ring-inset ring-[color:var(--cc-accent-border)]',
-                    disabled && 'opacity-30 pointer-events-none'
-                  )}
-                >
-                  {day}
-                </button>
-              </div>
+                {name.slice(0, 3)}
+              </button>
             );
           })}
         </div>
+      ) : (
+        <div role="grid" aria-label={`${MONTHS[view.m]} ${view.y}`}>
+          <div className="grid grid-cols-7 mb-0.5">
+            {WEEKDAYS.map((d) => (
+              <span key={d} className="cc-muted text-[11px] font-semibold text-center py-1">{d}</span>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-y-0.5">
+            {cells.map((day, i) => {
+              if (day === null) return <span key={`e${i}`} />;
+              const date = iso(view.y, view.m, day);
+              const disabled = date < RANGE_MIN_DATE || date > maxDate;
+              const isStart = date === lo && Boolean(lo);
+              const isEnd = date === hi && Boolean(hi);
+              const inRange = Boolean(lo && hi) && date > lo && date < hi;
+              const edge = isStart || isEnd;
+              return (
+                <div
+                  key={date}
+                  className={cn(
+                    'relative flex justify-center',
+                    inRange && 'bg-[color:var(--cc-accent-soft)]',
+                    isStart && hi > lo && 'bg-gradient-to-r from-transparent from-50% to-[color:var(--cc-accent-soft)] to-50%',
+                    isEnd && hi > lo && 'bg-gradient-to-l from-transparent from-50% to-[color:var(--cc-accent-soft)] to-50%'
+                  )}
+                >
+                  <button
+                    type="button"
+                    role="gridcell"
+                    disabled={disabled}
+                    aria-selected={edge || inRange}
+                    aria-label={formatShort(date)}
+                    onClick={() => pick(date)}
+                    onMouseEnter={() => setHover(date)}
+                    className={cn(
+                      'w-9 h-9 rounded-full text-xs font-semibold tabular-nums transition-colors cursor-pointer',
+                      edge
+                        ? 'bg-[color:var(--cc-accent)] text-[color:var(--cc-card-bg)]'
+                        : inRange
+                        ? 'cc-title hover:bg-[color:var(--cc-accent-border)]'
+                        : 'cc-title hover:bg-[color:var(--cc-accent-soft)]',
+                      date === maxDate && !edge && 'ring-1 ring-inset ring-[color:var(--cc-accent)] text-[color:var(--cc-accent)]',
+                      disabled && 'opacity-30 pointer-events-none'
+                    )}
+                  >
+                    {day}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* shortcut */}
+      <div className="flex items-center border-t border-[color:var(--cc-divider)] pt-1.5">
+        <button type="button" onClick={clear} disabled={!from && !to} className={linkBtnCls}>Clear</button>
       </div>
 
-      <div className="flex items-center justify-end gap-2 pt-2 border-t border-[color:var(--cc-card-border)]">
-        <button type="button" onClick={onCancel} className="cc-btn">Cancel</button>
+      <div className="flex items-center justify-end gap-2">
+        <button type="button" onClick={onCancel} className="cc-btn cc-btn-secondary">Cancel</button>
         <button
           type="button"
           onClick={() => complete && onApply({ from, to: to || from })}

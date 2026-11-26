@@ -1,7 +1,10 @@
 /**
  * Mock data for Attendance -> Regularization (E-Sampark integration) and Attendance -> Notifications.
- * Frontend simulation only. "Today" is fixed at 2026-10-05 so every number is stable.
+ * Frontend simulation only. Dates are relative to the actual current date (see utils/today.ts).
  */
+
+import { DASHBOARD_REFERENCE_DATE } from '../modules/dashboard/dashboard.metrics';
+import { addDaysIso } from '../utils/today';
 
 export type RegularizationStatus = 'Pending' | 'Approved' | 'Rejected';
 export type PunchIssueType = 'Missed punch' | 'Late' | 'Half day' | 'On duty';
@@ -72,14 +75,14 @@ const buildRequests = (): RegularizationRequest[] => {
     const bucket = i % 20;
     const status: RegularizationStatus = bucket < 11 ? 'Pending' : bucket < 17 ? 'Approved' : 'Rejected';
     const ageHours = status === 'Pending' ? 2 + ((i * 7) % 44) : 3 + ((i * 5) % 26);
-    const dayOffset = ageHours > 24 ? 2 : 1;
-    const d = 5 - dayOffset;
+    // Attendance date: requests raised in the last day are for today / yesterday; older ones spread over the last two weeks.
+    const daysAgo = ageHours <= 24 ? (ageHours > 12 ? 1 : 0) : 1 + (i % 13);
     rows.push({
       id: `REG-${2400 + i}`,
       employee: NAMES[(i * 5) % NAMES.length],
       empCode: `2C${String(1040 + ((i * 17) % 400)).padStart(5, '0')}`,
       client: REGULARIZATION_CLIENTS[i % REGULARIZATION_CLIENTS.length],
-      date: `2026-10-${String(d).padStart(2, '0')}`,
+      date: addDaysIso(DASHBOARD_REFERENCE_DATE, -daysAgo),
       issueType,
       requestedIn: reqIn,
       requestedOut: reqOut,

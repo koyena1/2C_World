@@ -1,4 +1,5 @@
 import { DASHBOARD_REFERENCE_DATE } from '../modules/dashboard/dashboard.metrics';
+import { shiftIso } from '../utils/today';
 
 export const EXIT_TYPES = ['Resignation', 'Termination', 'Contract end', 'Absconded', 'Offer Not Rolled Out'] as const;
 export type ExitType = (typeof EXIT_TYPES)[number];
@@ -56,8 +57,8 @@ const c = (
   client,
   designation,
   exitType,
-  noticeDate,
-  lwd,
+  noticeDate: shiftIso(noticeDate),
+  lwd: lwd ? shiftIso(lwd) : null,
   status,
   transfer,
   reason,
@@ -78,6 +79,13 @@ export const EXIT_CASES: ExitCase[] = [
   c(11, 'Suresh Patil', 'Flipkart Internet Pvt Ltd', 'Warehouse Lead', 'Termination', '2026-08-14', '2026-08-31', 'Closed', 'Not applicable', 'Policy violation'),
   c(12, 'Meera Reddy', 'Larsen & Toubro Ltd', 'Project Engineer', 'Resignation', '2026-09-15', '2026-11-14', 'Notice period', 'Pending transfer closure', 'Family reasons'),
   c(13, 'Rohit Malhotra', 'Wipro Digital', 'Developer', 'Offer Not Rolled Out', '2026-09-20', null, 'Closed', 'Not applicable', 'Candidate not onboarded'),
+  c(14, 'Aditi Bose', 'Tata Consultancy Services', 'Systems Engineer', 'Resignation', '2026-09-12', '2026-11-11', 'Notice period', 'Not applicable', 'Higher studies abroad'),
+  c(15, 'Farhan Ali', 'Flipkart Internet Pvt Ltd', 'Last Mile Supervisor', 'Resignation', '2026-09-18', '2026-11-17', 'Notice period', 'Pending transfer closure', 'Relocating to hometown'),
+  c(16, 'Ritu Sengupta', 'HDFC Bank Ltd', 'Relationship Executive', 'Termination', '2026-09-24', '2026-10-09', 'Clearance', 'Cleared', 'Attendance policy breach'),
+  c(17, 'Gopal Das', 'Reliance Retail Ltd', 'Store Associate', 'Absconded', '2026-09-27', '2026-09-26', 'Initiated', 'Pending transfer closure', 'Not reachable since 26 Sep'),
+  c(18, 'Shalini Menon', 'Infosys Technologies', 'Test Engineer', 'Contract end', '2026-09-30', '2026-11-30', 'Initiated', 'Not applicable', 'Project completed'),
+  c(19, 'Pranav Kulkarni', 'Larsen & Toubro Ltd', 'Site Engineer', 'Resignation', '2026-10-02', '2026-12-01', 'Initiated', 'Pending transfer closure', 'Better opportunity'),
+  c(20, 'Nandini Rao', 'Wipro Digital', 'Business Analyst', 'Offer Not Rolled Out', '2026-10-03', null, 'Initiated', 'Not applicable', 'Client freeze on hiring'),
 ];
 
 /* ---------------- Exit documents ---------------- */

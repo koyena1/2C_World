@@ -72,6 +72,9 @@ interface CandidateDirectoryProps {
 
 const DEFAULT_FILTERS: FilterOptions = INITIAL_DIRECTORY_FILTERS;
 
+/** Hard cap on rows per page. */
+const MAX_ROWS_PER_PAGE = 10;
+
 export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
   candidates: initialCandidates,
   onOpenInviteModal,
@@ -348,11 +351,18 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
   }, [filteredCandidates, sortBy]);
 
   // Paginated candidate slice
-  const totalPages = Math.max(1, Math.ceil(sortedCandidates.length / pageSize));
+  // A page never shows more than 10 candidates, whatever the Rows option says (25 / 50 still page through in batches of 10).
+  const effectivePageSize = Math.min(pageSize, MAX_ROWS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(sortedCandidates.length / effectivePageSize));
+  // Search, filters, tabs and sorting can shrink the list: never stay on a page that no longer exists.
+  const safePage = Math.min(currentPage, totalPages);
+  useEffect(() => {
+    if (currentPage !== safePage) setCurrentPage(safePage);
+  }, [currentPage, safePage]);
   const paginatedCandidates = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return sortedCandidates.slice(startIndex, startIndex + pageSize);
-  }, [sortedCandidates, currentPage, pageSize]);
+    const startIndex = (safePage - 1) * effectivePageSize;
+    return sortedCandidates.slice(startIndex, startIndex + effectivePageSize);
+  }, [sortedCandidates, safePage, effectivePageSize]);
 
   // Bulk selection handlers
   // Row action menu (shared by the desktop table row and the phone card)
@@ -1321,7 +1331,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
           {/* SORTING, ROWS PER PAGE & TABLE CONTROLS BAR                                */}
           {/* ========================================================================= */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <PaginationSummary page={currentPage} total={sortedCandidates.length} pageSize={pageSize} itemLabel="candidates" />
+            <PaginationSummary page={safePage} total={sortedCandidates.length} pageSize={effectivePageSize} itemLabel="candidates" />
 
             <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 sm:flex-wrap w-full sm:w-auto">
               {/* Sort By Dropdown */}
@@ -1368,7 +1378,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                 </SelectMenu>
               </div>
 
-              <PaginationControls page={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} mobileIndicator />
+              <PaginationControls page={safePage} totalPages={totalPages} onPageChange={setCurrentPage} mobileIndicator />
             </div>
           </div>
 

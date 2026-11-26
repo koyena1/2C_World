@@ -10,18 +10,12 @@ import {
   computeRecentActivity,
   computeRecruiterMetrics,
   computeStatusMix,
-  DASHBOARD_REFERENCE_DATE,
 } from './dashboard.metrics';
 import { PageHeader } from '../../components/page/PageHeader';
 import { SelectMenu } from '../../components/ui/SelectMenu';
-import {
-  blockersTrend,
-  joinedTrend,
-  kycVerifiedTrend,
-  pendingOffersTrend,
-  totalCandidatesTrend,
-  upcomingJoiningTrend,
-} from '../../utils/candidateTrends';
+import { atRangeEnd, rangeKpiTrends } from '../../utils/candidateTrends';
+import { rangeLabel, formatShort } from './dateRange';
+import { useDashboardDate } from './DashboardDateContext';
 import { CandidatePipeline } from './command-center/CandidatePipeline';
 import { ClientAnalytics } from './command-center/ClientAnalytics';
 import { JoiningOverview } from './command-center/JoiningOverview';
@@ -40,9 +34,6 @@ interface HrOpsDashboardProps {
   /** Active role: decides which module shortcuts are shown. */
   role: string;
 }
-
-const formatReferenceDate = (iso: string) =>
-  new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
 /**
  * HR Operations Command Center.
@@ -74,32 +65,26 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
     [allCandidates, clientFilter, recruiterFilter]
   );
 
-  const kpis = useMemo(() => computeKpis(candidates), [candidates]);
-  const kpiTrends = useMemo(
-    () => ({
-      total: totalCandidatesTrend(candidates),
-      joined: joinedTrend(candidates),
-      kycVerified: kycVerifiedTrend(candidates),
-      pendingOffers: pendingOffersTrend(candidates),
-      blockers: blockersTrend(candidates),
-      upcoming: upcomingJoiningTrend(candidates),
-    }),
-    [candidates]
-  );
-  const pipeline = useMemo(() => computePipeline(candidates), [candidates]);
-  const statusMix = useMemo(() => computeStatusMix(candidates), [candidates]);
-  const pendingActions = useMemo(() => [...computePendingActions(candidates), ...hrOpsActions(role)], [candidates, role]);
-  const clients = useMemo(() => computeClientMetrics(candidates), [candidates]);
-  const recruiters = useMemo(() => computeRecruiterMetrics(candidates), [candidates]);
-  const joining = useMemo(() => computeJoiningOverview(candidates), [candidates]);
-  const activity = useMemo(() => computeRecentActivity(candidates, 5), [candidates]);
+  // The one date filter for the whole dashboard (set from the header picker). Defaults to today.
+  const { preset: rangePreset, range } = useDashboardDate();
+  // Everything below is derived from the candidate list as it stood on the last day of the range.
+  const scoped = useMemo(() => atRangeEnd(candidates, range.to), [candidates, range.to]);
+  const kpis = useMemo(() => computeKpis(scoped, range.to), [scoped, range.to]);
+  const overviewTrends = useMemo(() => rangeKpiTrends(candidates, range), [candidates, range]);
+  const pipeline = useMemo(() => computePipeline(scoped), [scoped]);
+  const statusMix = useMemo(() => computeStatusMix(scoped), [scoped]);
+  const pendingActions = useMemo(() => [...computePendingActions(scoped, range.to), ...hrOpsActions(role)], [scoped, range.to, role]);
+  const clients = useMemo(() => computeClientMetrics(scoped), [scoped]);
+  const recruiters = useMemo(() => computeRecruiterMetrics(scoped), [scoped]);
+  const joining = useMemo(() => computeJoiningOverview(candidates, range), [candidates, range]);
+  const activity = useMemo(() => computeRecentActivity(candidates, 5, range), [candidates, range]);
 
   return (
     <div className="ops-dashboard flex-1 flex flex-col">
       <PageHeader
         icon={LayoutDashboard}
         title="HR Operations Command Center"
-        subtitle={`Monitor onboarding, resolve issues and ensure joining readiness · as of ${formatReferenceDate(DASHBOARD_REFERENCE_DATE)}`}
+        subtitle={`Monitor onboarding, resolve issues and ensure joining readiness · ${range.from === range.to ? `as of ${formatShort(range.to)}` : `${formatShort(range.from)} – ${formatShort(range.to)}`}`}
         actions={
           <>
             <div className="min-w-[9.5rem] flex-1 sm:flex-none">
@@ -139,7 +124,7 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
         {/* 1. Overview: the three primary KPIs first, then the operational figures */}
         <OperationalOverview
           kpis={kpis}
-          trends={kpiTrends}
+          trends={overviewTrends}
           role={role}
           pendingActions={{ total: pendingActions.reduce((n, a) => n + a.count, 0), categories: pendingActions.filter((a) => a.count > 0).length }}
           onNavigate={onNavigate}
@@ -157,6 +142,7 @@ export const HrOpsDashboard: React.FC<HrOpsDashboardProps> = ({
           <div className="contents xl:flex xl:flex-col xl:col-span-8 xl:gap-[var(--cc-gap)] xl:min-w-0">
             <JoiningOverview
               data={joining}
+              periodLabel={rangeLabel(rangePreset, range)}
               onOpenCandidate={(id) => (onOpenCandidateProfile ? onOpenCandidateProfile(id) : onNavigate('directory'))}
             />
             <ClientAnalytics clients={clients} />

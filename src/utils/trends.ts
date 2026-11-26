@@ -36,6 +36,8 @@ export interface TrendInput {
    * direction is not certain.
    */
   previousHigh?: number;
+  /** Overrides the standard "vs last month" style caption (e.g. "vs previous period"). */
+  periodLabel?: string;
 }
 
 export const addDays = (iso: string, days: number): string => {

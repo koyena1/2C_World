@@ -137,7 +137,7 @@ export interface PendingActionMetric {
   target: string;
 }
 
-export const computePendingActions = (candidates: Candidate[]): PendingActionMetric[] => {
+export const computePendingActions = (candidates: Candidate[], refDate: string = DASHBOARD_REFERENCE_DATE): PendingActionMetric[] => {
   const active = candidates.filter(isActive);
 
   return [
@@ -149,7 +149,7 @@ export const computePendingActions = (candidates: Candidate[]): PendingActionMet
       id: 'joining',
       label: 'Joining blockers',
       hint: `Joining in the ${UPCOMING_WINDOW_LABEL} with an open issue`,
-      count: active.filter((c) => isInUpcomingWindow(c) && hasAnyBlocker(c)).length,
+      count: active.filter((c) => isInUpcomingWindow(c, refDate) && hasAnyBlocker(c)).length,
       tone: 'bad',
       target: 'directory',
     },
@@ -225,25 +225,17 @@ export interface JoiningEntry {
 }
 
 export interface JoiningOverview {
-  today: JoiningEntry[];
-  upcoming: JoiningEntry[];
-  /** Joiners after today, up to the end of the upcoming window (same window as the KPI card). */
-  next7: JoiningEntry[];
+  /** Joiners (not dropped) whose joining date falls inside the selected dashboard range. */
+  inRange: JoiningEntry[];
 }
 
-export const computeJoiningOverview = (candidates: Candidate[]): JoiningOverview => {
+export const computeJoiningOverview = (candidates: Candidate[], range: { from: string; to: string }): JoiningOverview => {
   const toEntry = (candidate: Candidate): JoiningEntry => ({ candidate, hasBlocker: hasAnyBlocker(candidate) });
-  const notDropped = candidates.filter((c) => !isDropped(c));
-
-  const windowEnd = addDays(DASHBOARD_REFERENCE_DATE, UPCOMING_WINDOW_DAYS);
-  const future = notDropped
-    .filter((c) => c.dateOfJoining > DASHBOARD_REFERENCE_DATE && c.joiningStatus !== 'Joined')
-    .sort((a, b) => a.dateOfJoining.localeCompare(b.dateOfJoining));
-
   return {
-    today: notDropped.filter((c) => c.dateOfJoining === DASHBOARD_REFERENCE_DATE).map(toEntry),
-    upcoming: future.map(toEntry),
-    next7: future.filter((c) => c.dateOfJoining <= windowEnd).map(toEntry),
+    inRange: candidates
+      .filter((c) => !isDropped(c) && c.dateOfJoining >= range.from && c.dateOfJoining <= range.to)
+      .sort((x, y) => x.dateOfJoining.localeCompare(y.dateOfJoining))
+      .map(toEntry),
   };
 };
 
@@ -272,7 +264,7 @@ const parseStamp = (raw: string): number => {
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), hour, m[5] ? Number(m[5]) : 0).getTime();
 };
 
-export const computeRecentActivity = (candidates: Candidate[], limit = 8): ActivityEvent[] => {
+export const computeRecentActivity = (candidates: Candidate[], limit = 8, range?: { from: string; to: string }): ActivityEvent[] => {
   const events: ActivityEvent[] = [];
 
   candidates.forEach((c) => {
@@ -324,5 +316,6 @@ export const computeRecentActivity = (candidates: Candidate[], limit = 8): Activ
     });
   });
 
-  return events.filter((e) => e.at > 0).sort((a, b) => b.at - a.at).slice(0, limit);
+  const inRange = (e: ActivityEvent) => !range || (e.atLabel.slice(0, 10) >= range.from && e.atLabel.slice(0, 10) <= range.to);
+  return events.filter((e) => e.at > 0 && inRange(e)).sort((a, b) => b.at - a.at).slice(0, limit);
 };

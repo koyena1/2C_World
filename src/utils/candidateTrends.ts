@@ -1,6 +1,7 @@
 import type { Candidate } from '../types/onboarding';
 import { computeKpis, DASHBOARD_REFERENCE_DATE, isDropped, type CommandCenterKpis } from '../modules/dashboard/dashboard.metrics';
-import { addDays, PERIOD_DAYS, stockTrend, type TrendInput } from './trends';
+import type { DateRange } from '../modules/dashboard/dateRange';
+import { addDays, countAsOf, PERIOD_DAYS, stockTrend, type TrendInput } from './trends';
 
 /**
  * Trends for the candidate KPI cards (Dashboard, Candidate Directory, KYC desk).
@@ -93,6 +94,53 @@ export const kycVerifiedTrend = (candidates: Candidate[]): TrendInput => kpiTren
 export const pendingOffersTrend = (candidates: Candidate[]): TrendInput => kpiTrend(candidates, 'pendingOffers', false);
 /** More people lined up to join in the next 7 days is better. */
 export const upcomingJoiningTrend = (candidates: Candidate[]): TrendInput => kpiTrend(candidates, 'upcomingJoining', true);
+
+/* ---------------- Date-range Overview ---------------- */
+
+const RANGE_CAPTION = 'vs previous period';
+
+/** The candidate list as it stood at the end of the range (the live list when the range ends today). */
+export const atRangeEnd = (candidates: Candidate[], to: string) =>
+  to >= DASHBOARD_REFERENCE_DATE ? candidates : candidatesAsOf(candidates, to, false);
+
+/** Overview KPI values for the selected period: every figure is as it stood on the period's last day. */
+export const computeRangeKpis = (candidates: Candidate[], range: DateRange): CommandCenterKpis =>
+  computeKpis(atRangeEnd(candidates, range.to), range.to);
+
+/**
+ * Overview trends for a period: each KPI at the end of the period against the day before the period
+ * started (an equally long, earlier window), rebuilt from dated records exactly as the monthly trends are.
+ */
+export const rangeKpiTrends = (candidates: Candidate[], range: DateRange) => {
+  const before = addDays(range.from, -1);
+  const atEnd = atRangeEnd(candidates, range.to);
+  const kpis = computeKpis(atEnd, range.to);
+  const earlier = (droppedStillActive: boolean) => computeKpis(candidatesAsOf(candidates, before, droppedStillActive), before);
+  const lo = earlier(true);
+  const hi = earlier(false);
+
+  const bounded = (kpi: Kpi, higherIsBetter: boolean): TrendInput => {
+    const a = lo[kpi] as number;
+    const b = hi[kpi] as number;
+    return { current: kpis[kpi] as number, previous: Math.min(a, b), previousHigh: Math.max(a, b), period: 'month', higherIsBetter, periodLabel: RANGE_CAPTION };
+  };
+
+  return {
+    total: { ...stockTrend(candidates, (c) => c.registrationDate, range.to, 'month', true), previous: countAsOf(candidates, (c) => c.registrationDate, before), periodLabel: RANGE_CAPTION },
+    joined: bounded('joined', true),
+    kycVerified: bounded('kycVerified', true),
+    pendingOffers: bounded('pendingOffers', false),
+    blockers: {
+      current: kpis.blockers,
+      previous: 0,
+      previousHigh: Math.max(lo.activeCandidates, hi.activeCandidates),
+      period: 'month' as const,
+      higherIsBetter: false,
+      periodLabel: RANGE_CAPTION,
+    },
+    upcoming: bounded('upcomingJoining', true),
+  };
+};
 
 /** KYC desk "100% Verified": every record verified and the ₹1 test passed; dated by the last record update. */
 export const fullyVerifiedTrend = (pool: Candidate[]): TrendInput => {

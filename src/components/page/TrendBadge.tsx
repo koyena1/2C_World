@@ -16,7 +16,7 @@ export const TrendBadge: React.FC<TrendBadgeProps> = ({ className, ...input }) =
 
   const Icon = trend.direction === 'up' ? ArrowUp : trend.direction === 'down' ? ArrowDown : Minus;
   const tone = trend.outcome === 'good' ? 'tone-good' : trend.outcome === 'bad' ? 'tone-bad' : 'tone-muted';
-  const period = PERIOD_LABEL[input.period];
+  const period = input.periodLabel ?? PERIOD_LABEL[input.period];
   const meaning =
     trend.outcome === 'good' ? ', an improvement' : trend.outcome === 'bad' ? ', a decline' : '';
 

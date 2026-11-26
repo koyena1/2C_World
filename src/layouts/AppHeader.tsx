@@ -4,6 +4,7 @@ import { IconButton } from '../components/ui/IconButton';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { ThemeToggle } from '../components/common/ThemeToggle';
 import { SyncButton } from '../components/common/SyncButton';
+import { DashboardDateFilter } from '../modules/dashboard/command-center/DashboardDateFilter';
 import { useTheme } from '../hooks/useTheme';
 import { SIDEBAR_GROUPS } from './sidebar/sidebar.config';
 import { findItemForView } from './sidebar/sidebar.utils';
@@ -24,6 +25,7 @@ const ROOT_LABEL = '2COMS Connect';
  */
 export const AppHeader: React.FC<AppHeaderProps> = ({ currentView, onGoHome, onOpenMenu }) => {
   const { isDark } = useTheme();
+  const isDashboard = currentView === 'dashboard' || currentView === 'overview';
   const page = findItemForView(SIDEBAR_GROUPS, currentView)?.item.label ?? 'Dashboard';
 
   return (
@@ -43,6 +45,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ currentView, onGoHome, onO
 
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <SyncButton />
+        {isDashboard && <DashboardDateFilter />}
         <ThemeToggle />
       </div>
     </header>

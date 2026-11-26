@@ -32,6 +32,7 @@ import { setTicketCandidate } from './modules/hr-ops/servicesStore';
 import { pathForView, viewFromPath } from './routes';
 import { canOpenView, DEFAULT_ROLE, type AppRole } from './modules/hr-ops/hrOps.config';
 import { computeKpis } from './modules/dashboard/dashboard.metrics';
+import { DashboardDateProvider } from './modules/dashboard/DashboardDateContext';
 import { hrOpsCounts } from './modules/dashboard/command-center/HrOpsExtras';
 
 function AppContent() {
@@ -120,6 +121,7 @@ function AppContent() {
 
   return (
     <RoleProvider role={activeRole}>
+    <DashboardDateProvider>
     <AppLayout
       currentView={currentView}
       onNavigate={handleSidebarNavigate}
@@ -207,6 +209,7 @@ function AppContent() {
 
       {currentView === 'usersettings' && canOpenView('usersettings', activeRole) && <UserSettingsModule appActiveRole={activeRole} />}
     </AppLayout>
+    </DashboardDateProvider>
     </RoleProvider>
   );
 }

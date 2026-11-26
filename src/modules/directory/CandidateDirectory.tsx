@@ -1552,6 +1552,7 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                         )}
                       </button>
                     </th>
+                    <th className="py-3 px-3 w-12 text-center">Actions</th>
                     <th className="py-3 px-3">User ID</th>
                     <th className="py-3 px-3">Candidate Details</th>
                     <th className="py-3 px-3">Company & Branch</th>
@@ -1561,7 +1562,6 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                     <th className="py-3 px-3">Joining Status</th>
                     <th className="py-3 px-3">Interview / Joining</th>
                     <th className="py-3 px-3">Sourcing Info</th>
-                    <th className="py-3 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
 
@@ -1614,6 +1614,23 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                             ) : (
                               <Square className={`w-4 h-4 mx-auto ${isDark ? 'text-slate-600 hover:text-slate-400' : 'text-slate-300 hover:text-slate-400'}`} />
                             )}
+                          </td>
+
+                          {/* Actions: View Details (eye icon only) */}
+                          <td className="py-3 px-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewCandidate(candidate)}
+                              className={`inline-flex items-center justify-center w-7 h-7 rounded-md transition-colors border shadow-2xs cursor-pointer ${
+                                isDark
+                                  ? 'bg-sky-950/80 text-sky-300 border-sky-800 hover:bg-sky-600 hover:text-white'
+                                  : 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-600 hover:text-white'
+                              }`}
+                              title={`View details for ${candidate.firstName} ${candidate.lastName}`}
+                              aria-label={`View details for ${candidate.firstName} ${candidate.lastName}`}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
                           </td>
 
                           {/* User ID & Old Emp ID */}
@@ -1760,41 +1777,6 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
                             </div>
                           </td>
 
-                          {/* Actions Column: Direct "View Details" CTA + More Menu */}
-                          <td className="py-3 px-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-1.5">
-                              {/* Direct View Details Button */}
-                              <button
-                                type="button"
-                                onClick={() => setPreviewCandidate(candidate)}
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md transition-colors border shadow-2xs cursor-pointer ${
-                                  isDark
-                                    ? 'bg-sky-950/80 text-sky-300 border-sky-800 hover:bg-sky-600 hover:text-white'
-                                    : 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-600 hover:text-white'
-                                }`}
-                                title={`Open details for ${candidate.firstName} ${candidate.lastName}`}
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                <span>View Details</span>
-                              </button>
-
-                              {/* More Actions Dropdown */}
-                              <div className="relative inline-block text-left">
-                                <button
-                                  type="button"
-                                  onClick={(e) => toggleActionMenu(candidate.id, e.currentTarget)}
-                                  className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                                    isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
-                                  }`}
-                                  aria-label="Candidate actions"
-                                >
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </button>
-
-                                {renderActionMenu(candidate)}
-                              </div>
-                            </div>
-                          </td>
                         </tr>
                       );
                     })

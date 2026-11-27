@@ -17,7 +17,7 @@ interface CategoryTabsProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
-  /** Below this breakpoint the tabs collapse into one dropdown (no sideways scrolling). Omit to always show tabs. */
+  /** Below this breakpoint the tabs collapse into one dropdown (no sideways scrolling). Omit to use the default: tabs for fewer than three, a dropdown below md for 3-5 tabs and below lg for 6 or more. */
   selectBelow?: Breakpoint;
 }
 
@@ -27,7 +27,10 @@ const SELECT_ONLY: Record<Breakpoint, string> = { sm: 'sm:hidden', md: 'md:hidde
 const TABS_ONLY: Record<Breakpoint, string> = { sm: '!hidden sm:!flex', md: '!hidden md:!flex', lg: '!hidden lg:!flex' };
 
 /** The standard category switcher (All Categories, Candidate Lifecycle, ...). Look lives in design-system.css (.cc-tab, .cc-count-badge). */
-export const CategoryTabs: React.FC<CategoryTabsProps> = ({ tabs, value, onChange, className, selectBelow }) => {
+export const CategoryTabs: React.FC<CategoryTabsProps> = ({ tabs, value, onChange, className, selectBelow: selectBelowProp }) => {
+  // Three or more tabs scroll sideways on a phone: collapse them into one dropdown below md, and long rows (6+) below lg.
+  // Desktop (1024px and up) keeps the tab row exactly as it was.
+  const selectBelow = selectBelowProp ?? (tabs.length >= 6 ? 'lg' : tabs.length >= 3 ? 'md' : undefined);
   const listRef = useRef<HTMLDivElement>(null);
   const firstRun = useRef(true);
 

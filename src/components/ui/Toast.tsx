@@ -38,7 +38,7 @@ export const Toast: React.FC<ToastProps> = ({
       role="status"
       aria-live="polite"
       className={cn(
-        'fixed z-50 rounded-lg shadow-xl flex items-center border text-xs',
+        'fixed z-[70] rounded-lg shadow-xl flex items-center border text-xs',
         'animate-in fade-in duration-200',
         closable
           ? 'bottom-6 right-6 px-4 py-3 gap-3 slide-in-from-bottom-2'

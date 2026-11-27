@@ -64,6 +64,8 @@ import { SelectMenu } from '../../components/ui/SelectMenu';
 interface CandidateDirectoryProps {
   candidates: Candidate[];
   onOpenInviteModal: () => void;
+  /** Persists an edited candidate in the app's list. */
+  onCandidateUpdate?: (candidate: Candidate) => void;
   onOpenCandidateProfile: (candidate: Candidate) => void;
   onOpenKycWorkspace: (candidate: Candidate) => void;
   externalFilters?: FilterOptions;
@@ -78,6 +80,7 @@ const MAX_ROWS_PER_PAGE = 10;
 export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
   candidates: initialCandidates,
   onOpenInviteModal,
+  onCandidateUpdate,
   onOpenCandidateProfile,
   onOpenKycWorkspace,
   externalFilters,
@@ -1846,6 +1849,11 @@ export const CandidateDirectory: React.FC<CandidateDirectoryProps> = ({
               setPreviewCandidate(null);
               onOpenKycWorkspace(c);
             }}
+            onUpdateCandidate={(updated) => {
+              onCandidateUpdate?.(updated);
+              setPreviewCandidate(updated);
+            }}
+            onToast={showToast}
           />
 
           {/* Filter Drawer (optional full slide-over backup) */}

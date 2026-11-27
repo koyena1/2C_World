@@ -10,6 +10,7 @@ export const VIEW_PATHS: Record<string, string> = {
   'offer-letters': '/offer-letters',
   import: '/bulk-import',
   kyc: '/kyc-verification',
+  'id-cards': '/id-card-management',
   attendance: '/attendance',
   holidays: '/holiday-masters',
   'contract-exit': '/contract-exit',

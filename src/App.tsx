@@ -14,6 +14,7 @@ import { BulkImportView } from './modules/import/BulkImportView';
 import { KycVerificationWorkspace } from './modules/kyc/KycVerificationWorkspace';
 import { CandidateProfile360 } from './modules/profile/CandidateProfile360';
 import { AttendanceModule } from './modules/attendance/AttendanceModule';
+import { IdCardModule } from './modules/id-cards/IdCardModule';
 import { HolidayMastersModule } from './modules/holidays/HolidayMastersModule';
 import { UserSettingsModule } from './modules/user-settings/UserSettingsModule';
 import { MOCK_CANDIDATES } from './data/mockOnboardingData';
@@ -159,6 +160,10 @@ function AppContent() {
         <CandidateDirectory
           candidates={candidates}
           onOpenInviteModal={() => setIsInviteModalOpen(true)}
+          onCandidateUpdate={(updated) => {
+            setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+            setSelectedCandidate((cur) => (cur.id === updated.id ? updated : cur));
+          }}
           onOpenCandidateProfile={handleOpenCandidateProfile}
           onOpenKycWorkspace={handleOpenKycWorkspace}
           externalFilters={directoryFilters}
@@ -189,6 +194,16 @@ function AppContent() {
           onRaiseTicket={(c) => {
             setTicketCandidate({ id: c.id, name: `${c.firstName} ${c.lastName}` });
             goTo('support-ticket');
+          }}
+        />
+      )}
+
+      {currentView === 'id-cards' && (
+        <IdCardModule
+          candidates={candidates}
+          onCandidateUpdate={(updated) => {
+            setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+            setSelectedCandidate((cur) => (cur.id === updated.id ? updated : cur));
           }}
         />
       )}

@@ -216,6 +216,8 @@ export const buildDemoCandidates = (count = 100): Candidate[] => {
     out.push({
       id: `cand-${200 + i}`,
       userId: `2C-2026-${9100 + i}`,
+      // Portrait photographs; a few candidates have none yet, so the ID card module can flag them.
+      avatarUrl: i % 11 === 4 ? undefined : `https://randomuser.me/api/portraits/${female ? 'women' : 'men'}/${(i * 7) % 90}.jpg`,
       firstName,
       lastName,
       email: `${firstName}.${lastName}${i % 9 === 0 ? i : ''}@example.com`.toLowerCase(),
@@ -250,7 +252,7 @@ export const buildDemoCandidates = (count = 100): Candidate[] => {
       accountHolderName: fullName,
       gender: female ? 'Female' : 'Male',
       dob: `${1990 + (i % 10)}-${pad(1 + (i % 12))}-${pad(1 + ((i * 3) % 28))}`,
-      bloodGroup: BLOOD[i % BLOOD.length],
+      bloodGroup: i % 29 === 3 ? '' : BLOOD[i % BLOOD.length],
       maritalStatus: i % 4 === 0 ? 'Married' : 'Single',
       highestQualification: pick(QUALIFICATIONS),
       fatherName: `${pick(FIRST_M)} ${lastName}`,

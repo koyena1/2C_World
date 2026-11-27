@@ -391,6 +391,8 @@ html.dark .cc-tab-active:hover { color: #0b1220; }
    Cell labels come from the header text (see useStackedTables). Add `cc-table-stack` to the <table>. */
 @media (max-width: 1023px) {
   .cc-table-wrap:has(> .cc-table-stack) { border: 0; overflow: visible; background: transparent; }
+  /* A table that was given a desktop min-width (min-w-[760px] ...) must be allowed to shrink to the card. */
+  .cc-table-stack { min-width: 0; max-width: 100%; }
   .cc-table-stack, .cc-table-stack tbody, .cc-table-stack tr, .cc-table-stack td { display: block; width: 100%; }
   .cc-table-stack thead { display: none; }
   .cc-table-stack tbody tr {
@@ -409,7 +411,7 @@ html.dark .cc-tab-active:hover { color: #0b1220; }
     padding: 6px 14px;
     text-align: right;
     min-width: 0;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
   }
   .cc-table-stack td::before {
     content: attr(data-label);
@@ -430,6 +432,44 @@ html.dark .cc-tab-active:hover { color: #0b1220; }
   .cc-table-stack td[data-label=""] { justify-content: flex-end; }
   .cc-table-stack td[colspan] { justify-content: center; text-align: center; }
   .cc-table-stack td[colspan]::before { display: none; }
+}
+/* A cell made of several parts (name + description, badge + date ...) shows its label on its own line and the parts below it. */
+@media (max-width: 1023px) {
+  .cc-table-stack td:has(> :nth-child(2)) { display: block; text-align: left; }
+  .cc-table-stack td:has(> :nth-child(2))::before { display: block; max-width: 100%; margin-bottom: 2px; }
+  .cc-table-stack td:has(> :nth-child(2))[data-label=""]::before { display: none; }
+}
+
+/* Phones only (desktop and tablet keep their grids): short filter fields and KPI cards sit two per row instead of one long stack. */
+@media (max-width: 639px) {
+  :is(.grid, .cc-grid).grid-cols-1:has(> * > button[role='combobox']),
+  :is(.grid, .cc-grid).grid-cols-1:has(> .cc-card-link) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  :is(.grid, .cc-grid).grid-cols-1:has(> .cc-card-link) > :last-child:nth-child(odd) { grid-column: span 2; }
+}
+
+/* Row headers (<th> inside the body) read like any other cell. */
+@media (max-width: 1023px) {
+  .cc-table-stack tbody th {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 6px 14px;
+    text-align: right;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    background: transparent;
+    position: static;
+  }
+  .cc-table-stack tbody th::before { content: attr(data-label); flex-shrink: 0; max-width: 45%; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--cc-muted); }
+  .cc-table-stack tbody th[data-label=""]::before { display: none; }
 }
 /* Tablet: two columns of label/value pairs per card. */
 @media (min-width: 640px) and (max-width: 1023px) {

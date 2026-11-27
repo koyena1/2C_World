@@ -41,7 +41,8 @@ export type FeatureId =
   | 'tickets' // 19 header + Candidate 360 (escalate to ticketing portal)
   | 'exit-module' // 20 Contract & Exit -> Exits
   | 'contract-closure' // 21 Contract & Exit -> Contracts
-  | 'exit-documentation'; // 22 Contract & Exit -> Exit Documents
+  | 'exit-documentation' // 22 Contract & Exit -> Exit Documents
+  | 'id-cards'; // 23 Candidate Pipeline -> ID Card Management
 
 export interface FeatureConfig {
   /** Requirement number (1-22) from the brief. */
@@ -80,6 +81,7 @@ export const FEATURES: Record<FeatureId, FeatureConfig> = {
   'exit-module': f(20, 'Exit Module', 'manage', 'manage', 'view'),
   'contract-closure': f(21, 'Contract Closure Module', 'manage', 'manage', 'view'),
   'exit-documentation': f(22, 'Exit Documentation Workflow', 'manage', 'manage', 'view'),
+  'id-cards': f(23, 'ID Card Management - Bulk Generation & Printing', 'manage', 'manage', 'view'),
 };
 
 export const accessFor = (feature: FeatureId, role: string): AccessLevel =>

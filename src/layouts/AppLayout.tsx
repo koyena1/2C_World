@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { cn } from '../utils/cn';
+import { useStackedTables } from '../hooks/useStackedTables';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './sidebar/AppSidebar';
 import type { SidebarNotifications } from './sidebar/sidebar.types';
@@ -41,6 +42,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const { isDark } = useTheme();
   const [navOpen, setNavOpen] = useState(false);
+  // Phones / small tablets: every data table becomes labelled cards (CSS only applies below 1024px).
+  useStackedTables();
 
   // Mobile drawer: Escape closes it, and the page behind it can't scroll while it is open
   useEffect(() => {

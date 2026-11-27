@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { X, ExternalLink, ShieldCheck, AlertCircle, ChevronRight, Eye, Check, Copy } from 'lucide-react';
+import { X, ExternalLink, ShieldCheck, AlertCircle, ChevronRight, Eye, Check, Copy, Pencil, BellRing, IdCard } from 'lucide-react';
 import { Candidate } from '../../types/onboarding';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { SectionCard } from '../../components/page/SectionCard';
 import { ProgressBar } from '../dashboard/command-center/shared';
 import { DocumentPreviewModal, DocumentPreviewData } from '../../components/common/DocumentPreviewModal';
+import { useRole } from '../../context/RoleContext';
+import { logAudit } from '../hr-ops/auditStore';
+import { EditCandidateDialog, IdCardDialog, SendNotificationDialog } from './CandidateActionDialogs';
 
 interface CandidatePreviewDrawerProps {
   candidate: Candidate | null;
   onClose: () => void;
   onOpenFullProfile: (candidate: Candidate) => void;
   onOpenKycWorkspace: (candidate: Candidate) => void;
+  /** Saves edits made in the Edit Candidate dialog. */
+  onUpdateCandidate?: (candidate: Candidate) => void;
+  /** Shows a confirmation toast (notification sent, ID card generated ...). */
+  onToast?: (message: string) => void;
 }
 
 /** An individual info tile: light-blue background + border on hover (.cc-card-hover), never on the section around it. */
@@ -30,7 +37,11 @@ export const CandidatePreviewDrawer: React.FC<CandidatePreviewDrawerProps> = ({
   onClose,
   onOpenFullProfile,
   onOpenKycWorkspace,
+  onUpdateCandidate,
+  onToast,
 }) => {
+  const { actor } = useRole();
+  const [dialog, setDialog] = useState<'edit' | 'notify' | 'idcard' | null>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<DocumentPreviewData | null>(null);
 
@@ -93,7 +104,8 @@ export const CandidatePreviewDrawer: React.FC<CandidatePreviewDrawerProps> = ({
           {/* BODY (scrolls) */}
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 sm:p-6 flex flex-col gap-3 sm:gap-4">
             {/* Candidate summary */}
-            <section className="cc-card p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+            <section className="cc-card p-3.5 sm:p-5 flex flex-col gap-3.5 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="cc-accent-chip w-12 h-12 rounded-full flex items-center justify-center font-bold text-base shrink-0">
                   {candidate.firstName[0]}{candidate.lastName[0]}
@@ -121,6 +133,23 @@ export const CandidatePreviewDrawer: React.FC<CandidatePreviewDrawerProps> = ({
                   <span className="cc-title font-mono text-sm font-bold">{candidate.onboardingCompletionPct}%</span>
                 </div>
                 <ProgressBar value={candidate.onboardingCompletionPct} tone="info" className="mt-1.5" label="Profile completion" />
+              </div>
+              </div>
+
+              {/* Candidate actions */}
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[color:var(--cc-divider)]">
+                <button type="button" onClick={() => setDialog('edit')} className="cc-btn cc-btn-secondary !h-8 flex-1 min-[480px]:flex-none">
+                  <Pencil className="w-3.5 h-3.5 text-[color:var(--cc-accent)]" aria-hidden />
+                  <span>Edit Candidate</span>
+                </button>
+                <button type="button" onClick={() => setDialog('notify')} className="cc-btn cc-btn-secondary !h-8 flex-1 min-[480px]:flex-none">
+                  <BellRing className="w-3.5 h-3.5 text-[color:var(--cc-warn)]" aria-hidden />
+                  <span>Send Notification</span>
+                </button>
+                <button type="button" onClick={() => setDialog('idcard')} className="cc-btn cc-btn-secondary !h-8 flex-1 min-[480px]:flex-none">
+                  <IdCard className="w-3.5 h-3.5 text-[color:var(--cc-good)]" aria-hidden />
+                  <span>Generate ID Card</span>
+                </button>
               </div>
             </section>
 
@@ -257,6 +286,21 @@ export const CandidatePreviewDrawer: React.FC<CandidatePreviewDrawerProps> = ({
           </div>
         </div>
       </div>
+
+      {dialog === 'edit' && (
+        <EditCandidateDialog
+          candidate={candidate}
+          onClose={() => setDialog(null)}
+          onSave={(updated) => {
+            onUpdateCandidate?.(updated);
+            logAudit({ area: 'candidate-directory', action: `Edited candidate details for ${updated.firstName} ${updated.lastName}`, subjectId: updated.id, actorId: actor.id, actorName: actor.name });
+            onToast?.(`Candidate details updated for ${updated.firstName} ${updated.lastName}.`);
+            setDialog(null);
+          }}
+        />
+      )}
+      {dialog === 'notify' && <SendNotificationDialog candidate={candidate} onClose={() => setDialog(null)} onSent={(m) => onToast?.(m)} />}
+      {dialog === 'idcard' && <IdCardDialog candidate={candidate} onClose={() => setDialog(null)} onGenerated={(m) => onToast?.(m)} />}
 
       {/* Embedded Document Preview Modal */}
       <DocumentPreviewModal

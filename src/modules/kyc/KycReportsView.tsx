@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FileBarChart, Download, Save, Trash2, FolderOpen, Lock, RotateCcw, Search, X } from 'lucide-react';
+import { FileBarChart, Download, Save, Trash2, FolderOpen, Lock, RotateCcw, Search, X, Check } from 'lucide-react';
 import type { Candidate } from '../../types/onboarding';
 import { PageHeader } from '../../components/page/PageHeader';
 import { PageBody } from '../../components/page/PageBody';
@@ -205,8 +205,8 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
         )}
 
         <div className="cc-grid grid-cols-1 xl:grid-cols-3">
-          <div className="xl:col-span-2 space-y-[var(--cc-gap)] min-w-0">
-            <SectionCard title="1. Report format" step={undefined}>
+          <div className="xl:col-span-2 space-y-[var(--cc-gap)] min-w-0 max-xl:contents max-xl:space-y-0">
+            <SectionCard title="1. Report format" step={undefined} className="max-xl:order-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {REPORT_FORMATS.map((f) => (
                   <button
@@ -214,20 +214,32 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
                     type="button"
                     onClick={() => changeFormat(f.id)}
                     aria-pressed={config.format === f.id}
-                    className={`text-left p-3 rounded-xl border transition-colors ${
+                    className={`text-left p-3 rounded-xl border transition-colors max-sm:p-2.5 max-sm:flex max-sm:items-start max-sm:gap-2.5 ${
                       config.format === f.id
                         ? 'cc-accent-chip'
                         : 'border-[color:var(--cc-card-border)] hover:border-[color:var(--cc-hover-border)]'
                     }`}
                   >
-                    <span className="block text-xs font-bold cc-title">{f.label}</span>
-                    <span className="block text-[11px] cc-muted mt-0.5">{f.description}</span>
+                    {/* phones: radio-style marker so the chosen format is obvious at a glance */}
+                    <span
+                      aria-hidden
+                      className={`sm:hidden shrink-0 mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center ${
+                        config.format === f.id ? 'bg-[color:var(--cc-accent)] border-[color:var(--cc-accent)] text-[color:var(--cc-card-bg)]' : 'border-[color:var(--cc-card-border)]'
+                      }`}
+                    >
+                      {config.format === f.id && <Check className="w-3 h-3" strokeWidth={3} />}
+                    </span>
+                    <span className="block min-w-0 max-sm:flex-1">
+                      <span className="block text-xs font-bold cc-title">{f.label}</span>
+                      <span className="block text-[11px] cc-muted mt-0.5">{f.description}</span>
+                    </span>
                   </button>
                 ))}
               </div>
             </SectionCard>
 
             <SectionCard
+              className="max-xl:order-4"
               title="2. Required fields"
               subtitle={fmt.kind === 'aggregate' ? 'Metric columns for this format' : 'Columns included in the export'}
               action={
@@ -248,7 +260,7 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
               {noFields && <p className="text-[11px] mt-2 font-medium tone-bad tone-text">Select at least one field.</p>}
             </SectionCard>
 
-            <SectionCard title="3. Reporting parameters">
+            <SectionCard title="3. Reporting parameters" className="max-xl:order-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="cc-label" htmlFor="rp-client">Client</label>
@@ -289,8 +301,8 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
             </SectionCard>
           </div>
 
-          <div className="space-y-[var(--cc-gap)] min-w-0">
-            <SectionCard title="Generate">
+          <div className="space-y-[var(--cc-gap)] min-w-0 max-xl:contents max-xl:space-y-0">
+            <SectionCard title="Generate" className="max-xl:order-2">
               <p className="cc-muted text-xs mb-3">
                 {fmt.label}: <strong className="cc-title">{report.data.length}</strong> row(s), {report.headers.length} column(s).
               </p>
@@ -299,34 +311,34 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
               </button>
             </SectionCard>
 
-            <SectionCard title="Saved report formats" subtitle="Stored for this session only">
+            <SectionCard title="Saved report formats" subtitle="Stored for this session only" className="max-xl:order-3">
               <div className="flex gap-2 mb-1">
                 <input
-                  className="cc-input"
+                  className="cc-input min-w-0"
                   placeholder="Format name"
                   value={saveName}
                   onChange={(e) => { setSaveName(e.target.value); setSaveError(''); }}
                   disabled={!canManage}
                   aria-label="Saved format name"
                 />
-                <button type="button" className="cc-btn cc-btn-secondary" onClick={handleSave} disabled={!canManage}>
+                <button type="button" className="cc-btn cc-btn-secondary shrink-0" onClick={handleSave} disabled={!canManage}>
                   <Save className="w-3.5 h-3.5" /><span>Save</span>
                 </button>
               </div>
               {saveError && <p className="text-[11px] mb-1 font-medium tone-bad tone-text">{saveError}</p>}
               <ul className="cc-divide mt-2">
                 {saved.map((s) => (
-                  <li key={s.id} className="py-2.5 flex items-center gap-2">
+                  <li key={s.id} className="py-2.5 flex items-center gap-2 max-sm:gap-1.5">
                     <div className="min-w-0 flex-1">
-                      <p className="cc-title text-xs font-semibold truncate">{s.name}</p>
-                      <p className="cc-muted text-[11px] truncate">
+                      <p className="cc-title text-xs font-semibold sm:truncate max-sm:break-words">{s.name}</p>
+                      <p className="cc-muted text-[11px] sm:truncate max-sm:break-words">
                         {REPORT_FORMATS.find((f) => f.id === s.config.format)?.label} · {s.savedBy} · {s.savedAt}
                       </p>
                     </div>
-                    <button type="button" className="cc-btn cc-btn-secondary" style={{ height: 28 }} onClick={() => handleLoad(s)} title="Load this format">
-                      <FolderOpen className="w-3.5 h-3.5" /><span>Load</span>
+                    <button type="button" className="cc-btn cc-btn-secondary !h-7 max-sm:!h-9 max-sm:!w-9 max-sm:!px-0 shrink-0" onClick={() => handleLoad(s)} title="Load this format" aria-label={`Load ${s.name}`}>
+                      <FolderOpen className="w-3.5 h-3.5" /><span className="max-sm:sr-only">Load</span>
                     </button>
-                    <button type="button" className="cc-btn cc-btn-tone tone-bad" style={{ height: 28, padding: '0 8px' }} onClick={() => handleDelete(s)} disabled={!canManage} aria-label={`Delete ${s.name}`}>
+                    <button type="button" className="cc-btn cc-btn-tone tone-bad !h-7 !px-2 max-sm:!h-9 max-sm:!w-9 max-sm:!px-0 shrink-0" onClick={() => handleDelete(s)} disabled={!canManage} aria-label={`Delete ${s.name}`}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </li>
@@ -339,7 +351,7 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
 
         <SectionCard title="Live preview" subtitle={`${fmt.label} · showing ${Math.min(PREVIEW_LIMIT, previewData.length)} of ${previewData.length} rows${searching ? ` (filtered from ${report.data.length})` : ''}`}
           action={
-              <div className="relative w-[9.5rem] min-[480px]:w-56 sm:w-64 shrink-0">
+              <div className="relative hidden sm:block sm:w-64 shrink-0">
                 <Search className="cc-muted w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden />
                 <input
                   id="kyc-report-search"
@@ -363,6 +375,22 @@ export const KycReportsView: React.FC<KycReportsViewProps> = ({ candidates }) =>
               </div>
           }
         >
+          <div className="relative w-full mb-3 sm:hidden">
+            <Search className="cc-muted w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search ID, name, client, document, status..."
+              aria-label="Search the live preview"
+              className="cc-input !pl-9 !pr-8"
+            />
+            {searching && (
+              <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="cc-muted hover:text-[color:var(--cc-title)] absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
           <div className="cc-table-wrap">
             <table className="cc-table">
               <thead>
